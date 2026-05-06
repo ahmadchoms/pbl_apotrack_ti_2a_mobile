@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../widgets/recent_activity_item.dart';
+import '../widgets/urgent_task_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -49,34 +52,26 @@ class HomeScreen extends StatelessWidget {
       'id': 1,
       'action': 'Update Stok',
       'description': 'Update stok Amoxicillin oleh Budi (Staff)',
-      'user_name': 'Budi',
-      'created_at_formatted': '10 Menit lalu',
+      'status': 'success',
+      'created_at': '2026-05-06 07:25:00',
+      'relative_time': '10 Menit lalu',
     },
     {
       'id': 2,
       'action': 'Pesanan Selesai',
       'description': 'Pesanan #ORD-0917 telah diserahkan',
-      'user_name': 'Ahmad Fauzi',
-      'created_at_formatted': '1 Jam lalu',
-    },
-    {
-      'id': 3,
-      'action': 'Input POS',
-      'description': 'Transaksi tunai Rp 150.000 berhasil',
-      'user_name': 'Ahmad Fauzi',
-      'created_at_formatted': '3 Jam lalu',
+      'status': 'success',
+      'created_at': '2026-05-06 06:35:00',
+      'relative_time': '1 Jam lalu',
     },
   ];
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF1D70F5);
-    const Color backgroundColor = Color(0xFFF9FAFB);
-
     final userData = profileResponse['data'] as Map<String, dynamic>;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +81,7 @@ class HomeScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 40),
               decoration: const BoxDecoration(
-                color: primaryColor,
+                color: AppColors.primary,
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(32),
                   bottomRight: Radius.circular(32),
@@ -154,7 +149,7 @@ class HomeScreen extends StatelessWidget {
                     child: _buildActionButton(
                       'Scan QR\nCustomer',
                       Icons.qr_code_scanner_rounded,
-                      primaryColor,
+                      AppColors.primary,
                       Colors.white,
                       true,
                       () => context.push('/staff/scanner'),
@@ -166,7 +161,7 @@ class HomeScreen extends StatelessWidget {
                       'POS /\nKasir',
                       Icons.point_of_sale_rounded,
                       Colors.white,
-                      primaryColor,
+                      AppColors.primary,
                       false,
                       () => context.push('/staff/pos'),
                     ),
@@ -185,7 +180,7 @@ class HomeScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textLight,
                   letterSpacing: 1.5,
                 ),
               ),
@@ -201,7 +196,11 @@ class HomeScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final task = urgentTasks[index];
                   final isStock = task['type'] == 'STOCK';
-                  return GestureDetector(
+                  return UrgentTaskCard(
+                    title: task['title'],
+                    subtitle: task['subtitle'],
+                    icon: isStock ? Icons.warning_amber_rounded : Icons.shopping_cart_outlined,
+                    color: isStock ? AppColors.warning : AppColors.primary,
                     onTap: () {
                       if (isStock) {
                         context.push('/staff/inventory');
@@ -209,12 +208,6 @@ class HomeScreen extends StatelessWidget {
                         context.push('/staff/orders');
                       }
                     },
-                    child: _buildTaskCard(
-                      task['title'],
-                      task['subtitle'],
-                      isStock ? Icons.warning_amber_rounded : Icons.shopping_cart_outlined,
-                      isStock ? const Color(0xFFF59E0B) : primaryColor,
-                    ),
                   );
                 },
               ),
@@ -230,7 +223,7 @@ class HomeScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textLight,
                   letterSpacing: 1.5,
                 ),
               ),
@@ -243,67 +236,9 @@ class HomeScreen extends StatelessWidget {
               itemCount: recentActivities.length,
               itemBuilder: (context, index) {
                 final activity = recentActivities[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: InkWell(
-                    onTap: () => context.push('/staff/audit-log-detail', extra: activity),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: const Color(0xFFF1F5F9),
-                            child: Icon(
-                              _getActivityIcon(activity['action']), 
-                              color: primaryColor,
-                              size: 20
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  activity['description'],
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800, 
-                                    fontSize: 13,
-                                    color: Color(0xFF1E293B)
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Oleh: ${activity['user_name']} - ${activity['created_at_formatted']}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF94A3B8), 
-                                    fontSize: 11, 
-                                    fontWeight: FontWeight.w500
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1), size: 20),
-                        ],
-                      ),
-                    ),
-                  ),
+                return RecentActivityItem(
+                  activity: activity,
+                  onTap: () => context.push('/staff/audit-log-detail', extra: activity),
                 );
               },
             ),
@@ -312,12 +247,6 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  IconData _getActivityIcon(String action) {
-    if (action.contains('Stok')) return Icons.inventory_2_outlined;
-    if (action.contains('Pesanan')) return Icons.check_circle_outline_rounded;
-    return Icons.history_rounded;
   }
 
   Widget _buildNotificationBadge(int count, BuildContext context) {
@@ -340,7 +269,7 @@ class HomeScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
-                  color: Color(0xFFEF4444),
+                  color: AppColors.danger,
                   shape: BoxShape.circle,
                 ),
                 constraints: const BoxConstraints(
@@ -383,7 +312,7 @@ class HomeScreen extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                color: isWarning ? const Color(0xFFFB923C) : Colors.white,
+                color: isWarning ? AppColors.accentOrange : Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
               ),
@@ -434,56 +363,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTaskCard(String title, String subtitle, IconData icon, Color color) {
-    return Container(
-      width: 240,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.1), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: -0.2),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

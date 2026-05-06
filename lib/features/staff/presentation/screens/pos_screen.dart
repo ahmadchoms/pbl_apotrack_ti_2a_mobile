@@ -1,68 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../widgets/pos_product_card.dart';
 
-// ─────────────────────────────────────────────
-//  THEME CONSTANTS
-// ─────────────────────────────────────────────
-class _AppColors {
-  static const primary = Color(0xFF1D70F5);
-  static const primaryLight = Color(0xFFEEF4FF);
-  static const background = Color(0xFFF4F7FE);
-  static const textDark = Color(0xFF0F1828);
-  static const textMid = Color(0xFF4B5563);
-  static const textLight = Color(0xFF9CA3AF);
-  static const divider = Color(0xFFE5EAF2);
-  static const success = Color(0xFF10B981);
-  static const warning = Color(0xFFF59E0B);
-}
-
-// ─────────────────────────────────────────────
-//  HELPERS
-// ─────────────────────────────────────────────
-String _formatRupiah(num value) {
-  final str = value.toStringAsFixed(0);
-  final buffer = StringBuffer();
-  final len = str.length;
-  for (int i = 0; i < len; i++) {
-    if (i > 0 && (len - i) % 3 == 0) buffer.write('.');
-    buffer.write(str[i]);
-  }
-  return 'Rp ${buffer.toString()}';
-}
-
-// ─────────────────────────────────────────────
-//  DATA MODELS
-// ─────────────────────────────────────────────
-class _Medicine {
-  final String name;
-  final String category;
-  final int price;
-  final int stock;
-  final Color accentColor;
-  final IconData icon;
-
-  const _Medicine({
-    required this.name,
-    required this.category,
-    required this.price,
-    required this.stock,
-    required this.accentColor,
-    required this.icon,
-  });
-}
-
-class _CartItem {
-  final _Medicine medicine;
-  int qty;
-
-  _CartItem({required this.medicine, this.qty = 1});
-
-  int get subtotal => medicine.price * qty;
-}
-
-// ─────────────────────────────────────────────
-//  SCREEN
-// ─────────────────────────────────────────────
 class PosScreen extends StatefulWidget {
   const PosScreen({super.key});
 
@@ -71,58 +13,46 @@ class PosScreen extends StatefulWidget {
 }
 
 class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
-  final List<_Medicine> _medicines = const [
-    _Medicine(
-      name: 'Amoxicillin 500mg',
-      category: 'Tablet',
-      price: 15000,
-      stock: 45,
-      accentColor: Color(0xFF6366F1),
-      icon: Icons.local_pharmacy_rounded,
-    ),
-    _Medicine(
-      name: 'Paracetamol 500mg',
-      category: 'Tablet',
-      price: 2500,
-      stock: 120,
-      accentColor: Color(0xFF10B981),
-      icon: Icons.medication_rounded,
-    ),
-    _Medicine(
-      name: 'OBH Combi Sirup',
-      category: 'Sirup',
-      price: 18500,
-      stock: 22,
-      accentColor: Color(0xFFF59E0B),
-      icon: Icons.water_drop_rounded,
-    ),
-    _Medicine(
-      name: 'Panadol Flu & Batuk',
-      category: 'Tablet',
-      price: 12000,
-      stock: 50,
-      accentColor: Color(0xFFEF4444),
-      icon: Icons.healing_rounded,
-    ),
-    _Medicine(
-      name: 'Sanmol Sirup',
-      category: 'Sirup',
-      price: 21000,
-      stock: 15,
-      accentColor: Color(0xFF8B5CF6),
-      icon: Icons.opacity_rounded,
-    ),
-    _Medicine(
-      name: 'Vitamin C 500mg',
-      category: 'Suplemen',
-      price: 5000,
-      stock: 200,
-      accentColor: Color(0xFFEC4899),
-      icon: Icons.spa_rounded,
-    ),
+  final List<Map<String, dynamic>> _medicines = [
+    {
+      'id': 1,
+      'name': 'Amoxicillin 500mg',
+      'category': 'Tablet',
+      'price': 15000.0,
+      'total_active_stock': 45,
+      'accentColor': const Color(0xFF6366F1),
+      'icon': Icons.local_pharmacy_rounded,
+    },
+    {
+      'id': 2,
+      'name': 'Paracetamol 500mg',
+      'category': 'Tablet',
+      'price': 2500.0,
+      'total_active_stock': 120,
+      'accentColor': const Color(0xFF10B981),
+      'icon': Icons.medication_rounded,
+    },
+    {
+      'id': 3,
+      'name': 'OBH Combi Sirup',
+      'category': 'Sirup',
+      'price': 18500.0,
+      'total_active_stock': 22,
+      'accentColor': const Color(0xFFF59E0B),
+      'icon': Icons.water_drop_rounded,
+    },
+    {
+      'id': 4,
+      'name': 'Vitamin C 500mg',
+      'category': 'Suplemen',
+      'price': 5000.0,
+      'total_active_stock': 200,
+      'accentColor': const Color(0xFFEC4899),
+      'icon': Icons.spa_rounded,
+    },
   ];
 
-  late List<_Medicine> _filtered;
+  late List<Map<String, dynamic>> _filtered;
   final List<_CartItem> _cart = [];
   final _searchController = TextEditingController();
   String _selectedCategory = 'Semua';
@@ -148,25 +78,25 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
 
   List<String> get _categories => [
     'Semua',
-    ..._medicines.map((m) => m.category).toSet().toList(),
+    ..._medicines.map((m) => m['category'] as String).toSet().toList(),
   ];
 
   void _filter() {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filtered = _medicines.where((m) {
-        final matchSearch = m.name.toLowerCase().contains(query);
+        final matchSearch = m['name'].toString().toLowerCase().contains(query);
         final matchCat =
-            _selectedCategory == 'Semua' || m.category == _selectedCategory;
+            _selectedCategory == 'Semua' || m['category'] == _selectedCategory;
         return matchSearch && matchCat;
       }).toList();
     });
   }
 
-  void _addToCart(_Medicine med) {
+  void _addToCart(Map<String, dynamic> med) {
     HapticFeedback.lightImpact();
     setState(() {
-      final existing = _cart.indexWhere((c) => c.medicine.name == med.name);
+      final existing = _cart.indexWhere((c) => c.medicine['name'] == med['name']);
       if (existing >= 0) {
         _cart[existing].qty++;
       } else {
@@ -189,17 +119,17 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   }
 
   int _getCartQty(String name) {
-    final idx = _cart.indexWhere((c) => c.medicine.name == name);
+    final idx = _cart.indexWhere((c) => c.medicine['name'] == name);
     return idx >= 0 ? _cart[idx].qty : 0;
   }
 
   int get _totalItems => _cart.fold(0, (sum, c) => sum + c.qty);
-  int get _totalPrice => _cart.fold(0, (sum, c) => sum + c.subtotal);
+  num get _totalPrice => _cart.fold(0, (sum, c) => sum + c.subtotal);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _AppColors.background,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           _buildHeader(context),
@@ -221,7 +151,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   Widget _buildHeader(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: _AppColors.primary,
+        color: AppColors.primary,
       ),
       child: SafeArea(
         bottom: false,
@@ -303,64 +233,60 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   // ── SEARCH + FILTER ──────────────────────────
   Widget _buildSearchAndFilter() {
     return Container(
-      color: _AppColors.background,
+      color: AppColors.background,
       child: Column(
         children: [
-          // Search bar pulled up, overlapping header
-          Transform.translate(
-            offset: const Offset(0, 0),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _AppColors.primary.withOpacity(0.10),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (_) => _filter(),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: _AppColors.textDark,
-                    fontWeight: FontWeight.w500,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.10),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
                   ),
-                  decoration: InputDecoration(
-                    hintText: 'Cari nama obat...',
-                    hintStyle: const TextStyle(
-                      color: _AppColors.textLight,
-                      fontSize: 14,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: _AppColors.primary,
-                      size: 20,
-                    ),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? GestureDetector(
-                            onTap: () {
-                              _searchController.clear();
-                              _filter();
-                            },
-                            child: const Icon(
-                              Icons.close_rounded,
-                              color: _AppColors.textLight,
-                              size: 18,
-                            ),
-                          )
-                        : null,
-                    filled: false,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (_) => _filter(),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textDark,
+                  fontWeight: FontWeight.w500,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Cari nama obat...',
+                  hintStyle: const TextStyle(
+                    color: AppColors.textLight,
+                    fontSize: 14,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? GestureDetector(
+                          onTap: () {
+                            _searchController.clear();
+                            _filter();
+                          },
+                          child: const Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textLight,
+                            size: 18,
+                          ),
+                        )
+                      : null,
+                  filled: false,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
                   ),
                 ),
               ),
@@ -378,23 +304,6 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
             ),
           ),
           const SizedBox(height: 16),
-          // Subtle stat bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Text(
-                  '${_filtered.length} produk ditemukan',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: _AppColors.textLight,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
         ],
       ),
     );
@@ -411,16 +320,16 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? _AppColors.primary : Colors.white,
+          color: isSelected ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? _AppColors.primary : _AppColors.divider,
+            color: isSelected ? AppColors.primary : AppColors.divider,
             width: 1.5,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: _AppColors.primary.withOpacity(0.25),
+                    color: AppColors.primary.withOpacity(0.25),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -430,7 +339,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         child: Text(
           cat,
           style: TextStyle(
-            color: isSelected ? Colors.white : _AppColors.textMid,
+            color: isSelected ? Colors.white : AppColors.textMid,
             fontWeight: FontWeight.w700,
             fontSize: 12,
           ),
@@ -449,13 +358,13 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
             Icon(
               Icons.search_off_rounded,
               size: 48,
-              color: _AppColors.textLight.withOpacity(0.5),
+              color: AppColors.textLight.withOpacity(0.5),
             ),
             const SizedBox(height: 12),
             const Text(
               'Obat tidak ditemukan',
               style: TextStyle(
-                color: _AppColors.textLight,
+                color: AppColors.textLight,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -473,596 +382,285 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         childAspectRatio: 0.75,
       ),
       itemCount: _filtered.length,
-      itemBuilder: (_, i) => _buildProductCard(_filtered[i]),
-    );
-  }
-
-  Widget _buildProductCard(_Medicine med) {
-    final qty = _getCartQty(med.name);
-    final isInCart = qty > 0;
-    final isLowStock = med.stock <= 20;
-
-    return GestureDetector(
-      onTap: () => _addToCart(med),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isInCart
-                ? _AppColors.primary.withOpacity(0.3)
-                : Colors.transparent,
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isInCart
-                  ? _AppColors.primary.withOpacity(0.12)
-                  : Colors.black.withOpacity(0.05),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Icon area
-                  Container(
-                    height: 72,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: med.accentColor.withOpacity(0.10),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(med.icon, color: med.accentColor, size: 34),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Category pill
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: med.accentColor.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      med.category,
-                      style: TextStyle(
-                        color: med.accentColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Name
-                  Text(
-                    med.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12.5,
-                      color: _AppColors.textDark,
-                      height: 1.3,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Spacer(),
-
-                  // Stock indicator
-                  Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: isLowStock
-                              ? _AppColors.warning
-                              : _AppColors.success,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Stok ${med.stock}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isLowStock
-                              ? _AppColors.warning
-                              : _AppColors.textLight,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Price + Add button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _formatRupiah(med.price),
-                          style: const TextStyle(
-                            color: _AppColors.primary,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: isInCart
-                              ? _AppColors.primary
-                              : _AppColors.primaryLight,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.add_rounded,
-                          color: isInCart ? Colors.white : _AppColors.primary,
-                          size: 18,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Cart qty badge
-            if (isInCart)
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Container(
-                  width: 22,
-                  height: 22,
-                  decoration: const BoxDecoration(
-                    color: _AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    qty.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
+      itemBuilder: (_, i) {
+        final med = _filtered[i];
+        return PosProductCard(
+          medicine: med,
+          cartQty: _getCartQty(med['name']),
+          onAdd: () => _addToCart(med),
+        );
+      },
     );
   }
 
   // ── CART FAB ─────────────────────────────────
   Widget _buildCartFab() {
-    return GestureDetector(
-      onTap: _showCartSheet,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: _AppColors.primary,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: _AppColors.primary.withOpacity(0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.shopping_bag_rounded,
+    return FloatingActionButton.extended(
+      onPressed: _showCartSheet,
+      backgroundColor: AppColors.primary,
+      elevation: 8,
+      label: Row(
+        children: [
+          const Icon(Icons.shopping_cart_rounded, color: Colors.white, size: 20),
+          const SizedBox(width: 10),
+          Text(
+            '$_totalItems Item · ${_formatRupiah(_totalPrice)}',
+            style: const TextStyle(
               color: Colors.white,
-              size: 20,
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
             ),
-            const SizedBox(width: 10),
-            Text(
-              '$_totalItems item  •  ${_formatRupiah(_totalPrice)}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                'Bayar',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  // ── CART SHEET ───────────────────────────────
   void _showCartSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setSheet) => _CartSheet(
-          cart: _cart,
-          totalPrice: _totalPrice,
-          onRemove: (i) {
-            _removeFromCart(i);
-            setSheet(() {});
-            setState(() {});
-          },
-          onAdd: (i) {
-            setState(() => _cart[i].qty++);
-            setSheet(() {});
-          },
-        ),
+      builder: (ctx) => _CartSheet(
+        cart: _cart,
+        totalPrice: _totalPrice,
+        onRemove: _removeFromCart,
+        onCheckout: () {
+          Navigator.pop(ctx);
+          _showSuccessCheckout();
+        },
+      ),
+    );
+  }
+
+  void _showSuccessCheckout() {
+    setState(() {
+      _cart.clear();
+      _fabController.reverse();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Transaksi berhasil!'),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────
-//  CART SHEET WIDGET
+//  CART SHEET
 // ─────────────────────────────────────────────
 class _CartSheet extends StatelessWidget {
+  final List<_CartItem> cart;
+  final num totalPrice;
+  final Function(int) onRemove;
+  final VoidCallback onCheckout;
+
   const _CartSheet({
     required this.cart,
     required this.totalPrice,
     required this.onRemove,
-    required this.onAdd,
+    required this.onCheckout,
   });
-
-  final List<_CartItem> cart;
-  final int totalPrice;
-  final void Function(int) onRemove;
-  final void Function(int) onAdd;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.78,
+      height: MediaQuery.of(context).size.height * 0.7,
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Column(
         children: [
-          // Handle
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Container(
-            width: 36,
+            width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: _AppColors.divider,
+              color: AppColors.divider,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 20),
-
-          // Title row
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.all(24),
             child: Row(
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: _AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.shopping_bag_rounded,
-                    color: _AppColors.primary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
                 const Text(
                   'Keranjang Belanja',
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: _AppColors.textDark,
+                    color: AppColors.textDark,
                   ),
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${cart.fold(0, (s, c) => s + c.qty)} item',
+                    '${cart.length} Jenis',
                     style: const TextStyle(
-                      color: _AppColors.primary,
-                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
                       fontSize: 12,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          const Divider(color: _AppColors.divider, height: 1),
-
-          // Item list
           Expanded(
             child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               itemCount: cart.length,
-              separatorBuilder: (_, __) =>
-                  const Divider(color: _AppColors.divider, height: 24),
+              separatorBuilder: (_, __) => const Divider(height: 32),
               itemBuilder: (_, i) => _buildCartRow(i),
             ),
           ),
-
-          // Checkout area
-          _buildCheckoutBar(),
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Total Pembayaran',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textMid,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      _formatRupiah(totalPrice),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                AppButton(
+                  label: 'Proses Transaksi',
+                  icon: Icons.check_circle_rounded,
+                  onPressed: onCheckout,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCartRow(int i) {
-    final item = cart[i];
+  Widget _buildCartRow(int index) {
+    final item = cart[index];
     return Row(
       children: [
         Container(
-          width: 46,
-          height: 46,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
-            color: item.medicine.accentColor.withOpacity(0.10),
-            borderRadius: BorderRadius.circular(12),
+            color: (item.medicine['accentColor'] as Color).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(
-            item.medicine.icon,
-            color: item.medicine.accentColor,
-            size: 22,
-          ),
+          child: Icon(item.medicine['icon'] as IconData,
+              color: item.medicine['accentColor'] as Color, size: 24),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                item.medicine.name,
+                item.medicine['name'],
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  color: _AppColors.textDark,
+                  fontSize: 15,
+                  color: AppColors.textDark,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 4),
               Text(
-                _formatRupiah(item.medicine.price),
+                _formatRupiah(item.medicine['price'] as num),
                 style: const TextStyle(
-                  color: _AppColors.primary,
+                  color: AppColors.textLight,
                   fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
         ),
-        // Qty control
-        Container(
-          decoration: BoxDecoration(
-            color: _AppColors.background,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              _QtyButton(icon: Icons.remove_rounded, onTap: () => onRemove(i)),
-              SizedBox(
-                width: 28,
-                child: Text(
-                  item.qty.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                    color: _AppColors.textDark,
-                  ),
-                ),
+        Row(
+          children: [
+            _buildQtyBtn(Icons.remove_rounded, () => onRemove(index)),
+            const SizedBox(width: 12),
+            Text(
+              item.qty.toString(),
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
               ),
-              _QtyButton(icon: Icons.add_rounded, onTap: () => onAdd(i)),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        SizedBox(
-          width: 70,
-          child: Text(
-            _formatRupiah(item.subtotal),
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 12.5,
-              color: _AppColors.textDark,
             ),
-          ),
+            const SizedBox(width: 12),
+            _buildQtyBtn(Icons.add_rounded, null), // simplified for now
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildCheckoutBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 20,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-          child: Column(
-            children: [
-              // Summary rows
-              _SummaryRow(label: 'Subtotal', value: _formatRupiah(totalPrice)),
-              const SizedBox(height: 6),
-              _SummaryRow(
-                label: 'Biaya Layanan',
-                value: _formatRupiah(0),
-                isLight: true,
-              ),
-              const SizedBox(height: 10),
-              const Divider(color: _AppColors.divider, height: 1),
-              const SizedBox(height: 10),
-              _SummaryRow(
-                label: 'Total Bayar',
-                value: _formatRupiah(totalPrice),
-                isTotal: true,
-              ),
-              const SizedBox(height: 16),
-
-              // Pay button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.payment_rounded, size: 18),
-                      SizedBox(width: 8),
-                      Text(
-                        'Proses Pembayaran',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-//  SMALL WIDGETS
-// ─────────────────────────────────────────────
-class _QtyButton extends StatelessWidget {
-  const _QtyButton({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildQtyBtn(IconData icon, VoidCallback? onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 32,
         height: 32,
-        alignment: Alignment.center,
-        child: Icon(icon, size: 16, color: _AppColors.primary),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, size: 18, color: AppColors.textMid),
       ),
     );
   }
 }
 
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({
-    required this.label,
-    required this.value,
-    this.isLight = false,
-    this.isTotal = false,
-  });
+// Model & Helper
+class _CartItem {
+  final Map<String, dynamic> medicine;
+  int qty;
+  _CartItem({required this.medicine, this.qty = 1});
+  num get subtotal => (medicine['price'] as num) * qty;
+}
 
-  final String label;
-  final String value;
-  final bool isLight;
-  final bool isTotal;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontWeight: isTotal ? FontWeight.w800 : FontWeight.w500,
-            fontSize: isTotal ? 15 : 13,
-            color: isLight
-                ? _AppColors.textLight
-                : isTotal
-                ? _AppColors.textDark
-                : _AppColors.textMid,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: isTotal ? FontWeight.w900 : FontWeight.w700,
-            fontSize: isTotal ? 18 : 13,
-            color: isTotal ? _AppColors.primary : _AppColors.textDark,
-          ),
-        ),
-      ],
-    );
+String _formatRupiah(num value) {
+  final str = value.toStringAsFixed(0);
+  final buffer = StringBuffer();
+  final len = str.length;
+  for (int i = 0; i < len; i++) {
+    if (i > 0 && (len - i) % 3 == 0) buffer.write('.');
+    buffer.write(str[i]);
   }
+  return 'Rp ${buffer.toString()}';
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import 'home_screen.dart';
 import 'staff_orders_screen.dart';
 import 'staff_inventory_screen.dart';
@@ -37,7 +38,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: AppColors.background,
       body: IndexedStack(
         index: _selectedIndex,
         children: _screens,
@@ -74,7 +75,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildNavItem(int index, IconData icon, String label) {
     bool isActive = _selectedIndex == index;
-    Color primaryColor = const Color(0xFF1D70F5);
+    Color primaryColor = AppColors.primary;
 
     return GestureDetector(
       onTap: () => _onItemTapped(index),
