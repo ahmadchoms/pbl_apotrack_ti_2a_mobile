@@ -1,12 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  // --- DUMMY DATA (API-READY STRUCTURE) ---
+  static const Map<String, dynamic> profileResponse = {
+    'status': 'success',
+    'message': 'Profile retrieved successfully',
+    'data': {
+      'id': 1,
+      'username': 'Ahmad Fauzi',
+      'email': 'ahmad.fauzi@example.com',
+      'phone': '081234567890',
+      'role': 'STAFF',
+      'is_active': true,
+      'avatar_url': null,
+      'pharmacy_name': 'Apotek Jaya Farma',
+      'pharmacy_id': 10,
+      'created_at': '2026-01-01T10:00:00Z',
+    }
+  };
+
+  static const Map<String, dynamic> todayStats = {
+    'total_orders': 12,
+    'pending_orders': 3,
+  };
+
+  static const int unreadNotifications = 2;
+
+  static const List<Map<String, dynamic>> urgentTasks = [
+    {
+      'id': 1,
+      'type': 'STOCK',
+      'title': 'Stok Paracetamol Menipis',
+      'subtitle': 'Sisa 5 Strip di gudang',
+    },
+    {
+      'id': 2,
+      'type': 'ORDER',
+      'title': 'Ada 2 Pesanan Baru',
+      'subtitle': 'Menunggu konfirmasi Anda',
+    },
+  ];
+
+  static const List<Map<String, dynamic>> recentActivities = [
+    {
+      'id': 1,
+      'action': 'Update Stok',
+      'description': 'Update stok Amoxicillin oleh Budi (Staff)',
+      'user_name': 'Budi',
+      'created_at_formatted': '10 Menit lalu',
+    },
+    {
+      'id': 2,
+      'action': 'Pesanan Selesai',
+      'description': 'Pesanan #ORD-0917 telah diserahkan',
+      'user_name': 'Ahmad Fauzi',
+      'created_at_formatted': '1 Jam lalu',
+    },
+    {
+      'id': 3,
+      'action': 'Input POS',
+      'description': 'Transaksi tunai Rp 150.000 berhasil',
+      'user_name': 'Ahmad Fauzi',
+      'created_at_formatted': '3 Jam lalu',
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFF1D70F5);
     const Color backgroundColor = Color(0xFFF9FAFB);
+
+    final userData = profileResponse['data'] as Map<String, dynamic>;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -31,22 +98,22 @@ class HomeScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Halo, Ahmad!',
-                            style: TextStyle(
+                            'Halo, ${userData['username'].toString().split(' ')[0]}!',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
                               letterSpacing: -0.5,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
-                            'Apotek Jaya Farma',
-                            style: TextStyle(
+                            userData['pharmacy_name'],
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -54,22 +121,22 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
-                      ),
+                      _buildNotificationBadge(unreadNotifications, context),
                     ],
                   ),
                   const SizedBox(height: 32),
                   Row(
                     children: [
-                      _buildSummaryItem('Pesanan Hari Ini', '12'),
+                      _buildSummaryItem(
+                        'Pesanan Hari Ini', 
+                        todayStats['total_orders'].toString()
+                      ),
                       const SizedBox(width: 16),
-                      _buildSummaryItem('Perlu Diproses', '3', isWarning: true),
+                      _buildSummaryItem(
+                        'Perlu Diproses', 
+                        todayStats['pending_orders'].toString(), 
+                        isWarning: true
+                      ),
                     ],
                   ),
                 ],
@@ -90,6 +157,7 @@ class HomeScreen extends StatelessWidget {
                       primaryColor,
                       Colors.white,
                       true,
+                      () => context.push('/staff/scanner'),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -100,6 +168,7 @@ class HomeScreen extends StatelessWidget {
                       Colors.white,
                       primaryColor,
                       false,
+                      () => context.push('/staff/pos'),
                     ),
                   ),
                 ],
@@ -108,11 +177,11 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 32),
 
-            // --- WARNING SECTION ---
+            // --- URGENT TASKS SECTION ---
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'PERINGATAN INVENTORI',
+                'TINDAKAN DIPERLUKAN',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
@@ -124,30 +193,36 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 16),
             SizedBox(
               height: 100,
-              child: ListView(
+              child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-                children: [
-                  _buildWarningCard(
-                    'Stok Paracetamol Menipis',
-                    'Sisa 5 Strip',
-                    Icons.warning_amber_rounded,
-                    const Color(0xFFF59E0B),
-                  ),
-                  const SizedBox(width: 12),
-                  _buildWarningCard(
-                    'Ada 2 Pesanan Baru',
-                    'Segera cek daftar',
-                    Icons.shopping_cart_outlined,
-                    primaryColor,
-                  ),
-                ],
+                itemCount: urgentTasks.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final task = urgentTasks[index];
+                  final isStock = task['type'] == 'STOCK';
+                  return GestureDetector(
+                    onTap: () {
+                      if (isStock) {
+                        context.push('/staff/inventory');
+                      } else {
+                        context.push('/staff/orders');
+                      }
+                    },
+                    child: _buildTaskCard(
+                      task['title'],
+                      task['subtitle'],
+                      isStock ? Icons.warning_amber_rounded : Icons.shopping_cart_outlined,
+                      isStock ? const Color(0xFFF59E0B) : primaryColor,
+                    ),
+                  );
+                },
               ),
             ),
 
             const SizedBox(height: 32),
 
-            // --- RECENT ACTIVITY PLACEHOLDER ---
+            // --- RECENT ACTIVITY SECTION ---
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Text(
@@ -161,49 +236,129 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Padding(
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 24),
+              itemCount: recentActivities.length,
+              itemBuilder: (context, index) {
+                final activity = recentActivities[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    onTap: () => context.push('/staff/audit-log-detail', extra: activity),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: const Color(0xFFF1F5F9),
+                            child: Icon(
+                              _getActivityIcon(activity['action']), 
+                              color: primaryColor,
+                              size: 20
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  activity['description'],
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800, 
+                                    fontSize: 13,
+                                    color: Color(0xFF1E293B)
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Oleh: ${activity['user_name']} - ${activity['created_at_formatted']}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF94A3B8), 
+                                    fontSize: 11, 
+                                    fontWeight: FontWeight.w500
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1), size: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getActivityIcon(String action) {
+    if (action.contains('Stok')) return Icons.inventory_2_outlined;
+    if (action.contains('Pesanan')) return Icons.check_circle_outline_rounded;
+    return Icons.history_rounded;
+  }
+
+  Widget _buildNotificationBadge(int count, BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/staff/notifications'),
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+          ),
+          if (count > 0)
+            Positioned(
+              right: 0,
+              top: 0,
               child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEF4444),
+                  shape: BoxShape.circle,
                 ),
-                child: const Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: Color(0xFFF1F5F9),
-                      child: Icon(Icons.history_rounded, color: primaryColor),
-                    ),
-                    SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Update Stok Amoxicillin',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-                        ),
-                        Text(
-                          'Oleh: Budi (Staff) - 10 Menit lalu',
-                          style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ],
+                constraints: const BoxConstraints(
+                  minWidth: 16,
+                  minHeight: 16,
+                ),
+                child: Text(
+                  count.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
-            const SizedBox(height: 100),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -239,7 +394,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(String label, IconData icon, Color bgColor, Color textColor, bool isSolid) {
+  Widget _buildActionButton(String label, IconData icon, Color bgColor, Color textColor, bool isSolid, VoidCallback onTap) {
     return Container(
       height: 130,
       decoration: BoxDecoration(
@@ -257,7 +412,7 @@ class HomeScreen extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: onTap,
           borderRadius: BorderRadius.circular(24),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -283,7 +438,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWarningCard(String title, String subtitle, IconData icon, Color color) {
+  Widget _buildTaskCard(String title, String subtitle, IconData icon, Color color) {
     return Container(
       width: 240,
       padding: const EdgeInsets.all(16),
@@ -323,7 +478,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.w600),
+                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w600),
                 ),
               ],
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class StaffProfileScreen extends StatelessWidget {
   const StaffProfileScreen({super.key});
@@ -69,19 +70,17 @@ class StaffProfileScreen extends StatelessWidget {
 
             // --- MENU GROUPS ---
             _buildMenuSection('PENGATURAN AKUN', [
-              _buildMenuItem(Icons.person_outline_rounded, 'Edit Profil'),
-              _buildMenuItem(Icons.lock_outline_rounded, 'Ubah Password'),
+              _buildMenuItem(Icons.person_outline_rounded, 'Edit Profil', () => context.push('/staff/edit-profile')),
+              _buildMenuItem(Icons.lock_outline_rounded, 'Ubah Password', () => context.push('/staff/change-password')),
             ]),
 
-            _buildMenuSection('OPERASIONAL APOTEK', [
-              _buildMenuItem(Icons.bar_chart_rounded, 'Laporan Shift / Kasir'),
-              _buildMenuItem(Icons.print_outlined, 'Pengaturan Printer Struk'),
-              _buildMenuItem(Icons.history_rounded, 'Riwayat Aktivitas Stok'),
+            _buildMenuSection('RIWAYAT AKTIVITAS', [
+              _buildMenuItem(Icons.history_rounded, 'Riwayat Aktivitas Anda', () => context.push('/staff/activity-history')),
             ]),
 
             _buildMenuSection('LAINNYA', [
-              _buildMenuItem(Icons.help_outline_rounded, 'Pusat Bantuan'),
-              _buildMenuItem(Icons.logout_rounded, 'Keluar / Logout', isDestructive: true),
+              _buildMenuItem(Icons.help_outline_rounded, 'Pusat Bantuan', () {}),
+              _buildMenuItem(Icons.logout_rounded, 'Keluar / Logout', () {}, isDestructive: true),
             ]),
 
             const SizedBox(height: 40),
@@ -135,7 +134,7 @@ class StaffProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String title, {bool isDestructive = false}) {
+  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap, {bool isDestructive = false}) {
     return ListTile(
       leading: Icon(
         icon,
@@ -154,7 +153,7 @@ class StaffProfileScreen extends StatelessWidget {
         Icons.chevron_right_rounded,
         color: isDestructive ? const Color(0xFFEF4444).withOpacity(0.3) : const Color(0xFFCBD5E1),
       ),
-      onTap: () {},
+      onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
