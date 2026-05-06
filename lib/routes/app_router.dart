@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/features/staff/presentation/screens/order_detail_screen.dart';
+import 'package:mobile/features/customer/presentation/screens/main_screen.dart'
+    as customer;
 import '../features/staff/presentation/screens/main_screen.dart' as staff;
 import '../features/staff/presentation/screens/pos_screen.dart';
 import '../features/staff/presentation/screens/scanner_screen.dart';
@@ -12,8 +14,7 @@ import '../features/staff/presentation/screens/edit_profile_screen.dart';
 import '../features/staff/presentation/screens/change_password_screen.dart';
 import '../features/staff/presentation/screens/activity_history_screen.dart';
 
-// TODO: Import Customer screens when ready
-// import '../features/customer/presentation/screens/main_screen.dart' as customer;
+// Sub-routes for staff
 
 class AppRouter {
   static const String initial = '/';
@@ -101,8 +102,7 @@ class AppRouter {
       ),
       GoRoute(
         path: customerHome,
-        builder: (context, state) =>
-            const Center(child: Text('Customer Home Placeholder')),
+        builder: (context, state) => const customer.CustomerMainScreen(),
       ),
     ],
     // Logic for redirection can be added here or handled in the Login logic
