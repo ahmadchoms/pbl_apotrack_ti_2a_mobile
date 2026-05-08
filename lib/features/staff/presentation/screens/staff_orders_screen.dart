@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/order_list_card.dart';
+import '../../data/services/staff_api_service.dart';
 
 class StaffOrdersScreen extends StatefulWidget {
   const StaffOrdersScreen({super.key});
@@ -13,6 +14,8 @@ class StaffOrdersScreen extends StatefulWidget {
 class _StaffOrdersScreenState extends State<StaffOrdersScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final StaffApiService _apiService = StaffApiService();
+  late Future<List<Map<String, dynamic>>> _ordersFuture;
 
   final _tabs = const [
     {'status': 'PENDING', 'label': 'Pending'},
@@ -25,6 +28,7 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    _ordersFuture = _apiService.getOrders();
   }
 
   @override
@@ -33,27 +37,85 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
     super.dispose();
   }
 
-  int _countByStatus(String status) =>
-      _allOrders.where((o) => o['order_status'] == status).length;
+  int _countByStatus(List<Map<String, dynamic>> orders, String status) =>
+      orders.where((o) => o['order_status'] == status).length;
+
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _ordersFuture = _apiService.getOrders();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          _buildHeader(),
-          _buildSummaryStrip(),
-          _buildTabBar(),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: _tabs
-                  .map((t) => _OrderListView(status: t['status']!))
-                  .toList(),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _ordersFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return _buildErrorState(snapshot.error.toString());
+          }
+
+          final allOrders = snapshot.data ?? [];
+
+          return Column(
+            children: [
+              _buildHeader(),
+              _buildSummaryStrip(allOrders),
+              _buildTabBar(allOrders),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _handleRefresh,
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: _tabs
+                        .map((t) => _OrderListView(
+                              status: t['status']!,
+                              orders: allOrders.where((o) => o['order_status'] == t['status']).toList(),
+                            ))
+                        .toList(),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.wifi_off_rounded, color: AppColors.danger, size: 64),
+            const SizedBox(height: 16),
+            const Text(
+              'Gagal Terhubung ke Server',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'Pastikan IP Laptop di api_client.dart sudah benar dan Backend sudah jalan.\n\nError: $error',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textLight),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _handleRefresh,
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -82,7 +144,7 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
                     ),
                   ),
                   Text(
-                    'Hari ini, 05 Mei 2026',
+                    'Update Real-time Backend',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.7),
                       fontSize: 12,
@@ -112,12 +174,12 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
     );
   }
 
-  Widget _buildSummaryStrip() {
+  Widget _buildSummaryStrip(List<Map<String, dynamic>> orders) {
     final stats = [
-      {'label': 'Total', 'value': _allOrders.length, 'color': AppColors.primary},
-      {'label': 'Pending', 'value': _countByStatus('PENDING'), 'color': AppColors.warning},
-      {'label': 'Diproses', 'value': _countByStatus('PROCESSING'), 'color': AppColors.primary},
-      {'label': 'Selesai', 'value': _countByStatus('COMPLETED'), 'color': AppColors.success},
+      {'label': 'Total', 'value': orders.length, 'color': AppColors.primary},
+      {'label': 'Pending', 'value': _countByStatus(orders, 'PENDING'), 'color': AppColors.warning},
+      {'label': 'Diproses', 'value': _countByStatus(orders, 'PROCESSING'), 'color': AppColors.primary},
+      {'label': 'Selesai', 'value': _countByStatus(orders, 'COMPLETED'), 'color': AppColors.success},
     ];
 
     return Container(
@@ -153,7 +215,7 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
     );
   }
 
-  Widget _buildTabBar() {
+  Widget _buildTabBar(List<Map<String, dynamic>> orders) {
     return Container(
       color: Colors.white,
       child: Column(
@@ -178,7 +240,7 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
               fontSize: 13,
             ),
             tabs: _tabs.map((t) {
-              final count = _countByStatus(t['status']!);
+              final count = _countByStatus(orders, t['status']!);
               return Tab(
                 child: Row(
                   children: [
@@ -218,14 +280,12 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
 }
 
 class _OrderListView extends StatelessWidget {
-  const _OrderListView({required this.status});
+  const _OrderListView({required this.status, required this.orders});
   final String status;
+  final List<Map<String, dynamic>> orders;
 
   @override
   Widget build(BuildContext context) {
-    final orders =
-        _allOrders.where((o) => o['order_status'] == status).toList();
-
     if (orders.isEmpty) {
       return Center(
         child: Column(
@@ -260,7 +320,7 @@ class _OrderListView extends StatelessWidget {
       itemCount: orders.length,
       itemBuilder: (_, i) {
         final order = orders[i];
-        final statusCfg = _statusMap[order['order_status']]!;
+        final statusCfg = _statusMap[order['order_status']] ?? _statusMap['PENDING']!;
         return OrderListCard(
           order: order,
           statusConfig: {

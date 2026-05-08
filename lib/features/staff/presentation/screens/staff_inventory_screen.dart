@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../routes/app_router.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../widgets/medicine_inventory_card.dart';
+import '../../data/services/staff_api_service.dart';
 
 class StaffInventoryScreen extends StatefulWidget {
   const StaffInventoryScreen({super.key});
@@ -14,15 +15,17 @@ class StaffInventoryScreen extends StatefulWidget {
 
 class _StaffInventoryScreenState extends State<StaffInventoryScreen> {
   final _searchCtrl = TextEditingController();
+  final StaffApiService _apiService = StaffApiService();
+  late Future<List<Map<String, dynamic>>> _medicinesFuture;
+  
   String _selectedFilter = 'Semua';
-  List<Map<String, dynamic>> _filtered = _medicines;
-
   final _filters = ['Semua', 'Stok Kritis', 'Stok Rendah', 'Normal'];
 
   @override
   void initState() {
     super.initState();
-    _searchCtrl.addListener(_applyFilter);
+    _medicinesFuture = _apiService.getMedicines();
+    _searchCtrl.addListener(() => setState(() {})); // Rebuild for search suffix icon
   }
 
   @override
@@ -31,50 +34,106 @@ class _StaffInventoryScreenState extends State<StaffInventoryScreen> {
     super.dispose();
   }
 
-  void _applyFilter() {
-    final q = _searchCtrl.text.toLowerCase();
+  Future<void> _handleRefresh() async {
     setState(() {
-      _filtered = _medicines.where((m) {
-        final matchSearch =
-            m['name'].toString().toLowerCase().contains(q) ||
-            (m['category']?.toString().toLowerCase().contains(q) ?? false);
-        
-        final stock = m['total_active_stock'] as int;
-        final isCritical = stock <= 10;
-        final isLow = stock <= 20;
-
-        final matchFilter = switch (_selectedFilter) {
-          'Stok Kritis' => isCritical,
-          'Stok Rendah' => isLow && !isCritical,
-          'Normal' => !isLow,
-          _ => true,
-        };
-        return matchSearch && matchFilter;
-      }).toList();
+      _medicinesFuture = _apiService.getMedicines();
     });
   }
 
-  int get _lowStockCount => _medicines.where((m) => (m['total_active_stock'] as int) <= 20).length;
-  int get _criticalCount => _medicines.where((m) => (m['total_active_stock'] as int) <= 10).length;
+  List<Map<String, dynamic>> _applyFilter(List<Map<String, dynamic>> medicines) {
+    final q = _searchCtrl.text.toLowerCase();
+    return medicines.where((m) {
+      final matchSearch =
+          m['name'].toString().toLowerCase().contains(q) ||
+          (m['category']?.toString().toLowerCase().contains(q) ?? false);
+      
+      final stock = m['total_active_stock'] as int;
+      final isCritical = stock <= 10;
+      final isLow = stock <= 20;
+
+      final matchFilter = switch (_selectedFilter) {
+        'Stok Kritis' => isCritical,
+        'Stok Rendah' => isLow && !isCritical,
+        'Normal' => !isLow,
+        _ => true,
+      };
+      return matchSearch && matchFilter;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          _buildHeader(),
-          if (_criticalCount > 0 || _lowStockCount > 0) _buildAlertBanner(),
-          _buildSearchAndFilter(),
-          _buildStatRow(),
-          Expanded(child: _buildList()),
-        ],
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _medicinesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return _buildErrorState(snapshot.error.toString());
+          }
+
+          final allMedicines = snapshot.data ?? [];
+          final filteredMedicines = _applyFilter(allMedicines);
+          final lowStockCount = allMedicines.where((m) => (m['total_active_stock'] as int) <= 20).length;
+          final criticalCount = allMedicines.where((m) => (m['total_active_stock'] as int) <= 10).length;
+
+          return Column(
+            children: [
+              _buildHeader(allMedicines.length),
+              if (criticalCount > 0 || lowStockCount > 0) 
+                _buildAlertBanner(criticalCount, lowStockCount),
+              _buildSearchAndFilter(),
+              _buildStatRow(filteredMedicines.length),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _handleRefresh,
+                  child: _buildList(filteredMedicines),
+                ),
+              ),
+            ],
+          );
+        },
       ),
       floatingActionButton: _buildFab(),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_rounded, color: AppColors.danger, size: 64),
+            const SizedBox(height: 16),
+            const Text(
+              'Gagal Memuat Inventori',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Periksa koneksi ke server Laravel Anda.\n\n$error',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textLight),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _handleRefresh,
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(int count) {
     return Container(
       decoration: const BoxDecoration(color: AppColors.primary),
       child: SafeArea(
@@ -96,7 +155,7 @@ class _StaffInventoryScreenState extends State<StaffInventoryScreen> {
                     ),
                   ),
                   Text(
-                    '${_medicines.length} produk terdaftar',
+                    '$count produk terdaftar di database',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.7),
                       fontSize: 12,
@@ -105,6 +164,7 @@ class _StaffInventoryScreenState extends State<StaffInventoryScreen> {
                   ),
                 ],
               ),
+              const Spacer(),
               _buildHeaderIcon(Icons.filter_list_rounded, () {
                 _showFilterSheet(context);
               }),
@@ -133,12 +193,11 @@ class _StaffInventoryScreenState extends State<StaffInventoryScreen> {
     );
   }
 
-  Widget _buildAlertBanner() {
-    final isCritical = _criticalCount > 0;
+  Widget _buildAlertBanner(int criticalCount, int lowStockCount) {
+    final isCritical = criticalCount > 0;
     return GestureDetector(
       onTap: () {
         setState(() => _selectedFilter = isCritical ? 'Stok Kritis' : 'Stok Rendah');
-        _applyFilter();
       },
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -152,54 +211,24 @@ class _StaffInventoryScreenState extends State<StaffInventoryScreen> {
                 : AppColors.warning.withOpacity(0.3),
             width: 1.5,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: (isCritical ? AppColors.danger : AppColors.warning).withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: (isCritical ? AppColors.danger : AppColors.warning).withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isCritical ? Icons.error_outline_rounded : Icons.warning_amber_rounded,
-                color: isCritical ? AppColors.danger : AppColors.warning,
-                size: 20,
-              ),
+            Icon(
+              isCritical ? Icons.error_outline_rounded : Icons.warning_amber_rounded,
+              color: isCritical ? AppColors.danger : AppColors.warning,
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isCritical ? 'TINDAKAN DIPERLUKAN' : 'PERINGATAN STOK',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: isCritical ? AppColors.danger : AppColors.warning,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isCritical
-                        ? '$_criticalCount produk hampir habis! Ketuk untuk lihat.'
-                        : '$_lowStockCount produk stok rendah. Perlu perhatian.',
-                    style: TextStyle(
-                      color: isCritical ? AppColors.danger : AppColors.warning,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
+              child: Text(
+                isCritical
+                    ? '$criticalCount produk hampir habis! Ketuk untuk lihat.'
+                    : '$lowStockCount produk stok rendah. Perlu perhatian.',
+                style: TextStyle(
+                  color: isCritical ? AppColors.danger : AppColors.warning,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
               ),
             ),
             Icon(Icons.chevron_right_rounded, color: isCritical ? AppColors.danger : AppColors.warning),
@@ -228,22 +257,18 @@ class _StaffInventoryScreenState extends State<StaffInventoryScreen> {
             ),
             child: TextField(
               controller: _searchCtrl,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textDark,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 14, color: AppColors.textDark, fontWeight: FontWeight.w500),
               decoration: InputDecoration(
                 hintText: 'Cari nama obat atau kategori...',
                 hintStyle: const TextStyle(color: AppColors.textLight, fontSize: 14),
                 prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
                 suffixIcon: _searchCtrl.text.isNotEmpty
-                    ? GestureDetector(
-                        onTap: () {
+                    ? IconButton(
+                        icon: const Icon(Icons.close_rounded, color: AppColors.textLight, size: 18),
+                        onPressed: () {
                           _searchCtrl.clear();
-                          _applyFilter();
+                          setState(() {});
                         },
-                        child: const Icon(Icons.close_rounded, color: AppColors.textLight, size: 18),
                       )
                     : null,
                 border: InputBorder.none,
@@ -274,10 +299,7 @@ class _StaffInventoryScreenState extends State<StaffInventoryScreen> {
     else if (filter == 'Normal') chipColor = AppColors.success;
 
     return GestureDetector(
-      onTap: () {
-        setState(() => _selectedFilter = filter);
-        _applyFilter();
-      },
+      onTap: () => setState(() => _selectedFilter = filter),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -298,13 +320,13 @@ class _StaffInventoryScreenState extends State<StaffInventoryScreen> {
     );
   }
 
-  Widget _buildStatRow() {
+  Widget _buildStatRow(int count) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
       child: Row(
         children: [
           Text(
-            '${_filtered.length} produk',
+            '$count produk ditemukan',
             style: const TextStyle(fontSize: 12, color: AppColors.textLight, fontWeight: FontWeight.w600),
           ),
         ],
@@ -312,12 +334,12 @@ class _StaffInventoryScreenState extends State<StaffInventoryScreen> {
     );
   }
 
-  Widget _buildList() {
+  Widget _buildList(List<Map<String, dynamic>> medicines) {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-      itemCount: _filtered.length,
+      itemCount: medicines.length,
       itemBuilder: (_, i) {
-        final med = _filtered[i];
+        final med = medicines[i];
         return MedicineInventoryCard(
           medicine: med,
           onTap: () => context.push(AppRouter.staffMedicineDetail, extra: med),
@@ -383,43 +405,6 @@ class _StaffInventoryScreenState extends State<StaffInventoryScreen> {
     );
   }
 }
-
-// Dummy Data
-final List<Map<String, dynamic>> _medicines = [
-  {
-    'id': 1,
-    'name': 'Amoxicillin 500mg',
-    'category': 'Antibiotik',
-    'form': 'Kapsul',
-    'unit': 'Strip',
-    'price': 15000,
-    'total_active_stock': 45,
-    'accentColor': const Color(0xFF6366F1),
-    'icon': Icons.local_pharmacy_rounded,
-  },
-  {
-    'id': 2,
-    'name': 'Paracetamol 500mg',
-    'category': 'Analgesik',
-    'form': 'Tablet',
-    'unit': 'Pcs',
-    'price': 2500,
-    'total_active_stock': 8,
-    'accentColor': const Color(0xFF10B981),
-    'icon': Icons.medication_rounded,
-  },
-  {
-    'id': 3,
-    'name': 'OBH Combi Anak',
-    'category': 'Ekspektoran',
-    'form': 'Sirup',
-    'unit': 'Botol',
-    'price': 18500,
-    'total_active_stock': 22,
-    'accentColor': const Color(0xFFF59E0B),
-    'icon': Icons.water_drop_rounded,
-  },
-];
 
 String _formatRupiah(num value) {
   final str = value.toStringAsFixed(0);

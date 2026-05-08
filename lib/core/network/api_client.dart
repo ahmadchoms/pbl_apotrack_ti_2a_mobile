@@ -1,15 +1,14 @@
 import 'package:dio/dio.dart';
 
 class ApiClient {
-  static const String baseUrl = 'http://localhost:8000/api'; // Change to your actual API URL
-  
-  final Dio dio;
+  // GANTI IP INI dengan IP laptop Anda (cek lewat ipconfig di terminal)
+  static const String baseUrl = 'http://192.168.18.14:8000/api'; 
 
-  ApiClient() : dio = Dio(
+  final Dio dio = Dio(
     BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -17,23 +16,8 @@ class ApiClient {
     ),
   );
 
-  void addInterceptor(Interceptor interceptor) {
-    dio.interceptors.add(interceptor);
-  }
-
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) {
-    return dio.get(path, queryParameters: queryParameters);
-  }
-
-  Future<Response> post(String path, {dynamic data}) {
-    return dio.post(path, data: data);
-  }
-
-  Future<Response> put(String path, {dynamic data}) {
-    return dio.put(path, data: data);
-  }
-
-  Future<Response> delete(String path) {
-    return dio.delete(path);
-  }
+  // Singleton pattern agar hemat memori
+  static final ApiClient _instance = ApiClient._internal();
+  factory ApiClient() => _instance;
+  ApiClient._internal();
 }
