@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../routes/app_router.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
-class CustomerHomeScreen extends StatelessWidget {
+class CustomerHomeScreen extends ConsumerWidget {
   const CustomerHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
           // --- TOP BAR & SEARCH ---
-          _buildSliverAppBar(),
+          _buildSliverAppBar(context, ref),
           
           SliverToBoxAdapter(
             child: Column(
@@ -30,7 +34,7 @@ class CustomerHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSliverAppBar() {
+  Widget _buildSliverAppBar(BuildContext context, WidgetRef ref) {
     return SliverAppBar(
       expandedHeight: 180,
       pinned: true,
@@ -53,18 +57,18 @@ class CustomerHomeScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Column(
+                      const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Lokasi Anda',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white70,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const Row(
+                          Row(
                             children: [
                               Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
                               SizedBox(width: 4),
@@ -82,9 +86,28 @@ class CustomerHomeScreen extends StatelessWidget {
                         ],
                       ),
                       const Spacer(),
-                      _buildHeaderIcon(Icons.notifications_none_rounded),
+                      // TAMPILKAN TOMBOL STAFF JIKA USER ADALAH STAF
+                      if (ref.watch(authNotifierProvider).user?.role == 'STAFF') ...[
+                        _buildHeaderIcon(
+                          Icons.admin_panel_settings_rounded,
+                          color: Colors.amberAccent,
+                          onTap: () => context.go(AppRouter.staffHome),
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      // TOMBOL LOGOUT (Merah Premium)
+                      _buildHeaderIcon(
+                        Icons.logout_rounded, 
+                        color: Colors.redAccent.shade100,
+                        onTap: () async {
+                          await ref.read(authNotifierProvider.notifier).logout();
+                          if (context.mounted) {
+                            context.go(AppRouter.login);
+                          }
+                        },
+                      ),
                       const SizedBox(width: 10),
-                      _buildHeaderIcon(Icons.shopping_cart_outlined),
+                      _buildHeaderIcon(Icons.notifications_none_rounded),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -135,14 +158,17 @@ class CustomerHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderIcon(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
+  Widget _buildHeaderIcon(IconData icon, {Color? color, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: color ?? Colors.white, size: 20),
       ),
-      child: Icon(icon, color: Colors.white, size: 20),
     );
   }
 

@@ -22,27 +22,22 @@ class _MainScreenState extends State<MainScreen> {
     _selectedIndex = widget.initialIndex;
   }
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const StaffOrdersScreen(),
-    const StaffInventoryScreen(),
-    const StaffProfileScreen(),
+  final List<Widget> _screens = const [
+    HomeScreen(),
+    StaffOrdersScreen(),
+    StaffInventoryScreen(),
+    StaffProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: _buildCustomBottomNav(),
     );
   }
@@ -53,13 +48,7 @@ class _MainScreenState extends State<MainScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, -4))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -74,8 +63,8 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildNavItem(int index, IconData icon, String label) {
-    bool isActive = _selectedIndex == index;
-    Color primaryColor = AppColors.primary;
+    final bool isActive = _selectedIndex == index;
+    const Color primaryColor = AppColors.primary;
 
     return GestureDetector(
       onTap: () => _onItemTapped(index),
@@ -89,22 +78,10 @@ class _MainScreenState extends State<MainScreen> {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: isActive ? primaryColor : Colors.grey[400],
-              size: 24,
-            ),
+            Icon(icon, color: isActive ? primaryColor : Colors.grey[400], size: 24),
             if (isActive) ...[
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: primaryColor,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                  letterSpacing: 0.5,
-                ),
-              ),
+              Text(label, style: const TextStyle(color: primaryColor, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5)),
             ],
           ],
         ),

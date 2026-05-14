@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../providers/staff_provider.dart';
 import '../widgets/order_list_card.dart';
-import '../../data/services/staff_api_service.dart';
+import '../../data/models/order.dart';
 
-class StaffOrdersScreen extends StatefulWidget {
+class StaffOrdersScreen extends ConsumerStatefulWidget {
   const StaffOrdersScreen({super.key});
 
   @override
-  State<StaffOrdersScreen> createState() => _StaffOrdersScreenState();
+  ConsumerState<StaffOrdersScreen> createState() => _StaffOrdersScreenState();
 }
 
-class _StaffOrdersScreenState extends State<StaffOrdersScreen>
+class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final StaffApiService _apiService = StaffApiService();
-  late Future<List<Map<String, dynamic>>> _ordersFuture;
 
   final _tabs = const [
     {'status': 'PENDING', 'label': 'Pending'},
@@ -28,7 +28,6 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
-    _ordersFuture = _apiService.getOrders();
   }
 
   @override
@@ -37,54 +36,39 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
     super.dispose();
   }
 
-  int _countByStatus(List<Map<String, dynamic>> orders, String status) =>
-      orders.where((o) => o['order_status'] == status).length;
-
-  Future<void> _handleRefresh() async {
-    setState(() {
-      _ordersFuture = _apiService.getOrders();
-    });
-  }
+  int _countByStatus(List<Order> orders, String status) =>
+      orders.where((o) => o.orderStatus == status).length;
 
   @override
   Widget build(BuildContext context) {
+    final ordersAsync = ref.watch(staffOrdersProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _ordersFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return _buildErrorState(snapshot.error.toString());
-          }
-
-          final allOrders = snapshot.data ?? [];
-
-          return Column(
-            children: [
-              _buildHeader(),
-              _buildSummaryStrip(allOrders),
-              _buildTabBar(allOrders),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _handleRefresh,
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: _tabs
-                        .map((t) => _OrderListView(
-                              status: t['status']!,
-                              orders: allOrders.where((o) => o['order_status'] == t['status']).toList(),
-                            ))
-                        .toList(),
-                  ),
+      body: ordersAsync.when(
+        data: (allOrders) => Column(
+          children: [
+            _buildHeader(),
+            _buildSummaryStrip(allOrders),
+            _buildTabBar(allOrders),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => ref.refresh(staffOrdersProvider.future),
+                child: TabBarView(
+                  controller: _tabController,
+                  children: _tabs
+                      .map((t) => _OrderListView(
+                            status: t['status']!,
+                            orders: allOrders.where((o) => o.orderStatus == t['status']).toList(),
+                          ))
+                      .toList(),
                 ),
               ),
-            ],
-          );
-        },
+            ),
+          ],
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => _buildErrorState(err.toString()),
       ),
     );
   }
@@ -99,18 +83,18 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
             const Icon(Icons.wifi_off_rounded, color: AppColors.danger, size: 64),
             const SizedBox(height: 16),
             const Text(
-              'Gagal Terhubung ke Server',
+              'Gagal Mengambil Data',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Pastikan IP Laptop di api_client.dart sudah benar dan Backend sudah jalan.\n\nError: $error',
+              error,
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppColors.textLight),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _handleRefresh,
+              onPressed: () => ref.refresh(staffOrdersProvider),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
               child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
             ),
@@ -122,19 +106,17 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
 
   Widget _buildHeader() {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-      ),
+      decoration: const BoxDecoration(color: AppColors.primary),
       child: SafeArea(
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
           child: Row(
             children: [
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Manajemen Pesanan',
                     style: TextStyle(
                       color: Colors.white,
@@ -144,9 +126,9 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
                     ),
                   ),
                   Text(
-                    'Update Real-time Backend',
+                    'Data riil dari Apotek Anda',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white70,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -157,14 +139,12 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
               GestureDetector(
                 onTap: () => context.push('/staff/notifications'),
                 child: Container(
-                  width: 38,
-                  height: 38,
+                  width: 38, height: 38,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.notifications_none_rounded,
-                      color: Colors.white, size: 20),
+                  child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 20),
                 ),
               ),
             ],
@@ -174,7 +154,7 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
     );
   }
 
-  Widget _buildSummaryStrip(List<Map<String, dynamic>> orders) {
+  Widget _buildSummaryStrip(List<Order> orders) {
     final stats = [
       {'label': 'Total', 'value': orders.length, 'color': AppColors.primary},
       {'label': 'Pending', 'value': _countByStatus(orders, 'PENDING'), 'color': AppColors.warning},
@@ -201,11 +181,7 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
                 const SizedBox(height: 2),
                 Text(
                   s['label'] as String,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textLight,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -215,7 +191,7 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
     );
   }
 
-  Widget _buildTabBar(List<Map<String, dynamic>> orders) {
+  Widget _buildTabBar(List<Order> orders) {
     return Container(
       color: Colors.white,
       child: Column(
@@ -230,15 +206,6 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
             unselectedLabelColor: AppColors.textLight,
             indicatorColor: AppColors.primary,
             indicatorWeight: 2.5,
-            indicatorSize: TabBarIndicatorSize.label,
-            labelStyle: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
             tabs: _tabs.map((t) {
               final count = _countByStatus(orders, t['status']!);
               return Tab(
@@ -248,12 +215,9 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
                     if (count > 0 && t['status'] != 'COMPLETED') ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                         decoration: BoxDecoration(
-                          color: t['status'] == 'PENDING'
-                              ? AppColors.warningLight
-                              : AppColors.primaryLight,
+                          color: t['status'] == 'PENDING' ? AppColors.warningLight : AppColors.primaryLight,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -261,9 +225,7 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w900,
-                            color: t['status'] == 'PENDING'
-                                ? AppColors.warning
-                                : AppColors.primary,
+                            color: t['status'] == 'PENDING' ? AppColors.warning : AppColors.primary,
                           ),
                         ),
                       ),
@@ -282,45 +244,20 @@ class _StaffOrdersScreenState extends State<StaffOrdersScreen>
 class _OrderListView extends StatelessWidget {
   const _OrderListView({required this.status, required this.orders});
   final String status;
-  final List<Map<String, dynamic>> orders;
+  final List<Order> orders;
 
   @override
   Widget build(BuildContext context) {
     if (orders.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(Icons.inbox_rounded,
-                  color: AppColors.primary, size: 36),
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              'Tidak ada pesanan',
-              style: TextStyle(
-                color: AppColors.textLight,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
-          ],
-        ),
-      );
+      return const Center(child: Text('Tidak ada pesanan'));
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      padding: const EdgeInsets.all(16),
       itemCount: orders.length,
       itemBuilder: (_, i) {
         final order = orders[i];
-        final statusCfg = _statusMap[order['order_status']] ?? _statusMap['PENDING']!;
+        final statusCfg = _statusMap[order.orderStatus] ?? _statusMap['PENDING']!;
         return OrderListCard(
           order: order,
           statusConfig: {
@@ -336,116 +273,17 @@ class _OrderListView extends StatelessWidget {
   }
 }
 
-// Dummy data & Helpers (Ideally moved to Data Layer in Phase 4)
-final List<Map<String, dynamic>> _allOrders = [
-  {
-    'id': 1,
-    'order_number': 'ORD-0921',
-    'created_at': '05 Mei 2026 10:30',
-    'buyer': {'username': 'Andi Setiawan'},
-    'service_type': 'DELIVERY',
-    'grand_total': 85000.0,
-    'order_status': 'PENDING',
-    'item_count': 3
-  },
-  {
-    'id': 2,
-    'order_number': 'ORD-0919',
-    'created_at': '05 Mei 2026 09:45',
-    'buyer': {'username': 'Rina Kusuma'},
-    'service_type': 'PICKUP',
-    'grand_total': 32000.0,
-    'order_status': 'PENDING',
-    'item_count': 1
-  },
-  {
-    'id': 3,
-    'order_number': 'ORD-0922',
-    'created_at': '05 Mei 2026 11:15',
-    'buyer': {'username': 'Siti Aminah'},
-    'service_type': 'PICKUP',
-    'grand_total': 120000.0,
-    'order_status': 'PROCESSING',
-    'item_count': 5
-  },
-  {
-    'id': 4,
-    'order_number': 'ORD-0920',
-    'created_at': '05 Mei 2026 10:05',
-    'buyer': {'username': 'Budi Prasetyo'},
-    'service_type': 'DELIVERY',
-    'grand_total': 67500.0,
-    'order_status': 'PROCESSING',
-    'item_count': 2
-  },
-  {
-    'id': 5,
-    'order_number': 'ORD-0918',
-    'created_at': '05 Mei 2026 09:00',
-    'buyer': {'username': 'Dewi Lestari'},
-    'service_type': 'DELIVERY',
-    'grand_total': 45000.0,
-    'order_status': 'READY',
-    'item_count': 2
-  },
-  {
-    'id': 6,
-    'order_number': 'ORD-0917',
-    'created_at': '05 Mei 2026 08:30',
-    'buyer': {'username': 'Ahmad Fauzi'},
-    'service_type': 'PICKUP',
-    'grand_total': 15000.0,
-    'order_status': 'COMPLETED',
-    'item_count': 1
-  },
-];
+const Map<String, _StatusConfig> _statusMap = {
+  'PENDING': _StatusConfig(label: 'Pending', color: AppColors.warning, bgColor: AppColors.warningLight, icon: Icons.hourglass_top_rounded),
+  'PROCESSING': _StatusConfig(label: 'Diproses', color: AppColors.primary, bgColor: AppColors.primaryLight, icon: Icons.autorenew_rounded),
+  'READY': _StatusConfig(label: 'Siap', color: AppColors.success, bgColor: AppColors.successLight, icon: Icons.check_circle_rounded),
+  'COMPLETED': _StatusConfig(label: 'Selesai', color: AppColors.textMid, bgColor: AppColors.background, icon: Icons.done_all_rounded),
+};
 
 class _StatusConfig {
-  final String label;
-  final Color color;
-  final Color bgColor;
-  final IconData icon;
-
-  const _StatusConfig({
-    required this.label,
-    required this.color,
-    required this.bgColor,
-    required this.icon,
-  });
+  final String label; final Color color; final Color bgColor; final IconData icon;
+  const _StatusConfig({required this.label, required this.color, required this.bgColor, required this.icon});
 }
-
-const Map<String, _StatusConfig> _statusMap = {
-  'PENDING': _StatusConfig(
-    label: 'Pending',
-    color: AppColors.warning,
-    bgColor: AppColors.warningLight,
-    icon: Icons.hourglass_top_rounded,
-  ),
-  'PROCESSING': _StatusConfig(
-    label: 'Diproses',
-    color: AppColors.primary,
-    bgColor: AppColors.primaryLight,
-    icon: Icons.autorenew_rounded,
-  ),
-  'READY': _StatusConfig(
-    label: 'Siap',
-    color: AppColors.success,
-    bgColor: AppColors.successLight,
-    icon: Icons.check_circle_rounded,
-  ),
-  'COMPLETED': _StatusConfig(
-    label: 'Selesai',
-    color: AppColors.textMid,
-    bgColor: AppColors.background,
-    icon: Icons.done_all_rounded,
-  ),
-  'CANCELLED': _StatusConfig(
-    label: 'Dibatalkan',
-    color: AppColors.danger,
-    bgColor: AppColors.dangerLight,
-    icon: Icons.cancel_rounded,
-  ),
-};
 
 String _formatRupiah(num value) {
   final str = value.toStringAsFixed(0);

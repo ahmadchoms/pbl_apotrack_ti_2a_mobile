@@ -1,108 +1,67 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/app_card.dart';
+import '../providers/staff_provider.dart';
 import '../widgets/pos_product_card.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../data/services/staff_service.dart';
+import '../../data/models/medicine.dart';
 
-class PosScreen extends StatefulWidget {
+class PosScreen extends ConsumerStatefulWidget {
   const PosScreen({super.key});
 
   @override
-  State<PosScreen> createState() => _PosScreenState();
+  ConsumerState<PosScreen> createState() => _PosScreenState();
 }
 
-class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
-  final List<Map<String, dynamic>> _medicines = [
-    {
-      'id': 1,
-      'name': 'Amoxicillin 500mg',
-      'category': 'Tablet',
-      'price': 15000.0,
-      'total_active_stock': 45,
-      'accentColor': const Color(0xFF6366F1),
-      'icon': Icons.local_pharmacy_rounded,
-    },
-    {
-      'id': 2,
-      'name': 'Paracetamol 500mg',
-      'category': 'Tablet',
-      'price': 2500.0,
-      'total_active_stock': 120,
-      'accentColor': const Color(0xFF10B981),
-      'icon': Icons.medication_rounded,
-    },
-    {
-      'id': 3,
-      'name': 'OBH Combi Sirup',
-      'category': 'Sirup',
-      'price': 18500.0,
-      'total_active_stock': 22,
-      'accentColor': const Color(0xFFF59E0B),
-      'icon': Icons.water_drop_rounded,
-    },
-    {
-      'id': 4,
-      'name': 'Vitamin C 500mg',
-      'category': 'Suplemen',
-      'price': 5000.0,
-      'total_active_stock': 200,
-      'accentColor': const Color(0xFFEC4899),
-      'icon': Icons.spa_rounded,
-    },
-  ];
-
-  late List<Map<String, dynamic>> _filtered;
+class _PosScreenState extends ConsumerState<PosScreen> {
   final List<_CartItem> _cart = [];
   final _searchController = TextEditingController();
   String _selectedCategory = 'Semua';
-
-  late final AnimationController _fabController;
+  bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
-    _filtered = _medicines;
-    _fabController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
+    _searchController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _fabController.dispose();
     super.dispose();
   }
 
-  List<String> get _categories => [
-    'Semua',
-    ..._medicines.map((m) => m['category'] as String).toSet().toList(),
-  ];
-
-  void _filter() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filtered = _medicines.where((m) {
-        final matchSearch = m['name'].toString().toLowerCase().contains(query);
-        final matchCat =
-            _selectedCategory == 'Semua' || m['category'] == _selectedCategory;
-        return matchSearch && matchCat;
-      }).toList();
-    });
+  List<Medicine> _applyFilter(List<Medicine> medicines) {
+    final query = _searchController.text.toLowerCase().trim();
+    return medicines.where((m) {
+      final matchSearch = m.name.toLowerCase().contains(query);
+      final catName = m.category ?? '';
+      final matchCat =
+          _selectedCategory == 'Semua' || catName == _selectedCategory;
+      return matchSearch && matchCat;
+    }).toList();
   }
 
-  void _addToCart(Map<String, dynamic> med) {
+  List<String> _getCategories(List<Medicine> medicines) {
+    final cats = <String>{'Semua'};
+    for (final m in medicines) {
+      if (m.category != null && m.category!.isNotEmpty) cats.add(m.category!);
+    }
+    return cats.toList();
+  }
+
+  void _addToCart(Medicine med) {
     HapticFeedback.lightImpact();
     setState(() {
-      final existing = _cart.indexWhere((c) => c.medicine['name'] == med['name']);
+      final existing = _cart.indexWhere((c) => c.medicine.id == med.id);
       if (existing >= 0) {
         _cart[existing].qty++;
       } else {
         _cart.add(_CartItem(medicine: med));
       }
-      if (_cart.length == 1) _fabController.forward();
     });
   }
 
@@ -113,13 +72,12 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         _cart[index].qty--;
       } else {
         _cart.removeAt(index);
-        if (_cart.isEmpty) _fabController.reverse();
       }
     });
   }
 
-  int _getCartQty(String name) {
-    final idx = _cart.indexWhere((c) => c.medicine['name'] == name);
+  int _getCartQty(String id) {
+    final idx = _cart.indexWhere((c) => c.medicine.id == id);
     return idx >= 0 ? _cart[idx].qty : 0;
   }
 
@@ -128,288 +86,403 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final medicinesAsync = ref.watch(staffMedicinesProvider);
+    final user = ref.watch(authNotifierProvider).user;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          _buildHeader(context),
-          _buildSearchAndFilter(),
-          Expanded(child: _buildGrid()),
-        ],
-      ),
-      floatingActionButton: ScaleTransition(
-        scale: CurvedAnimation(
-          parent: _fabController,
-          curve: Curves.elasticOut,
-        ),
-        child: _cart.isNotEmpty ? _buildCartFab() : const SizedBox.shrink(),
-      ),
-    );
-  }
-
-  // ── HEADER ──────────────────────────────────
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Kasir POS',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  Text(
-                    'Apotek Sehat Sejahtera',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
+          _buildHeader(context, user?.pharmacyName ?? 'Apotek ApoTrack'),
+          medicinesAsync.when(
+            data: (medicines) {
+              final categories = _getCategories(medicines);
+              final filtered = _applyFilter(medicines);
+              return Expanded(
+                child: Column(
                   children: [
-                    const Icon(Icons.circle, color: Color(0xFF4ADE80), size: 7),
-                    const SizedBox(width: 5),
-                    Text(
-                      'Buka',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    _buildSearchAndFilter(categories),
+                    Expanded(child: _buildGrid(filtered)),
                   ],
                 ),
-              ),
-            ],
+              );
+            },
+            loading: () => const Expanded(
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Expanded(child: _buildErrorState(e.toString())),
           ),
-        ),
+          _buildStickyCartBar(),
+        ],
       ),
     );
   }
 
-  // ── SEARCH + FILTER ──────────────────────────
-  Widget _buildSearchAndFilter() {
+  Widget _buildHeader(BuildContext context, String pharmacyName) {
     return Container(
-      color: AppColors.background,
-      child: Column(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 16,
+        bottom: 20,
+        left: 20,
+        right: 20,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+      ),
+      child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
             child: Container(
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.arrow_back_rounded,
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.10),
-                    blurRadius: 20,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (_) => _filter(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textDark,
-                  fontWeight: FontWeight.w500,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Cari nama obat...',
-                  hintStyle: const TextStyle(
-                    color: AppColors.textLight,
-                    fontSize: 14,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? GestureDetector(
-                          onTap: () {
-                            _searchController.clear();
-                            _filter();
-                          },
-                          child: const Icon(
-                            Icons.close_rounded,
-                            color: AppColors.textLight,
-                            size: 18,
-                          ),
-                        )
-                      : null,
-                  filled: false,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
+                size: 20,
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 36,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, i) => _buildChip(_categories[i]),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Point of Sale',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  pharmacyName,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFF10B981).withOpacity(0.5),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.circle, color: Color(0xFF10B981), size: 8),
+                const SizedBox(width: 6),
+                const Text(
+                  'Kasir Aktif',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSearchAndFilter(List<String> categories) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+          child: Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+            ),
+            child: TextField(
+              controller: _searchController,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textDark,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Cari SKU atau nama obat...',
+                hintStyle: const TextStyle(
+                  color: AppColors.textLight,
+                  fontSize: 14,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  color: AppColors.textMid,
+                  size: 22,
+                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? GestureDetector(
+                        onTap: () {
+                          _searchController.clear();
+                          setState(() {});
+                        },
+                        child: const Icon(
+                          Icons.cancel_rounded,
+                          color: AppColors.textLight,
+                          size: 18,
+                        ),
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 38,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            itemCount: categories.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (_, i) => _buildChip(categories[i]),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 
   Widget _buildChip(String cat) {
     final isSelected = _selectedCategory == cat;
     return GestureDetector(
-      onTap: () {
-        setState(() => _selectedCategory = cat);
-        _filter();
-      },
+      onTap: () => setState(() => _selectedCategory = cat),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          color: isSelected ? AppColors.textDark : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.divider,
-            width: 1.5,
+            color: isSelected ? AppColors.textDark : AppColors.divider,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.25),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : [],
         ),
         child: Text(
           cat,
           style: TextStyle(
             color: isSelected ? Colors.white : AppColors.textMid,
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            fontSize: 13,
           ),
         ),
       ),
     );
   }
 
-  // ── GRID ─────────────────────────────────────
-  Widget _buildGrid() {
-    if (_filtered.isEmpty) {
+  Widget _buildGrid(List<Medicine> filtered) {
+    if (filtered.isEmpty) {
       return Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search_off_rounded,
-              size: 48,
-              color: AppColors.textLight.withOpacity(0.5),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Obat tidak ditemukan',
-              style: TextStyle(
-                color: AppColors.textLight,
-                fontWeight: FontWeight.w600,
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
               ),
+              child: const Icon(
+                Icons.inventory_2_outlined,
+                size: 48,
+                color: AppColors.textLight,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Data tidak ditemukan',
+              style: TextStyle(
+                color: AppColors.textDark,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Coba kata kunci atau kategori lain',
+              style: TextStyle(color: AppColors.textLight, fontSize: 13),
             ),
           ],
         ),
       );
     }
-
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.75,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.65, // Adjusted for taller, modern cards
       ),
-      itemCount: _filtered.length,
+      itemCount: filtered.length,
       itemBuilder: (_, i) {
-        final med = _filtered[i];
+        final med = filtered[i];
         return PosProductCard(
           medicine: med,
-          cartQty: _getCartQty(med['name']),
+          cartQty: _getCartQty(med.id),
           onAdd: () => _addToCart(med),
         );
       },
     );
   }
 
-  // ── CART FAB ─────────────────────────────────
-  Widget _buildCartFab() {
-    return FloatingActionButton.extended(
-      onPressed: _showCartSheet,
-      backgroundColor: AppColors.primary,
-      elevation: 8,
-      label: Row(
-        children: [
-          const Icon(Icons.shopping_cart_rounded, color: Colors.white, size: 20),
-          const SizedBox(width: 10),
-          Text(
-            '$_totalItems Item · ${_formatRupiah(_totalPrice)}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
+  Widget _buildStickyCartBar() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      height: _cart.isNotEmpty ? 90 : 0,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Total ($_totalItems item)',
+                        style: const TextStyle(
+                          color: AppColors.textLight,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _formatRupiah(_totalPrice),
+                        style: const TextStyle(
+                          color: AppColors.textDark,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: _showCartSheet,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.shopping_bag_outlined,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Keranjang',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.danger.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.cloud_off_rounded,
+              color: AppColors.danger,
+              size: 40,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Koneksi Terputus',
+            style: TextStyle(
+              color: AppColors.textDark,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              error,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textLight, fontSize: 13),
+            ),
+          ),
+          const SizedBox(height: 24),
+          AppButton(
+            width: 160,
+            label: 'Muat Ulang',
+            icon: Icons.refresh_rounded,
+            onPressed: () => ref.refresh(staffMedicinesProvider),
           ),
         ],
       ),
@@ -421,94 +494,182 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _CartSheet(
-        cart: _cart,
-        totalPrice: _totalPrice,
-        onRemove: _removeFromCart,
-        onCheckout: () {
-          Navigator.pop(ctx);
-          _showSuccessCheckout();
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return _CartSheet(
+            cart: _cart,
+            totalPrice: _totalPrice,
+            isProcessing: _isProcessing,
+            onRemove: (idx) {
+              if (_isProcessing) return;
+              setState(() => _removeFromCart(idx));
+              setSheetState(() {});
+            },
+            onAdd: (idx) {
+              if (_isProcessing) return;
+              setState(() => _addToCart(_cart[idx].medicine));
+              setSheetState(() {});
+            },
+            onCheckout: () async {
+              if (_isProcessing) return;
+              
+              setSheetState(() => _isProcessing = true);
+              setState(() => _isProcessing = true);
+              
+              final success = await _processCheckout();
+              
+              if (mounted) {
+                if (success) {
+                  Navigator.pop(ctx);
+                } else {
+                  setSheetState(() => _isProcessing = false);
+                  setState(() => _isProcessing = false);
+                }
+              }
+            },
+          );
         },
       ),
     );
   }
 
-  void _showSuccessCheckout() {
-    setState(() {
-      _cart.clear();
-      _fabController.reverse();
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Transaksi berhasil!'),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+  Future<bool> _processCheckout() async {
+    final service = ref.read(staffServiceProvider);
+    final items = _cart
+        .map(
+          (c) => {
+            'id': c.medicine.id,
+            'quantity': c.qty,
+            'price': c.price,
+          },
+        )
+        .toList();
+
+    try {
+      await service.storePosOrder({
+        'items': items,
+        'total': _totalPrice,
+        'payment_method': 'TUNAI',
+      });
+      
+      setState(() {
+        _cart.clear();
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.white),
+                SizedBox(width: 12),
+                Text(
+                  'Transaksi berhasil diproses',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(20),
+          ),
+        );
+        ref.refresh(staffMedicinesProvider);
+      }
+      return true;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memproses transaksi: $e'),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(20),
+          ),
+        );
+      }
+      return false;
+    }
   }
 }
 
 // ─────────────────────────────────────────────
-//  CART SHEET
+// CART SHEET (REDESIGNED)
 // ─────────────────────────────────────────────
 class _CartSheet extends StatelessWidget {
   final List<_CartItem> cart;
   final num totalPrice;
+  final bool isProcessing;
   final Function(int) onRemove;
+  final Function(int) onAdd;
   final VoidCallback onCheckout;
 
   const _CartSheet({
     required this.cart,
     required this.totalPrice,
+    required this.isProcessing,
     required this.onRemove,
+    required this.onAdd,
     required this.onCheckout,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        color: AppColors.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
-          const SizedBox(height: 12),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(2),
+          // Grabber
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 48,
+              height: 5,
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Keranjang Belanja',
+                  'Rincian Pesanan',
                   style: TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.textDark,
+                    letterSpacing: -0.5,
                   ),
                 ),
-                const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${cart.length} Jenis',
+                    '${cart.length} Produk',
                     style: const TextStyle(
                       color: AppColors.primary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -516,22 +677,36 @@ class _CartSheet extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              itemCount: cart.length,
-              separatorBuilder: (_, __) => const Divider(height: 32),
-              itemBuilder: (_, i) => _buildCartRow(i),
+            child: Container(
+              color: Colors.white,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                itemCount: cart.length,
+                separatorBuilder: (_, __) => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Divider(height: 1, color: AppColors.divider),
+                ),
+                itemBuilder: (_, i) => _buildCartRow(i),
+              ),
             ),
           ),
           Container(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 20,
+              bottom: MediaQuery.of(context).padding.bottom + 20,
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 15,
-                  offset: const Offset(0, -5),
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 24,
+                  offset: const Offset(0, -8),
                 ),
               ],
             ),
@@ -541,9 +716,9 @@ class _CartSheet extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Total Pembayaran',
+                      'Total Tagihan',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 15,
                         color: AppColors.textMid,
                         fontWeight: FontWeight.w600,
                       ),
@@ -551,17 +726,19 @@ class _CartSheet extends StatelessWidget {
                     Text(
                       _formatRupiah(totalPrice),
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.w900,
                         color: AppColors.primary,
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 AppButton(
-                  label: 'Proses Transaksi',
-                  icon: Icons.check_circle_rounded,
+                  label: isProcessing ? 'Memproses...' : 'Proses Pembayaran',
+                  icon: isProcessing ? null : Icons.payments_outlined,
+                  isLoading: isProcessing,
                   onPressed: onCheckout,
                 ),
               ],
@@ -574,17 +751,33 @@ class _CartSheet extends StatelessWidget {
 
   Widget _buildCartRow(int index) {
     final item = cart[index];
+
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 56,
-          height: 56,
+          width: 64,
+          height: 64,
           decoration: BoxDecoration(
-            color: (item.medicine['accentColor'] as Color).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(14),
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.divider.withOpacity(0.5)),
           ),
-          child: Icon(item.medicine['icon'] as IconData,
-              color: item.medicine['accentColor'] as Color, size: 24),
+          child:
+              item.medicine.imageUrl != null &&
+                  item.medicine.imageUrl!.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    item.medicine.imageUrl!,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : const Icon(
+                  Icons.medication_outlined,
+                  color: AppColors.textLight,
+                  size: 28,
+                ),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -592,20 +785,20 @@ class _CartSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                item.medicine['name'],
+                item.medicine.name,
                 style: const TextStyle(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   fontSize: 15,
                   color: AppColors.textDark,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                _formatRupiah(item.medicine['price'] as num),
+                _formatRupiah(item.price),
                 style: const TextStyle(
-                  color: AppColors.textLight,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
@@ -613,45 +806,75 @@ class _CartSheet extends StatelessWidget {
         ),
         Row(
           children: [
-            _buildQtyBtn(Icons.remove_rounded, () => onRemove(index)),
-            const SizedBox(width: 12),
-            Text(
-              item.qty.toString(),
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
+            _buildActionBtn(
+              Icons.remove_rounded,
+              () => onRemove(index),
+              isRemove: item.qty == 1,
+            ),
+            SizedBox(
+              width: 40,
+              child: Text(
+                item.qty.toString(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: AppColors.textDark,
+                ),
               ),
             ),
-            const SizedBox(width: 12),
-            _buildQtyBtn(Icons.add_rounded, null), // simplified for now
+            _buildActionBtn(Icons.add_rounded, () => onAdd(index)),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildQtyBtn(IconData icon, VoidCallback? onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(8),
+  Widget _buildActionBtn(
+    IconData icon,
+    VoidCallback? onTap, {
+    bool isRemove = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap?.call();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isRemove
+                  ? AppColors.danger.withOpacity(0.1)
+                  : AppColors.background,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: isRemove ? AppColors.danger : AppColors.textDark,
+            ),
+          ),
         ),
-        child: Icon(icon, size: 18, color: AppColors.textMid),
       ),
     );
   }
 }
 
-// Model & Helper
 class _CartItem {
-  final Map<String, dynamic> medicine;
+  final Medicine medicine;
   int qty;
   _CartItem({required this.medicine, this.qty = 1});
-  num get subtotal => (medicine['price'] as num) * qty;
+
+  num get price => medicine.price;
+  num get subtotal => price * qty;
 }
 
 String _formatRupiah(num value) {

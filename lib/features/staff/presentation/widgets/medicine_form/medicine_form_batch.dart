@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../../core/theme/app_colors.dart';
 
 class MedicineFormBatchCard extends StatelessWidget {
@@ -102,7 +103,19 @@ class MedicineFormBatchCard extends StatelessWidget {
                       child: MedicineFormBatchField(
                         label: 'Kadaluarsa',
                         initialValue: batch['exp'] ?? '',
-                        hint: 'MM/YYYY',
+                        hint: 'YYYY-MM-DD',
+                        readOnly: true,
+                        onTap: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now().add(const Duration(days: 365)),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days: 3650)),
+                          );
+                          if (date != null) {
+                            onChanged('exp', date.toString().split(' ').first);
+                          }
+                        },
                         onChanged: (v) => onChanged('exp', v),
                         icon: Icons.event_outlined,
                       ),
@@ -116,6 +129,7 @@ class MedicineFormBatchCard extends StatelessWidget {
                   hint: 'Masukkan jumlah stok...',
                   onChanged: (v) => onChanged('stock', v),
                   keyboard: TextInputType.number,
+                  isDigitsOnly: true,
                   icon: Icons.add_box_outlined,
                 ),
               ],
@@ -134,6 +148,9 @@ class MedicineFormBatchField extends StatefulWidget {
   final Function(String) onChanged;
   final TextInputType? keyboard;
   final IconData? icon;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final bool isDigitsOnly;
 
   const MedicineFormBatchField({
     super.key,
@@ -143,6 +160,9 @@ class MedicineFormBatchField extends StatefulWidget {
     this.hint,
     this.keyboard,
     this.icon,
+    this.readOnly = false,
+    this.onTap,
+    this.isDigitsOnly = false,
   });
 
   @override
@@ -151,17 +171,29 @@ class MedicineFormBatchField extends StatefulWidget {
 
 class _MedicineFormBatchFieldState extends State<MedicineFormBatchField> {
   final _focus = FocusNode();
+  late TextEditingController _controller;
   bool _focused = false;
 
   @override
   void initState() {
     super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
     _focus.addListener(() => setState(() => _focused = _focus.hasFocus));
+  }
+
+  @override
+  void didUpdateWidget(MedicineFormBatchField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialValue != oldWidget.initialValue && 
+        widget.initialValue != _controller.text) {
+      _controller.text = widget.initialValue;
+    }
   }
 
   @override
   void dispose() {
     _focus.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -192,9 +224,14 @@ class _MedicineFormBatchFieldState extends State<MedicineFormBatchField> {
           ),
           child: TextField(
             focusNode: _focus,
-            controller: TextEditingController(text: widget.initialValue),
+            controller: _controller,
             onChanged: widget.onChanged,
             keyboardType: widget.keyboard,
+            readOnly: widget.readOnly,
+            onTap: widget.onTap,
+            inputFormatters: [
+              if (widget.isDigitsOnly) FilteringTextInputFormatter.digitsOnly,
+            ],
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -204,14 +241,17 @@ class _MedicineFormBatchFieldState extends State<MedicineFormBatchField> {
               hintText: widget.hint,
               hintStyle: const TextStyle(color: AppColors.textLight, fontSize: 12),
               prefixIcon: widget.icon != null
-                  ? Icon(
-                      widget.icon,
-                      size: 15,
-                      color: _focused ? AppColors.primary : AppColors.textLight,
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Icon(
+                        widget.icon,
+                        size: 16,
+                        color: _focused ? AppColors.primary : AppColors.textLight,
+                      ),
                     )
                   : null,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
           ),
         ),

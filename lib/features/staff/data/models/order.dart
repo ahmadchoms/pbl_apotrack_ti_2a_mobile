@@ -1,5 +1,5 @@
 class Order {
-  final int id;
+  final String id;
   final String orderNumber;
   final String orderStatus;
   final String paymentStatus;
@@ -9,10 +9,11 @@ class Order {
   final String? notes;
   final bool hasPrescription;
   final String createdAt;
-  final Map<String, dynamic> buyer;
+  final Map<String, dynamic> customer;
   final List<OrderItem> items;
   final Map<String, dynamic>? tracking;
   final Map<String, dynamic>? address;
+  final String? verificationCode;
 
   Order({
     required this.id,
@@ -25,36 +26,41 @@ class Order {
     this.notes,
     required this.hasPrescription,
     required this.createdAt,
-    required this.buyer,
+    required this.customer,
     required this.items,
     this.tracking,
     this.address,
+    this.verificationCode,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
+    // Backend returns 'user' as customer, but we can also handle 'buyer'
+    final userData = json['user'] ?? json['buyer'] ?? {};
+    
     return Order(
-      id: json['id'],
-      orderNumber: json['order_number'],
-      orderStatus: json['order_status'],
-      paymentStatus: json['payment_status'],
-      serviceType: json['service_type'],
-      grandTotal: json['grand_total'] ?? 0,
-      shippingCost: json['shipping_cost'] ?? 0,
+      id: json['id']?.toString() ?? '',
+      orderNumber: json['order_number']?.toString() ?? 'N/A',
+      orderStatus: json['order_status']?.toString() ?? 'PENDING',
+      paymentStatus: json['payment_status']?.toString() ?? 'UNPAID',
+      serviceType: json['service_type']?.toString() ?? 'PICKUP',
+      grandTotal: num.tryParse(json['grand_total']?.toString() ?? '0') ?? 0,
+      shippingCost: num.tryParse(json['shipping_cost']?.toString() ?? '0') ?? 0,
       notes: json['notes'],
-      hasPrescription: json['has_prescription'] ?? false,
-      createdAt: json['created_at'],
-      buyer: json['buyer'],
-      items: (json['items'] as List)
+      hasPrescription: json['has_prescription'] == true || json['has_prescription'] == 1 || json['has_prescription']?.toString() == 'true',
+      createdAt: json['created_at']?.toString() ?? '-',
+      customer: userData is Map<String, dynamic> ? userData : {'username': 'Pembeli Umum'},
+      items: (json['items'] as List? ?? [])
           .map((i) => OrderItem.fromJson(i))
           .toList(),
-      tracking: json['tracking'],
+      tracking: json['delivery_tracking'] ?? json['tracking'],
       address: json['address'],
+      verificationCode: json['verification_code']?.toString(),
     );
   }
 }
 
 class OrderItem {
-  final int id;
+  final String id;
   final num price;
   final int quantity;
   final num subtotal;
@@ -70,11 +76,11 @@ class OrderItem {
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
-      id: json['id'],
-      price: json['price'] ?? 0,
-      quantity: json['quantity'] ?? 0,
-      subtotal: json['subtotal'] ?? 0,
-      medicine: json['medicine'],
+      id: json['id']?.toString() ?? '',
+      price: num.tryParse(json['price']?.toString() ?? '0') ?? 0,
+      quantity: int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
+      subtotal: num.tryParse(json['subtotal']?.toString() ?? '0') ?? 0,
+      medicine: json['medicine'] is Map ? json['medicine'] : {},
     );
   }
 }

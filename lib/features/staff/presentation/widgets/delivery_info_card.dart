@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../data/models/order.dart';
 
 class DeliveryInfoCard extends StatelessWidget {
-  final Map<String, dynamic> order;
+  final Order order;
 
   const DeliveryInfoCard({
     super.key,
@@ -12,8 +13,8 @@ class DeliveryInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tracking = order['tracking'] as Map<String, dynamic>?;
-    final address = order['address'] as Map<String, dynamic>;
+    final tracking = order.tracking;
+    final address = order.address ?? {};
 
     return AppCard(
       child: Column(
@@ -29,6 +30,22 @@ class DeliveryInfoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          // Recipient block
+          if (address['recipient_name'] != null || address['phone_number'] != null) ...[
+            Row(
+              children: [
+                const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.textLight),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${address['recipient_name'] ?? 'Penerima'} • ${address['phone_number'] ?? '-'}',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
           // Address block
           Container(
             padding: const EdgeInsets.all(12),
@@ -64,7 +81,7 @@ class DeliveryInfoCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        address['address_line'] as String,
+                        '${address['address_line'] ?? '-'}${address['city'] != null ? ", ${address['city']}" : ""}${address['province'] != null ? ", ${address['province']}" : ""}',
                         style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textDark,
@@ -86,7 +103,7 @@ class DeliveryInfoCard extends StatelessWidget {
                 child: _InfoTile(
                   icon: Icons.local_shipping_rounded,
                   label: 'Kurir',
-                  value: tracking?['courier_name'] ?? '-',
+                  value: tracking?['courier_name']?.toString() ?? '-',
                 ),
               ),
               const SizedBox(width: 10),
@@ -94,7 +111,7 @@ class DeliveryInfoCard extends StatelessWidget {
                 child: _InfoTile(
                   icon: Icons.near_me_rounded,
                   label: 'Jarak',
-                  value: '${address['distance']} km',
+                  value: '${address['distance'] ?? 0} km',
                 ),
               ),
             ],
@@ -103,7 +120,7 @@ class DeliveryInfoCard extends StatelessWidget {
           _InfoTile(
             icon: Icons.qr_code_rounded,
             label: 'No. Resi',
-            value: tracking?['tracking_number'] ?? '-',
+            value: tracking?['tracking_number']?.toString() ?? '-',
             highlight: true,
           ),
         ],

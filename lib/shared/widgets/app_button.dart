@@ -3,7 +3,7 @@ import '../../core/theme/app_colors.dart';
 
 class AppButton extends StatelessWidget {
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isLoading;
   final IconData? icon;
   final Color backgroundColor;
@@ -13,7 +13,7 @@ class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
     required this.label,
-    required this.onPressed,
+    this.onPressed,
     this.isLoading = false,
     this.icon,
     this.backgroundColor = AppColors.primary,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class Medicine {
-  final int id;
+  final String id;
   final String name;
   final String? genericName;
   final String? description;
@@ -15,10 +15,13 @@ class Medicine {
   final String? form;
   final String? type;
   final String? unit;
+  final String? manufacturer;
+  final num? weightInGrams;
   final String? imageUrl;
   final DateTime? createdAt;
+  final List<Map<String, dynamic>>? batches;
 
-  // UI UI Helpers (not from API)
+  // UI Helpers
   final Color accentColor;
   final IconData icon;
 
@@ -37,30 +40,36 @@ class Medicine {
     this.form,
     this.type,
     this.unit,
+    this.manufacturer,
+    this.weightInGrams,
     this.imageUrl,
     this.createdAt,
+    this.batches,
     this.accentColor = const Color(0xFF1D70F5),
     this.icon = Icons.medication_rounded,
   });
 
   factory Medicine.fromJson(Map<String, dynamic> json) {
     return Medicine(
-      id: json['id'],
-      name: json['name'],
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? 'Unknown',
       genericName: json['generic_name'],
       description: json['description'],
-      dosage: json['dosage'],
+      dosage: json['dosage'] ?? json['dosage_info'],
       sideEffects: json['side_effects'],
-      price: json['price'] ?? 0,
-      totalActiveStock: json['total_active_stock'] ?? 0,
-      requiresPrescription: json['requires_prescription'] ?? false,
-      isActive: json['is_active'] ?? true,
-      category: json['category'] is Map ? json['category']['name'] : json['category'],
-      form: json['form'] is Map ? json['form']['name'] : json['form'],
-      type: json['type'] is Map ? json['type']['name'] : json['type'],
-      unit: json['unit'] is Map ? json['unit']['name'] : json['unit'],
+      price: num.tryParse(json['price']?.toString() ?? '0') ?? 0,
+      totalActiveStock: (num.tryParse(json['total_active_stock']?.toString() ?? json['stock']?.toString() ?? '0') ?? 0).toInt(),
+      requiresPrescription: json['requires_prescription'] == true || json['requires_prescription'] == 1,
+      isActive: json['is_active'] == true || json['is_active'] == 1,
+      category: json['category'] is Map ? json['category']['name'] : json['category']?.toString(),
+      form: json['form'] is Map ? json['form']['name'] : json['form']?.toString(),
+      type: json['type'] is Map ? json['type']['name'] : json['type']?.toString(),
+      unit: json['unit'] is Map ? json['unit']['name'] : json['unit']?.toString(),
+      manufacturer: json['manufacturer'],
+      weightInGrams: num.tryParse(json['weight_in_grams']?.toString() ?? ''),
       imageUrl: json['image_url'],
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
+      batches: json['batches'] != null ? List<Map<String, dynamic>>.from(json['batches']) : null,
       accentColor: _getAccentColor(json['category']),
       icon: _getIcon(json['category']),
     );

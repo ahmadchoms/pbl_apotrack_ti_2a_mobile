@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:mobile/features/staff/data/models/audit_log.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
 
 class AuditLogDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> activity;
+  final AuditLog activity;
 
   const AuditLogDetailScreen({super.key, required this.activity});
 
   @override
   Widget build(BuildContext context) {
-    final category = _getCategory(activity['action']);
+    final category = _getCategory(activity.action);
     final color = _getCategoryColor(category);
 
     return Scaffold(
@@ -24,11 +26,18 @@ class AuditLogDetailScreen extends StatelessWidget {
             stretch: true,
             backgroundColor: AppColors.primary,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               onPressed: () => context.pop(),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
+              stretchModes: const [
+                StretchMode.zoomBackground,
+                StretchMode.blurBackground,
+              ],
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -61,7 +70,10 @@ class AuditLogDetailScreen extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 2,
+                              ),
                             ),
                             child: Icon(
                               _getCategoryIcon(category),
@@ -71,7 +83,10 @@ class AuditLogDetailScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(20),
@@ -110,7 +125,7 @@ class AuditLogDetailScreen extends StatelessWidget {
                   children: [
                     // --- ACTION TITLE ---
                     Text(
-                      activity['action'] ?? 'Aktivitas Sistem',
+                      activity.action.replaceAll('_', ' '),
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
@@ -121,10 +136,17 @@ class AuditLogDetailScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.access_time_filled_rounded, color: AppColors.textLight, size: 14),
+                        const Icon(
+                          Icons.access_time_filled_rounded,
+                          color: AppColors.textLight,
+                          size: 14,
+                        ),
                         const SizedBox(width: 6),
                         Text(
-                          activity['relative_time'] ?? 'Baru saja',
+                          DateFormat(
+                            'EEEE, d MMM yyyy - HH:mm',
+                            'id_ID',
+                          ).format(activity.createdAt),
                           style: const TextStyle(
                             fontSize: 14,
                             color: AppColors.textLight,
@@ -151,16 +173,79 @@ class AuditLogDetailScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(24),
                       child: Column(
                         children: [
-                          _buildDetailRow(Icons.info_outline_rounded, 'Deskripsi', activity['description'] ?? '-'),
+                          _buildDetailRow(
+                            Icons.info_outline_rounded,
+                            'Deskripsi',
+                            activity.description,
+                          ),
                           _buildDivider(),
-                          _buildDetailRow(Icons.event_note_rounded, 'Waktu Riil', activity['created_at'] ?? activity['relative_time'] ?? '-'),
+                          _buildDetailRow(
+                            Icons.event_note_rounded,
+                            'Status Sistem',
+                            activity.status.toUpperCase(),
+                          ),
                           _buildDivider(),
-                          _buildDetailRow(Icons.fingerprint_rounded, 'ID Log', '#LOG-${activity['id'] ?? '0000'}'),
+                          _buildDetailRow(
+                            Icons.fingerprint_rounded,
+                            'ID Log',
+                            activity.id.substring(0, 8).toUpperCase(),
+                          ),
                           _buildDivider(),
-                          _buildDetailRow(Icons.person_pin_rounded, 'Otoritas', 'Staff Apotek'),
+                          _buildDetailRow(
+                            Icons.person_pin_rounded,
+                            'Otoritas',
+                            activity.username ?? 'Staff Apotek',
+                          ),
                         ],
                       ),
                     ),
+
+                    if (activity.metadata != null &&
+                        activity.metadata!.isNotEmpty) ...[
+                      const SizedBox(height: 32),
+                      const Text(
+                        'METADATA TAMBAHAN',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textLight,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      AppCard(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: activity.metadata!.entries.map((e) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    '${e.key}: ',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: AppColors.textMid,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      e.value.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.textDark,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
 
                     const SizedBox(height: 32),
 
@@ -170,11 +255,18 @@ class AuditLogDetailScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.success.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.success.withOpacity(0.1), width: 1.5),
+                        border: Border.all(
+                          color: AppColors.success.withOpacity(0.1),
+                          width: 1.5,
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.verified_user_rounded, color: AppColors.success, size: 24),
+                          const Icon(
+                            Icons.verified_user_rounded,
+                            color: AppColors.success,
+                            size: 24,
+                          ),
                           const SizedBox(width: 16),
                           const Expanded(
                             child: Column(
@@ -182,11 +274,19 @@ class AuditLogDetailScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   'Aktivitas Terverifikasi',
-                                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppColors.textDark),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 14,
+                                    color: AppColors.textDark,
+                                  ),
                                 ),
                                 Text(
                                   'Log ini telah dicatat secara otomatis oleh sistem keamanan ApoTrack.',
-                                  style: TextStyle(fontSize: 12, color: AppColors.textMid, height: 1.4),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textMid,
+                                    height: 1.4,
+                                  ),
                                 ),
                               ],
                             ),
@@ -249,31 +349,42 @@ class AuditLogDetailScreen extends StatelessWidget {
     );
   }
 
-  String _getCategory(String? action) {
-    if (action == null) return 'Umum';
-    if (action.contains('Stok')) return 'Inventori';
-    if (action.contains('Pesanan')) return 'Transaksi';
-    if (action.contains('Profil')) return 'Akun';
-    return 'Sistem';
+  String _getCategory(String action) {
+    final act = action.toUpperCase();
+    if (act.contains('MEDICINE') || act.contains('STOCK')) return 'Inventori';
+    if (act.contains('ORDER')) return 'Transaksi';
+    if (act.contains('PROFILE') || act.contains('PASSWORD')) return 'Akun';
+    if (act.contains('LOGIN') || act.contains('LOGOUT')) return 'Sistem';
+    return 'Umum';
   }
 
   IconData _getCategoryIcon(String category) {
     switch (category) {
-      case 'Inventori': return Icons.inventory_2_rounded;
-      case 'Transaksi': return Icons.receipt_long_rounded;
-      case 'Akun': return Icons.manage_accounts_rounded;
-      case 'Sistem': return Icons.settings_suggest_rounded;
-      default: return Icons.history_rounded;
+      case 'Inventori':
+        return Icons.inventory_2_rounded;
+      case 'Transaksi':
+        return Icons.receipt_long_rounded;
+      case 'Akun':
+        return Icons.manage_accounts_rounded;
+      case 'Sistem':
+        return Icons.settings_suggest_rounded;
+      default:
+        return Icons.history_rounded;
     }
   }
 
   Color _getCategoryColor(String category) {
     switch (category) {
-      case 'Inventori': return AppColors.primary;
-      case 'Transaksi': return AppColors.success;
-      case 'Akun': return AppColors.warning;
-      case 'Sistem': return AppColors.danger;
-      default: return AppColors.textMid;
+      case 'Inventori':
+        return AppColors.primary;
+      case 'Transaksi':
+        return AppColors.success;
+      case 'Akun':
+        return Colors.purple;
+      case 'Sistem':
+        return AppColors.textLight;
+      default:
+        return AppColors.textMid;
     }
   }
 }

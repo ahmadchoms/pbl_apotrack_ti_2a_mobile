@@ -1,6 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'api_client.dart';
-
-final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient();
-});
+// DEPRECATED: This file is no longer used.
+// Use dioProvider from api_client.dart instead of apiClientProvider.
+// The legacy ApiClient singleton does NOT inject auth tokens.
+// This file can be safely deleted from the project.

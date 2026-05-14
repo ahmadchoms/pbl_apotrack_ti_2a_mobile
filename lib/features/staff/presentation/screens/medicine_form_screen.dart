@@ -5,18 +5,30 @@ import '../../../../core/theme/app_colors.dart';
 import '../widgets/medicine_form/medicine_form_card.dart';
 import '../widgets/medicine_form/medicine_form_fields.dart';
 import '../widgets/medicine_form/medicine_form_batch.dart';
+import '../../data/models/medicine.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/staff_provider.dart';
+import '../../data/services/staff_service.dart';
+import '../../../../shared/widgets/app_button.dart';
 
-class MedicineFormScreen extends StatefulWidget {
-  final Map<String, dynamic>? medicine;
+class MedicineFormScreen extends ConsumerStatefulWidget {
+  final Medicine? medicine;
   const MedicineFormScreen({super.key, this.medicine});
 
   @override
-  State<MedicineFormScreen> createState() => _MedicineFormScreenState();
+  ConsumerState<MedicineFormScreen> createState() => _MedicineFormScreenState();
 }
 
-class _MedicineFormScreenState extends State<MedicineFormScreen>
+class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     with SingleTickerProviderStateMixin {
   late bool isEdit;
+  XFile? _pickedFile;
+  bool _isSaving = false;
+  final _picker = ImagePicker();
 
   // Controllers
   final _nameCtrl = TextEditingController();
@@ -35,21 +47,44 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
   bool _requiresPrescription = false;
   bool _isActive = true;
 
-  // Batches
+  // Batches (Temporary storage as Map for form logic)
   final List<Map<String, dynamic>> _batches = [];
 
   // Options (from API in real app)
   final _categories = [
     'Antibiotik',
     'Analgesik',
-    'Ekspektoran',
-    'Antiseptik',
-    'Suplemen',
-    'Antasida',
+    'Antipiretik',
+    'Antihipertensi',
+    'Antidiabetes',
+    'Vitamin & Suplemen',
+    'Antihistamin',
+    'Antasida & GERD',
+    'Batuk & Flu',
+    'P3K & Antiseptik',
+    'Kesehatan Mata',
+    'Ibu & Bayi',
   ];
-  final _types = ['Tablet', 'Pcs', 'Botol 60ml', 'Botol 15ml', 'Strip isi 10'];
-  final _forms = ['Kapsul', 'Tablet', 'Sirup', 'Cairan', 'Salep', 'Krim'];
-  final _units = ['Strip', 'Botol', 'Box', 'Tube', 'Pcs'];
+  final _types = [
+    'Obat Bebas',
+    'Obat Bebas Terbatas',
+    'Obat Wajib Apotek',
+    'Obat Keras',
+    'Alat Kesehatan',
+    'Herbal'
+  ];
+  final _forms = [
+    'Tablet',
+    'Kapsul',
+    'Sirup',
+    'Suspensi',
+    'Tetes (mata/telinga)',
+    'Salep / Krim',
+    'Injeksi',
+    'Botol',
+    'Sachet'
+  ];
+  final _units = ['Strip', 'Box', 'Botol', 'Tube', 'Pcs', 'Sachet'];
 
   // Animation
   late AnimationController _headerAnimCtrl;
@@ -65,25 +100,36 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
     isEdit = widget.medicine != null;
     if (isEdit) {
       final m = widget.medicine!;
-      _nameCtrl.text = m['name'] ?? '';
-      _genericNameCtrl.text = m['generic_name'] ?? '';
-      _manufacturerCtrl.text = m['manufacturer'] ?? '';
-      _priceCtrl.text = m['price']?.toString() ?? '';
-      _weightCtrl.text = m['weight_in_grams']?.toString() ?? '';
-      _descCtrl.text = m['description'] ?? '';
-      _dosageCtrl.text = m['dosage_info'] ?? '';
-      _category = m['category'];
-      _type = m['type'];
-      _form = m['form'];
-      _unit = m['unit'];
-      _requiresPrescription = m['requires_prescription'] ?? false;
-      _isActive = m['is_active'] ?? true;
+      _nameCtrl.text = m.name;
+      _genericNameCtrl.text = m.genericName ?? '';
+      _manufacturerCtrl.text = m.manufacturer ?? '';
+      _priceCtrl.text = m.price.toString();
+      _weightCtrl.text = m.weightInGrams?.toString() ?? '';
+      _descCtrl.text = m.description ?? '';
+      _dosageCtrl.text = m.dosage ?? '';
+      _category = m.category;
+      _type = m.type;
+      _form = m.form;
+      _unit = m.unit;
+      _requiresPrescription = m.requiresPrescription;
+      _isActive = m.isActive;
 
-      if (m['batches'] != null) {
-        for (var b in (m['batches'] as List)) {
-          _batches.add(Map<String, dynamic>.from(b));
-        }
+      // Handle missing categories/types in lists to avoid Dropdown error
+      if (_category != null && !_categories.contains(_category)) {
+        _categories.add(_category!);
       }
+      if (_type != null && !_types.contains(_type)) {
+        _types.add(_type!);
+      }
+      if (_form != null && !_forms.contains(_form)) {
+        _forms.add(_form!);
+      }
+      if (_unit != null && !_units.contains(_unit)) {
+        _units.add(_unit!);
+      }
+
+      // Note: Model currently doesn't expose batches directly in a way we use here
+      // But we can keep it empty or handle it later if model supports it
     } else {
       _addBatch();
     }
@@ -110,6 +156,116 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
   void _removeBatch(int index) {
     HapticFeedback.lightImpact();
     setState(() => _batches.removeAt(index));
+  }
+
+  Future<void> _pickImage() async {
+    HapticFeedback.mediumImpact();
+    try {
+      final picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+      if (picked != null) {
+        setState(() => _pickedFile = picked);
+        ref.invalidate(staffMedicinesProvider);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengambil gambar: $e'), backgroundColor: AppColors.danger),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveMedicine() async {
+    if (_nameCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama obat wajib diisi')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    final service = ref.read(staffServiceProvider);
+
+    try {
+      final Map<String, dynamic> data = {
+        'name': _nameCtrl.text,
+        'generic_name': _genericNameCtrl.text,
+        'category': _category,
+        'type': _type,
+        'form': _form,
+        'unit': _unit,
+        'price': num.tryParse(_priceCtrl.text) ?? 0,
+        'is_active': _isActive ? 1 : 0,
+        'manufacturer': _manufacturerCtrl.text.isEmpty ? 'ApoTrack' : _manufacturerCtrl.text,
+        'description': _descCtrl.text,
+        'dosage_info': _dosageCtrl.text,
+        'weight_in_grams': num.tryParse(_weightCtrl.text) ?? 0,
+        'requires_prescription': _requiresPrescription ? 1 : 0,
+      };
+
+      final formData = FormData.fromMap(data);
+
+      // Add batches with indices for Laravel: batches[0][batch_number]
+      for (var i = 0; i < _batches.length; i++) {
+        final b = _batches[i];
+        if (b['number'] != null && b['number'].toString().isNotEmpty) {
+          formData.fields.add(MapEntry('batches[$i][batch_number]', b['number'].toString()));
+          formData.fields.add(MapEntry('batches[$i][expired_date]', b['exp'].toString()));
+          formData.fields.add(MapEntry('batches[$i][stock]', (int.tryParse(b['stock'].toString()) ?? 0).toString()));
+        }
+      }
+
+      if (_pickedFile != null) {
+        if (kIsWeb) {
+          formData.files.add(MapEntry(
+            'image',
+            MultipartFile.fromBytes(await _pickedFile!.readAsBytes(), filename: 'medicine.jpg'),
+          ));
+        } else {
+          formData.files.add(MapEntry(
+            'image',
+            await MultipartFile.fromFile(_pickedFile!.path, filename: 'medicine.jpg'),
+          ));
+        }
+      }
+
+      dynamic payload = formData;
+
+      if (isEdit) {
+        await service.updateMedicine(widget.medicine!.id, payload);
+      } else {
+        await service.createMedicine(payload);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isEdit ? 'Perubahan berhasil disimpan' : 'Obat berhasil ditambahkan'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        ref.invalidate(staffMedicinesProvider);
+        context.pop();
+      }
+    } catch (e) {
+      String errorMessage = e.toString();
+      if (e is DioException && e.response?.data != null) {
+        final respData = e.response!.data;
+        if (respData is Map && respData.containsKey('message')) {
+          errorMessage = respData['message'];
+        }
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan: $errorMessage'), backgroundColor: AppColors.danger),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   // ── BUILD ─────────────────────────────────────
@@ -228,7 +384,7 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
                   const SizedBox(height: 6),
                   Text(
                     isEdit
-                        ? (widget.medicine?['name'] ?? 'Edit Obat')
+                        ? (widget.medicine?.name ?? 'Edit Obat')
                         : 'Tambah Produk Baru',
                     style: const TextStyle(
                       color: Colors.white,
@@ -258,7 +414,7 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
   Widget _buildImageUpload() {
     return MedicineFormCard(
       child: GestureDetector(
-        onTap: () => HapticFeedback.lightImpact(),
+        onTap: _pickImage,
         child: Container(
           height: 160,
           decoration: BoxDecoration(
@@ -268,6 +424,27 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
               color: AppColors.primary.withOpacity(0.2),
               width: 1.5,
             ),
+            image: _pickedFile != null
+                ? DecorationImage(
+                    image: kIsWeb 
+                        ? NetworkImage(_pickedFile!.path) 
+                        : FileImage(File(_pickedFile!.path)) as ImageProvider,
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withOpacity(0.3),
+                      BlendMode.darken,
+                    ),
+                  )
+                : (isEdit && widget.medicine?.imageUrl != null)
+                    ? DecorationImage(
+                        image: NetworkImage(widget.medicine!.imageUrl!),
+                        fit: BoxFit.cover,
+                        colorFilter: ColorFilter.mode(
+                          Colors.black.withOpacity(0.3),
+                          BlendMode.darken,
+                        ),
+                      )
+                    : null,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -275,22 +452,30 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
               Container(
                 width: 56,
                 height: 56,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryLight,
+                decoration: BoxDecoration(
+                  color: (_pickedFile != null || (isEdit && widget.medicine?.imageUrl != null))
+                      ? Colors.white.withOpacity(0.2)
+                      : AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.add_photo_alternate_rounded,
-                  color: AppColors.primary,
+                  color: (_pickedFile != null || (isEdit && widget.medicine?.imageUrl != null))
+                      ? Colors.white
+                      : AppColors.primary,
                   size: 28,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Upload Foto Obat',
+              Text(
+                (_pickedFile != null || (isEdit && widget.medicine?.imageUrl != null))
+                    ? 'Ganti Foto Obat'
+                    : 'Upload Foto Obat',
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textDark,
+                  color: (_pickedFile != null || (isEdit && widget.medicine?.imageUrl != null))
+                      ? Colors.white
+                      : AppColors.textDark,
                   fontSize: 14,
                 ),
               ),
@@ -298,11 +483,11 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _metaBadge('JPG'),
+                  _metaBadge('JPG', inverted: _pickedFile != null || (isEdit && widget.medicine?.imageUrl != null)),
                   const SizedBox(width: 5),
-                  _metaBadge('PNG'),
+                  _metaBadge('PNG', inverted: _pickedFile != null || (isEdit && widget.medicine?.imageUrl != null)),
                   const SizedBox(width: 5),
-                  _metaBadge('Max 2MB'),
+                  _metaBadge('Max 2MB', inverted: _pickedFile != null || (isEdit && widget.medicine?.imageUrl != null)),
                 ],
               ),
             ],
@@ -312,18 +497,18 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
     );
   }
 
-  Widget _metaBadge(String label) => Container(
+  Widget _metaBadge(String label, {bool inverted = false}) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
     decoration: BoxDecoration(
-      color: AppColors.primaryLight,
+      color: inverted ? Colors.white.withOpacity(0.2) : AppColors.primaryLight,
       borderRadius: BorderRadius.circular(5),
     ),
     child: Text(
       label,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.w700,
-        color: AppColors.primary,
+        color: inverted ? Colors.white : AppColors.primary,
       ),
     ),
   );
@@ -375,7 +560,7 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
               onChanged: (v) => setState(() => _unit = v),
             ),
             right: MedicineFormDropdown(
-              label: 'Tipe Kemasan',
+              label: 'Golongan Obat',
               value: _type,
               items: _types,
               onChanged: (v) => setState(() => _type = v),
@@ -564,62 +749,11 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.heavyImpact();
-                    context.pop();
-                  },
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.primaryDark],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.35),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.save_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isEdit ? 'Simpan Perubahan' : 'Simpan Obat Baru',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 14,
-                              ),
-                            ),
-                            Text(
-                              '${_batches.length} batch · ${_nameCtrl.text.isEmpty ? "Belum ada nama" : _nameCtrl.text}',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                child: AppButton(
+                  label: _isSaving ? 'Menyimpan...' : (isEdit ? 'Simpan Perubahan' : 'Simpan Obat Baru'),
+                  isLoading: _isSaving,
+                  onPressed: _saveMedicine,
+                  icon: Icons.save_rounded,
                 ),
               ),
             ],
@@ -627,6 +761,30 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
         ),
       ),
     );
+  }
+
+  // ── DELETE LOGIC ──────────────────────────────
+  Future<void> _deleteMedicine() async {
+    setState(() => _isSaving = true);
+    try {
+      await ref.read(staffServiceProvider).deleteMedicine(widget.medicine!.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Obat berhasil dihapus'), backgroundColor: AppColors.success),
+        );
+        ref.invalidate(staffMedicinesProvider);
+        context.pop(); // Kembali ke detail
+        context.pop(); // Kembali ke list (karena detail akan error jika obat sudah dihapus)
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menghapus: $e'), backgroundColor: AppColors.danger),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   // ── DELETE CONFIRM ────────────────────────────
@@ -710,9 +868,9 @@ class _MedicineFormScreenState extends State<MedicineFormScreen>
                 const SizedBox(width: 12),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      context.pop();
+                    onTap: () async {
+                      Navigator.pop(context); // Tutup bottom sheet
+                      _deleteMedicine();
                     },
                     child: Container(
                       height: 48,

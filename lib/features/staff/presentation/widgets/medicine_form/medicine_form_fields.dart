@@ -110,10 +110,13 @@ class _MedicineFormFieldState extends State<MedicineFormField> {
                         ),
                       )
                     : widget.prefixIcon != null
-                        ? Icon(
-                            widget.prefixIcon,
-                            color: _focused ? AppColors.primary : AppColors.textLight,
-                            size: 18,
+                        ? Container(
+                            padding: EdgeInsets.only(top: widget.maxLines > 1 ? 14 : 0),
+                            child: Icon(
+                              widget.prefixIcon,
+                              color: _focused ? AppColors.primary : AppColors.textLight,
+                              size: 18,
+                            ),
                           )
                         : null,
                 border: InputBorder.none,

@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/status_badge.dart';
+import '../../data/models/order.dart';
 
 class OrderListCard extends StatelessWidget {
-  final Map<String, dynamic> order;
+  final Order order;
   final Map<String, dynamic> statusConfig;
   final String Function(num) formatRupiah;
 
@@ -18,15 +19,17 @@ class OrderListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = order['order_status'] as String;
+    final status = order.orderStatus;
     final isCompleted = status == 'COMPLETED' || status == 'CANCELLED';
-    final isDelivery = order['service_type'] == 'DELIVERY';
+    final isDelivery = order.serviceType == 'DELIVERY';
 
     final Map<String, String> nextAction = {
       'PENDING': 'Mulai Proses',
       'PROCESSING': 'Tandai Siap',
       'READY': 'Selesaikan',
     };
+
+    final customerName = order.customer['username']?.toString() ?? 'Pembeli Umum';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -63,7 +66,7 @@ class OrderListCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(7),
                       ),
                       child: Text(
-                        '#${order['order_number']}',
+                        '#${order.orderNumber}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 11,
@@ -76,7 +79,7 @@ class OrderListCard extends StatelessWidget {
                     const Icon(Icons.access_time_rounded, size: 12, color: AppColors.textLight),
                     const SizedBox(width: 3),
                     Text(
-                      order['created_at'].toString().split(' ')[3],
+                      _formatTime(order.createdAt),
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textLight,
@@ -101,7 +104,7 @@ class OrderListCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            order['buyer']['username'],
+                            customerName,
                             style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w900,
@@ -111,7 +114,7 @@ class OrderListCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${order['item_count']} item pesanan',
+                            '${order.items.length} item pesanan',
                             style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.textLight,
@@ -122,7 +125,7 @@ class OrderListCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      formatRupiah(order['grand_total'] as num),
+                      formatRupiah(order.grandTotal),
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 17,
@@ -194,5 +197,16 @@ class OrderListCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatTime(dynamic dateStr) {
+    if (dateStr == null) return '--:--';
+    final str = dateStr.toString();
+    final parts = str.split(' ');
+    if (parts.length >= 2) {
+      final timeParts = parts[1].split(':');
+      if (timeParts.length >= 2) return '${timeParts[0]}:${timeParts[1]}';
+    }
+    return str.length > 5 ? str.substring(0, 5) : str;
   }
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../data/models/order.dart';
 
 class OrderItemsCard extends StatelessWidget {
-  final Map<String, dynamic> order;
+  final Order order;
   final String Function(num) formatRupiah;
 
   const OrderItemsCard({
@@ -14,9 +15,9 @@ class OrderItemsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = order['items'] as List;
-    final grandTotal = order['grand_total'] as num;
-    final shippingCost = order['shipping_cost'] as num;
+    final items = order.items;
+    final grandTotal = order.grandTotal;
+    final shippingCost = order.shippingCost;
     final subtotal = grandTotal - shippingCost;
 
     return AppCard(
@@ -33,7 +34,7 @@ class OrderItemsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ...items.map((item) => _buildItemRow(item as Map<String, dynamic>)),
+          ...items.map((item) => _buildItemRow(item)),
           const SizedBox(height: 4),
           const Divider(height: 24),
           _PriceRow(label: 'Subtotal Produk', value: formatRupiah(subtotal)),
@@ -74,8 +75,14 @@ class OrderItemsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildItemRow(Map<String, dynamic> item) {
-    final med = item['medicine'] as Map<String, dynamic>;
+  Widget _buildItemRow(OrderItem item) {
+    final med = item.medicine;
+    // Note: medicine field in OrderItem model is still Map<String, dynamic> 
+    // because it might be a nested object from API. 
+    // We can parse it here or update model later.
+    final medName = med['name']?.toString() ?? 'Obat';
+    final medUnit = med['unit'] is Map ? med['unit']['name'] : med['unit']?.toString() ?? 'Unit';
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -84,11 +91,11 @@ class OrderItemsCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: (med['accentColor'] as Color).withOpacity(0.10),
+              color: AppColors.primary.withOpacity(0.10),
               borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(med['icon'] as IconData,
-                color: med['accentColor'] as Color, size: 22),
+            child: const Icon(Icons.medication_rounded,
+                color: AppColors.primary, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -96,7 +103,7 @@ class OrderItemsCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  med['name'] as String,
+                  medName,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 14,
@@ -105,7 +112,7 @@ class OrderItemsCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${med['unit']}  ·  ${item['quantity']}x ${formatRupiah(item['price'] as num)}',
+                  '$medUnit  ·  ${item.quantity}x ${formatRupiah(item.price)}',
                   style: const TextStyle(
                     color: AppColors.textLight,
                     fontSize: 11,
@@ -116,7 +123,7 @@ class OrderItemsCard extends StatelessWidget {
             ),
           ),
           Text(
-            formatRupiah(item['subtotal'] as num),
+            formatRupiah(item.subtotal),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 14,
