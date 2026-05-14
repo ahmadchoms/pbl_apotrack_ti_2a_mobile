@@ -128,8 +128,17 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
         _units.add(_unit!);
       }
 
-      // Note: Model currently doesn't expose batches directly in a way we use here
-      // But we can keep it empty or handle it later if model supports it
+      // Load existing batches into the form
+      if (m.batches != null && m.batches!.isNotEmpty) {
+        for (final b in m.batches!) {
+          _batches.add({
+            'id': b['id'], // Simpan ID agar Laravel tahu ini update batch lama, bukan buat baru
+            'number': b['batch_number'],
+            'exp': b['expired_date']?.toString().split(' ')[0], // Ambil format YYYY-MM-DD saja
+            'stock': b['stock'].toString(),
+          });
+        }
+      }
     } else {
       _addBatch();
     }
@@ -212,6 +221,9 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
       for (var i = 0; i < _batches.length; i++) {
         final b = _batches[i];
         if (b['number'] != null && b['number'].toString().isNotEmpty) {
+          if (b['id'] != null) {
+            formData.fields.add(MapEntry('batches[$i][id]', b['id'].toString()));
+          }
           formData.fields.add(MapEntry('batches[$i][batch_number]', b['number'].toString()));
           formData.fields.add(MapEntry('batches[$i][expired_date]', b['exp'].toString()));
           formData.fields.add(MapEntry('batches[$i][stock]', (int.tryParse(b['stock'].toString()) ?? 0).toString()));
