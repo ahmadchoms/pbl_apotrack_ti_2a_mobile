@@ -56,6 +56,102 @@ final inventoryFilterProvider =
     );
 
 // ─────────────────────────────────────────────
+// PAGINATION STATE
+// ─────────────────────────────────────────────
+
+class PaginationState<T> {
+  final List<T> items;
+  final bool isLoading;
+  final bool isLoadingNextPage;
+  final String? error;
+  final int page;
+  final bool hasMore;
+
+  const PaginationState({
+    this.items = const [],
+    this.isLoading = true,
+    this.isLoadingNextPage = false,
+    this.error,
+    this.page = 1,
+    this.hasMore = true,
+  });
+
+  PaginationState<T> copyWith({
+    List<T>? items,
+    bool? isLoading,
+    bool? isLoadingNextPage,
+    String? error,
+    int? page,
+    bool? hasMore,
+  }) {
+    return PaginationState<T>(
+      items: items ?? this.items,
+      isLoading: isLoading ?? this.isLoading,
+      isLoadingNextPage: isLoadingNextPage ?? this.isLoadingNextPage,
+      error: error,
+      page: page ?? this.page,
+      hasMore: hasMore ?? this.hasMore,
+    );
+  }
+}
+
+class StaffMedicinesNotifier extends StateNotifier<PaginationState<Medicine>> {
+  final Ref ref;
+  static const int _perPage = 15;
+
+  StaffMedicinesNotifier(this.ref) : super(const PaginationState()) {
+    fetchFirstPage();
+  }
+
+  Future<void> fetchFirstPage() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final service = ref.read(staffServiceProvider);
+      final newItems = await service.getMedicines(queryParams: {
+        'page': 1,
+        'per_page': _perPage,
+      });
+      
+      state = state.copyWith(
+        items: newItems,
+        isLoading: false,
+        page: 1,
+        hasMore: newItems.length >= _perPage,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> fetchNextPage() async {
+    if (!state.hasMore || state.isLoadingNextPage || state.isLoading) return;
+
+    state = state.copyWith(isLoadingNextPage: true, error: null);
+    try {
+      final nextPage = state.page + 1;
+      final service = ref.read(staffServiceProvider);
+      final newItems = await service.getMedicines(queryParams: {
+        'page': nextPage,
+        'per_page': _perPage,
+      });
+
+      state = state.copyWith(
+        items: [...state.items, ...newItems],
+        isLoadingNextPage: false,
+        page: nextPage,
+        hasMore: newItems.length >= _perPage,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoadingNextPage: false, error: e.toString());
+    }
+  }
+  
+  void refresh() {
+    fetchFirstPage();
+  }
+}
+
+// ─────────────────────────────────────────────
 // PROVIDERS
 // ─────────────────────────────────────────────
 
@@ -65,69 +161,61 @@ final staffOrdersProvider = FutureProvider<List<Order>>((ref) async {
   return service.getOrders();
 });
 
-/// Provider untuk mengambil daftar obat staf secara asinkron.
-final staffMedicinesProvider = FutureProvider<List<Medicine>>((ref) async {
-  final service = ref.watch(staffServiceProvider);
-  return service.getMedicines();
+/// Provider untuk mengambil daftar obat staf dengan Paginasi.
+final staffMedicinesProvider = StateNotifierProvider<StaffMedicinesNotifier, PaginationState<Medicine>>((ref) {
+  return StaffMedicinesNotifier(ref);
 });
 
 /// Provider untuk mengambil daftar obat + menerapkan filter & sorting secara lokal.
-final filteredMedicinesProvider = Provider<AsyncValue<List<Medicine>>>((ref) {
-  final medicinesAsync = ref.watch(staffMedicinesProvider);
+final filteredMedicinesProvider = Provider<List<Medicine>>((ref) {
+  final medicinesState = ref.watch(staffMedicinesProvider);
   final filter = ref.watch(inventoryFilterProvider);
 
-  return medicinesAsync.whenData((medicines) {
-    var result = List<Medicine>.from(medicines);
+  var result = List<Medicine>.from(medicinesState.items);
 
-    // Filter kategori
-    if (filter.categoryFilter != 'Semua') {
-      result = result
-          .where((m) => m.category == filter.categoryFilter)
-          .toList();
-    }
+  // Filter kategori
+  if (filter.categoryFilter != 'Semua') {
+    result = result
+        .where((m) => m.category == filter.categoryFilter)
+        .toList();
+  }
 
-    // Filter stok
-    result = result.where((m) {
-      final stock = m.totalActiveStock;
-      return switch (filter.stockFilter) {
-        'Stok Kritis' => stock <= 10,
-        'Stok Rendah' => stock <= 20 && stock > 10,
-        'Normal' => stock > 20,
-        _ => true,
-      };
-    }).toList();
+  // Filter stok
+  result = result.where((m) {
+    final stock = m.totalActiveStock;
+    return switch (filter.stockFilter) {
+      'Stok Kritis' => stock <= 10,
+      'Stok Rendah' => stock <= 20 && stock > 10,
+      'Normal' => stock > 20,
+      _ => true,
+    };
+  }).toList();
 
-    // Sorting
-    result.sort((a, b) {
-      return switch (filter.sortBy) {
-        MedicineSortBy.nameAsc => a.name.compareTo(b.name),
-        MedicineSortBy.nameDesc => b.name.compareTo(a.name),
-        MedicineSortBy.stockAsc => a.totalActiveStock.compareTo(
-          b.totalActiveStock,
-        ),
-        MedicineSortBy.stockDesc => b.totalActiveStock.compareTo(
-          a.totalActiveStock,
-        ),
-        MedicineSortBy.priceAsc => a.price.compareTo(b.price),
-        MedicineSortBy.priceDesc => b.price.compareTo(a.price),
-      };
-    });
-
-    return result;
+  // Sorting
+  result.sort((a, b) {
+    return switch (filter.sortBy) {
+      MedicineSortBy.nameAsc => a.name.compareTo(b.name),
+      MedicineSortBy.nameDesc => b.name.compareTo(a.name),
+      MedicineSortBy.stockAsc => a.totalActiveStock.compareTo(b.totalActiveStock),
+      MedicineSortBy.stockDesc => b.totalActiveStock.compareTo(a.totalActiveStock),
+      MedicineSortBy.priceAsc => a.price.compareTo(b.price),
+      MedicineSortBy.priceDesc => b.price.compareTo(a.price),
+    };
   });
+
+  return result;
 });
 
 /// Ekstrak daftar kategori unik dari data obat untuk digunakan di filter sheet.
-final medicineCategoriesProvider = Provider<AsyncValue<List<String>>>((ref) {
-  return ref.watch(staffMedicinesProvider).whenData((medicines) {
-    final cats = <String>{'Semua'};
-    for (final m in medicines) {
-      if (m.category != null && m.category!.isNotEmpty) {
-        cats.add(m.category!);
-      }
+final medicineCategoriesProvider = Provider<List<String>>((ref) {
+  final medicinesState = ref.watch(staffMedicinesProvider);
+  final cats = <String>{'Semua'};
+  for (final m in medicinesState.items) {
+    if (m.category != null && m.category!.isNotEmpty) {
+      cats.add(m.category!);
     }
-    return cats.toList();
-  });
+  }
+  return cats.toList();
 });
 
 /// Provider untuk mengambil riwayat aktivitas staf secara asinkron.

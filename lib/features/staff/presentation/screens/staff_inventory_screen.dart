@@ -17,15 +17,24 @@ class StaffInventoryScreen extends ConsumerStatefulWidget {
 
 class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
   final _searchCtrl = TextEditingController();
+  final _scrollCtrl = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _searchCtrl.addListener(() => setState(() {}));
+    _scrollCtrl.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
+      ref.read(staffMedicinesProvider.notifier).fetchNextPage();
+    }
   }
 
   @override
   void dispose() {
+    _scrollCtrl.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -43,40 +52,53 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredAsync = ref.watch(filteredMedicinesProvider);
-    final rawAsync = ref.watch(staffMedicinesProvider);
+    final filteredList = ref.watch(filteredMedicinesProvider);
+    final state = ref.watch(staffMedicinesProvider);
     final filterState = ref.watch(inventoryFilterProvider);
+
+    if (state.isLoading && state.items.isEmpty) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: const Center(child: CircularProgressIndicator()),
+        floatingActionButton: _buildFab(),
+      );
+    }
+
+    if (state.error != null && state.items.isEmpty) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: _buildErrorState(state.error!),
+        floatingActionButton: _buildFab(),
+      );
+    }
+
+    final allMedicines = state.items;
+    final criticalCount = allMedicines.where((m) => m.totalActiveStock <= 10).length;
+    final lowStockCount = allMedicines.where((m) {
+      final s = m.totalActiveStock;
+      return s <= 20 && s > 10;
+    }).length;
+
+    final displayList = _applySearch(filteredList);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: rawAsync.when(
-        data: (allMedicines) {
-          final criticalCount = allMedicines.where((m) => m.totalActiveStock <= 10).length;
-          final lowStockCount = allMedicines.where((m) {
-            final s = m.totalActiveStock;
-            return s <= 20 && s > 10;
-          }).length;
-
-          final displayList = filteredAsync.whenOrNull(data: (d) => _applySearch(d)) ?? [];
-
-          return Column(
-            children: [
-              _buildHeader(allMedicines.length),
-              if (criticalCount > 0 || lowStockCount > 0)
-                _buildAlertBanner(criticalCount, lowStockCount),
-              _buildSearchAndFilter(filterState),
-              _buildStatRow(displayList.length, filterState),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () => ref.refresh(staffMedicinesProvider.future),
-                  child: _buildList(displayList),
-                ),
-              ),
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => _buildErrorState(err.toString()),
+      body: Column(
+        children: [
+          _buildHeader(allMedicines.length),
+          if (criticalCount > 0 || lowStockCount > 0)
+            _buildAlertBanner(criticalCount, lowStockCount),
+          _buildSearchAndFilter(filterState),
+          _buildStatRow(displayList.length, filterState),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.read(staffMedicinesProvider.notifier).refresh();
+              },
+              child: _buildList(displayList, state.isLoadingNextPage),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: _buildFab(),
     );
@@ -96,7 +118,7 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
             Text(error, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textLight)),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => ref.refresh(staffMedicinesProvider),
+              onPressed: () => ref.read(staffMedicinesProvider.notifier).refresh(),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
               child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
             ),
@@ -261,23 +283,34 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
     };
   }
 
-  Widget _buildList(List<Medicine> medicines) {
+  Widget _buildList(List<Medicine> medicines, bool isLoadingNextPage) {
     if (medicines.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.search_off_rounded, size: 48, color: AppColors.textSubtle),
-            SizedBox(height: 12),
-            Text('Tidak ada obat ditemukan', style: TextStyle(color: AppColors.textLight)),
-          ],
-        ),
+      return ListView( // Pakai ListView agar RefreshIndicator tetap bekerja walau kosong
+        children: [
+          const SizedBox(height: 100),
+          const Icon(Icons.search_off_rounded, size: 48, color: AppColors.textSubtle),
+          const SizedBox(height: 12),
+          const Center(child: Text('Tidak ada obat ditemukan', style: TextStyle(color: AppColors.textLight))),
+        ],
       );
     }
     return ListView.builder(
+      controller: _scrollCtrl,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-      itemCount: medicines.length,
+      itemCount: medicines.length + (isLoadingNextPage ? 1 : 0),
       itemBuilder: (_, i) {
+        if (i == medicines.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: SizedBox(
+                width: 24, height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+              ),
+            ),
+          );
+        }
         final med = medicines[i];
         return MedicineInventoryCard(
           medicine: med,
@@ -290,8 +323,7 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
   }
 
   void _showFilterSheet(BuildContext context) {
-    final categoriesAsync = ref.read(medicineCategoriesProvider);
-    final categories = categoriesAsync.whenOrNull(data: (d) => d) ?? ['Semua'];
+    final categories = ref.read(medicineCategoriesProvider);
     final filterState = ref.read(inventoryFilterProvider);
 
     showModalBottomSheet(

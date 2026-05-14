@@ -103,10 +103,10 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authNotifierProvider).user;
     final ordersAsync = ref.watch(staffOrdersProvider);
-    final medicinesAsync = ref.watch(staffMedicinesProvider);
+    final medicinesState = ref.watch(staffMedicinesProvider);
 
     final orders = ordersAsync.whenOrNull(data: (d) => d) ?? [];
-    final medicines = medicinesAsync.whenOrNull(data: (d) => d) ?? [];
+    final medicines = medicinesState.items;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
