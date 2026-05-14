@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile/features/auth/data/models/user_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../data/services/staff_service.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -83,53 +81,28 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final service = ref.read(staffServiceProvider);
-
-      final Map<String, dynamic> data = {
-        'username': name,
-        'email': email,
-        'phone': phone.isEmpty ? null : phone,
-      };
-
-      final formData = FormData.fromMap(data);
-      if (_pickedFile != null) {
-        if (kIsWeb) {
-          formData.files.add(
-            MapEntry(
-              'image',
-              MultipartFile.fromBytes(
-                await _pickedFile!.readAsBytes(),
-                filename: 'avatar.jpg',
-              ),
-            ),
+      // Panggil metode update di AuthNotifier (Provider)
+      await ref
+          .read(authNotifierProvider.notifier)
+          .updateProfileData(
+            username: name,
+            email: email,
+            phone: phone.isEmpty ? null : phone,
+            imageFile: _pickedFile,
           );
-        } else {
-          formData.files.add(
-            MapEntry(
-              'image',
-              await MultipartFile.fromFile(
-                _pickedFile!.path,
-                filename: 'avatar.jpg',
-              ),
-            ),
-          );
-        }
-      }
-
-      // Laravel needs _method=PUT for multipart POST
-      formData.fields.add(const MapEntry('_method', 'PUT'));
-
-      await service.updateProfile(formData);
-
-      // Refresh user session
-      await ref.read(authNotifierProvider.notifier).updateProfileData();
 
       if (mounted) {
         _showSnack('Profil berhasil diperbarui!');
         context.pop();
       }
     } catch (e) {
-      if (mounted) _showSnack('Gagal: $e', isError: true);
+      if (mounted) {
+        // Ambil pesan error ramah pengguna jika ada
+        final errorMsg = e.toString().contains('DioException')
+            ? 'Gagal terhubung ke server. Periksa koneksi Anda.'
+            : e.toString().replaceAll('Exception:', '');
+        _showSnack(errorMsg, isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

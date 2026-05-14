@@ -101,6 +101,10 @@ class AuthService {
   Future<UserModel> fetchMe() async {
     return await _repository.fetchMe();
   }
+
+  Future<Map<String, dynamic>> updateProfile(dynamic payload) async {
+    return await _repository.updateProfile(payload);
+  }
 }
 
 final authServiceProvider = Provider<AuthService>((ref) {

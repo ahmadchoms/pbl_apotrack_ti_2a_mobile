@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/auth_service.dart';
 
@@ -132,10 +133,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   // ── VERIFY OTP ─────────────────────────────────
-  Future<bool> verifyOtp({
-    required String email,
-    required String otp,
-  }) async {
+  Future<bool> verifyOtp({required String email, required String otp}) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final user = await _authService.finalizeRegistration(
@@ -156,11 +154,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   // ── UPDATE PROFILE ─────────────────────────────
-  Future<void> updateProfileData() async {
+  Future<void> updateProfileData({
+    required String username,
+    required String email,
+    String? phone,
+    dynamic imageFile, // Bisa XFile atau File
+  }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final updatedUser = await _authService.fetchMe();
-      state = state.copyWith(user: updatedUser, isLoading: false);
+      final formData = FormData.fromMap({
+        'username': username,
+        'email': email,
+        if (phone != null) 'phone': phone,
+        '_method': 'PUT', // Penting untuk Laravel Multipart Update
+      });
+
+      if (imageFile != null) {
+        final path = imageFile.path;
+        formData.files.add(
+          MapEntry(
+            'image',
+            await MultipartFile.fromFile(path, filename: 'profile.jpg'),
+          ),
+        );
+      }
+
+      final updatedData = await _authService.updateProfile(formData);
+      final updatedUser = UserModel.fromJson(updatedData);
+
+      if (mounted) {
+        state = state.copyWith(user: updatedUser, isLoading: false);
+      }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
       rethrow;
