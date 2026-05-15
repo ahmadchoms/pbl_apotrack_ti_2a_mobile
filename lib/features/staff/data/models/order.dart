@@ -1,3 +1,51 @@
+class DeliveryTracking {
+  final String? biteshipId;
+  final String? courierName;
+  final String? courierCode;
+  final String? courierService;
+  final String? trackingNumber;
+  final String? trackingUrl;
+  final num deliveryFee;
+  final String status;
+
+  DeliveryTracking({
+    this.biteshipId,
+    this.courierName,
+    this.courierCode,
+    this.courierService,
+    this.trackingNumber,
+    this.trackingUrl,
+    this.deliveryFee = 0,
+    required this.status,
+  });
+
+  factory DeliveryTracking.fromJson(Map<String, dynamic> json) {
+    return DeliveryTracking(
+      biteshipId: json['biteship_id']?.toString(),
+      courierName: json['courier_name']?.toString(),
+      courierCode: json['courier_code']?.toString(),
+      courierService: json['courier_service']?.toString(),
+      trackingNumber: json['tracking_number']?.toString(),
+      trackingUrl: json['tracking_url']?.toString(),
+      deliveryFee: num.tryParse(json['delivery_fee']?.toString() ?? '0') ?? 0,
+      status: json['status']?.toString() ?? 'WAITING_PICKUP',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'biteship_id': biteshipId,
+      'courier_name': courierName,
+      'courier_code': courierCode,
+      'courier_service': courierService,
+      'tracking_number': trackingNumber,
+      'tracking_url': trackingUrl,
+      'delivery_fee': deliveryFee,
+      'status': status,
+    };
+  }
+}
+
 class Order {
   final String id;
   final String orderNumber;
@@ -11,7 +59,7 @@ class Order {
   final String createdAt;
   final Map<String, dynamic> customer;
   final List<OrderItem> items;
-  final Map<String, dynamic>? tracking;
+  final DeliveryTracking? tracking;
   final Map<String, dynamic>? address;
   final String? verificationCode;
 
@@ -34,8 +82,8 @@ class Order {
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
-    // Backend returns 'user' as customer, but we can also handle 'buyer'
     final userData = json['user'] ?? json['buyer'] ?? {};
+    final trackingData = json['delivery_tracking'] ?? json['tracking'];
     
     return Order(
       id: json['id']?.toString() ?? '',
@@ -52,7 +100,7 @@ class Order {
       items: (json['items'] as List? ?? [])
           .map((i) => OrderItem.fromJson(i))
           .toList(),
-      tracking: json['delivery_tracking'] ?? json['tracking'],
+      tracking: trackingData != null ? DeliveryTracking.fromJson(trackingData) : null,
       address: json['address'],
       verificationCode: json['verification_code']?.toString(),
     );

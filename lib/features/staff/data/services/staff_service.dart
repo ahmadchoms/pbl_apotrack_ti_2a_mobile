@@ -28,6 +28,10 @@ class StaffService {
     await _repository.updateOrderStatus(orderId, status);
   }
 
+  Future<void> shipOrder(String orderId, String courierCode, String courierService) async {
+    await _repository.shipOrder(orderId, courierCode, courierService);
+  }
+
   // --- INVENTARIS (MEDICINES) ---
 
   Future<List<Medicine>> getMedicines({Map<String, dynamic>? queryParams}) async {

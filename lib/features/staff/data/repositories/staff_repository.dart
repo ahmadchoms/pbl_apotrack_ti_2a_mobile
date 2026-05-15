@@ -19,6 +19,12 @@ class StaffRepository {
   Future<Response> updateOrderStatus(String id, String status) =>
       _dio.patch('/staff/orders/$id/status', data: {'status': status});
 
+  Future<Response> shipOrder(String id, String courierCode, String courierService) =>
+      _dio.post('/staff/orders/$id/ship', data: {
+        'courier_code': courierCode,
+        'courier_service': courierService,
+      });
+
   // --- INVENTARIS (MEDICINES) ---
   Future<Response> getMedicines(Map<String, dynamic>? queryParams) =>
       _dio.get('/staff/medicines', queryParameters: queryParams);

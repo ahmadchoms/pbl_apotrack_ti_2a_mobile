@@ -20,8 +20,11 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
   final _tabs = const [
     {'status': 'PENDING', 'label': 'Pending'},
     {'status': 'PROCESSING', 'label': 'Diproses'},
-    {'status': 'READY', 'label': 'Siap'},
+    {'status': 'READY_FOR_PICKUP', 'label': 'Siap'},
+    {'status': 'SHIPPED', 'label': 'Dikirim'},
+    {'status': 'DELIVERED', 'label': 'Diterima'},
     {'status': 'COMPLETED', 'label': 'Selesai'},
+    {'status': 'CANCELLED', 'label': 'Dibatalkan'},
   ];
 
   @override
@@ -57,10 +60,14 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
                 child: TabBarView(
                   controller: _tabController,
                   children: _tabs
-                      .map((t) => _OrderListView(
-                            status: t['status']!,
-                            orders: allOrders.where((o) => o.orderStatus == t['status']).toList(),
-                          ))
+                      .map(
+                        (t) => _OrderListView(
+                          status: t['status']!,
+                          orders: allOrders
+                              .where((o) => o.orderStatus == t['status'])
+                              .toList(),
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -80,7 +87,11 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off_rounded, color: AppColors.danger, size: 64),
+            const Icon(
+              Icons.wifi_off_rounded,
+              color: AppColors.danger,
+              size: 64,
+            ),
             const SizedBox(height: 16),
             const Text(
               'Gagal Mengambil Data',
@@ -95,8 +106,13 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => ref.refresh(staffOrdersProvider),
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: const Text(
+                'Coba Lagi',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -139,12 +155,17 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
               GestureDetector(
                 onTap: () => context.push('/staff/notifications'),
                 child: Container(
-                  width: 38, height: 38,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.notifications_none_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
               ),
             ],
@@ -157,9 +178,21 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
   Widget _buildSummaryStrip(List<Order> orders) {
     final stats = [
       {'label': 'Total', 'value': orders.length, 'color': AppColors.primary},
-      {'label': 'Pending', 'value': _countByStatus(orders, 'PENDING'), 'color': AppColors.warning},
-      {'label': 'Diproses', 'value': _countByStatus(orders, 'PROCESSING'), 'color': AppColors.primary},
-      {'label': 'Selesai', 'value': _countByStatus(orders, 'COMPLETED'), 'color': AppColors.success},
+      {
+        'label': 'Siap',
+        'value': _countByStatus(orders, 'READY_FOR_PICKUP'),
+        'color': AppColors.success,
+      },
+      {
+        'label': 'Dikirim',
+        'value': _countByStatus(orders, 'SHIPPED'),
+        'color': AppColors.accentIndigo,
+      },
+      {
+        'label': 'Selesai',
+        'value': _countByStatus(orders, 'COMPLETED'),
+        'color': AppColors.textMid,
+      },
     ];
 
     return Container(
@@ -181,7 +214,11 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
                 const SizedBox(height: 2),
                 Text(
                   s['label'] as String,
-                  style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textLight,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -215,9 +252,14 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
                     if (count > 0 && t['status'] != 'COMPLETED') ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
-                          color: t['status'] == 'PENDING' ? AppColors.warningLight : AppColors.primaryLight,
+                          color: t['status'] == 'PENDING'
+                              ? AppColors.warningLight
+                              : AppColors.primaryLight,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -225,7 +267,9 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w900,
-                            color: t['status'] == 'PENDING' ? AppColors.warning : AppColors.primary,
+                            color: t['status'] == 'PENDING'
+                                ? AppColors.warning
+                                : AppColors.primary,
                           ),
                         ),
                       ),
@@ -257,7 +301,8 @@ class _OrderListView extends StatelessWidget {
       itemCount: orders.length,
       itemBuilder: (_, i) {
         final order = orders[i];
-        final statusCfg = _statusMap[order.orderStatus] ?? _statusMap['PENDING']!;
+        final statusCfg =
+            _statusMap[order.orderStatus] ?? _statusMap['PENDING']!;
         return OrderListCard(
           order: order,
           statusConfig: {
@@ -274,15 +319,61 @@ class _OrderListView extends StatelessWidget {
 }
 
 const Map<String, _StatusConfig> _statusMap = {
-  'PENDING': _StatusConfig(label: 'Pending', color: AppColors.warning, bgColor: AppColors.warningLight, icon: Icons.hourglass_top_rounded),
-  'PROCESSING': _StatusConfig(label: 'Diproses', color: AppColors.primary, bgColor: AppColors.primaryLight, icon: Icons.autorenew_rounded),
-  'READY': _StatusConfig(label: 'Siap', color: AppColors.success, bgColor: AppColors.successLight, icon: Icons.check_circle_rounded),
-  'COMPLETED': _StatusConfig(label: 'Selesai', color: AppColors.textMid, bgColor: AppColors.background, icon: Icons.done_all_rounded),
+  'PENDING': _StatusConfig(
+    label: 'Pending',
+    color: AppColors.warning,
+    bgColor: AppColors.warningLight,
+    icon: Icons.hourglass_top_rounded,
+  ),
+  'PROCESSING': _StatusConfig(
+    label: 'Diproses',
+    color: AppColors.primary,
+    bgColor: AppColors.primaryLight,
+    icon: Icons.autorenew_rounded,
+  ),
+  'READY_FOR_PICKUP': _StatusConfig(
+    label: 'Siap',
+    color: AppColors.success,
+    bgColor: AppColors.successLight,
+    icon: Icons.check_circle_rounded,
+  ),
+  'SHIPPED': _StatusConfig(
+    label: 'Dikirim',
+    color: AppColors.accentIndigo,
+    bgColor: AppColors.primaryLight,
+    icon: Icons.local_shipping_rounded,
+  ),
+  'DELIVERED': _StatusConfig(
+    label: 'Diterima',
+    color: AppColors.success,
+    bgColor: AppColors.successLight,
+    icon: Icons.inventory_2_rounded,
+  ),
+  'COMPLETED': _StatusConfig(
+    label: 'Selesai',
+    color: AppColors.textMid,
+    bgColor: AppColors.background,
+    icon: Icons.done_all_rounded,
+  ),
+  'CANCELLED': _StatusConfig(
+    label: 'Dibatalkan',
+    color: AppColors.danger,
+    bgColor: AppColors.dangerLight,
+    icon: Icons.cancel_rounded,
+  ),
 };
 
 class _StatusConfig {
-  final String label; final Color color; final Color bgColor; final IconData icon;
-  const _StatusConfig({required this.label, required this.color, required this.bgColor, required this.icon});
+  final String label;
+  final Color color;
+  final Color bgColor;
+  final IconData icon;
+  const _StatusConfig({
+    required this.label,
+    required this.color,
+    required this.bgColor,
+    required this.icon,
+  });
 }
 
 String _formatRupiah(num value) {

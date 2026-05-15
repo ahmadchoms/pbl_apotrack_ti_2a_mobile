@@ -14,11 +14,12 @@ class OrderStatusTimeline extends StatelessWidget {
     final steps = [
       {'status': 'PENDING', 'label': 'Diterima', 'icon': Icons.inbox_rounded},
       {'status': 'PROCESSING', 'label': 'Diproses', 'icon': Icons.autorenew_rounded},
-      {'status': 'READY', 'label': 'Siap', 'icon': Icons.check_circle_outline_rounded},
+      {'status': 'READY_FOR_PICKUP', 'label': 'Siap', 'icon': Icons.check_circle_outline_rounded},
+      {'status': 'SHIPPED', 'label': 'Dikirim', 'icon': Icons.local_shipping_rounded},
       {'status': 'COMPLETED', 'label': 'Selesai', 'icon': Icons.done_all_rounded},
     ];
 
-    final statusOrder = ['PENDING', 'PROCESSING', 'READY', 'COMPLETED'];
+    final statusOrder = ['PENDING', 'PROCESSING', 'READY_FOR_PICKUP', 'SHIPPED', 'COMPLETED', 'DELIVERED'];
     final currentIdx = statusOrder.indexOf(currentStatus);
 
     return Container(

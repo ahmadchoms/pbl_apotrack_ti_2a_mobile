@@ -1,20 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../data/models/order.dart';
 
 class DeliveryInfoCard extends StatelessWidget {
   final Order order;
 
-  const DeliveryInfoCard({
-    super.key,
-    required this.order,
-  });
+  const DeliveryInfoCard({super.key, required this.order});
+
+  // Mapping Kurir UX Friendly
+  static const Map<String, String> _courierMap = {
+    'jne': 'JNE Express',
+    'jnt': 'J&T Express',
+    'sicepat': 'SiCepat',
+    'gojek': 'GoSend',
+    'grab': 'GrabExpress',
+    'anteraja': 'AnterAja',
+    'tiki': 'TIKI',
+    'pos': 'POS Indonesia',
+  };
+
+  // Mapping Status Biteship UX Friendly
+  static const Map<String, Map<String, dynamic>> _statusMap = {
+    'WAITING': {'label': 'Menunggu Proses', 'color': AppColors.textMid},
+    'ALLOCATING_COURIER': {
+      'label': 'Mencari Kurir',
+      'color': AppColors.warning,
+    },
+    'PICKING_UP': {'label': 'Menuju Penjemputan', 'color': AppColors.primary},
+    'PICKED_UP': {'label': 'Paket Diambil', 'color': AppColors.primary},
+    'DROPPING_OFF': {
+      'label': 'Sedang Diantar',
+      'color': AppColors.accentIndigo,
+    },
+    'DELIVERED': {'label': 'Sampai Tujuan', 'color': AppColors.success},
+    'COMPLETED': {'label': 'Selesai', 'color': AppColors.success},
+    'CANCELLED': {'label': 'Dibatalkan', 'color': AppColors.danger},
+    'REJECTED': {'label': 'Ditolak', 'color': AppColors.danger},
+    'COURIER_NOT_FOUND': {
+      'label': 'Kurir Tidak Ditemukan',
+      'color': AppColors.danger,
+    },
+  };
+
+  Future<void> _openTrackingUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final tracking = order.tracking;
-    final address = order.address ?? {};
+    final address = order.address;
+
+    // Get UX Friendly Status
+    final statusKey = tracking?.status?.toUpperCase() ?? 'WAITING';
+    final statusInfo =
+        _statusMap[statusKey] ??
+        {'label': statusKey, 'color': AppColors.textMid};
+
+    // Get UX Friendly Courier Name
+    final rawCourier =
+        tracking?.courierCode?.toLowerCase() ??
+        tracking?.courierName?.toLowerCase() ??
+        '';
+    final courierName = _courierMap[rawCourier] ?? tracking?.courierName ?? '-';
 
     return AppCard(
       child: Column(
@@ -31,21 +86,27 @@ class DeliveryInfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           // Recipient block
-          if (address['recipient_name'] != null || address['phone_number'] != null) ...[
-            Row(
-              children: [
-                const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.textLight),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${address['recipient_name'] ?? 'Penerima'} • ${address['phone_number'] ?? '-'}',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textDark),
+          Row(
+            children: [
+              const Icon(
+                Icons.person_outline_rounded,
+                size: 14,
+                color: AppColors.textLight,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${order.customer['username'] ?? 'Penerima'} • ${order.customer['phone'] ?? '-'}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           // Address block
           Container(
             padding: const EdgeInsets.all(12),
@@ -63,8 +124,11 @@ class DeliveryInfoCard extends StatelessWidget {
                     color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: const Icon(Icons.location_on_rounded,
-                      color: AppColors.primary, size: 18),
+                  child: const Icon(
+                    Icons.location_on_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -81,7 +145,7 @@ class DeliveryInfoCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '${address['address_line'] ?? '-'}${address['city'] != null ? ", ${address['city']}" : ""}${address['province'] != null ? ", ${address['province']}" : ""}',
+                        address?['address_detail'] ?? '-',
                         style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textDark,
@@ -103,26 +167,60 @@ class DeliveryInfoCard extends StatelessWidget {
                 child: _InfoTile(
                   icon: Icons.local_shipping_rounded,
                   label: 'Kurir',
-                  value: tracking?['courier_name']?.toString() ?? '-',
+                  value: tracking != null
+                      ? '$courierName - ${tracking.courierService?.toUpperCase()}'
+                      : '-',
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _InfoTile(
-                  icon: Icons.near_me_rounded,
-                  label: 'Jarak',
-                  value: '${address['distance'] ?? 0} km',
+                  icon: Icons.info_outline_rounded,
+                  label: 'Status Kurir',
+                  value: statusInfo['label'],
+                  highlight: true,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
+          // Resi tile with copy
           _InfoTile(
             icon: Icons.qr_code_rounded,
-            label: 'No. Resi',
-            value: tracking?['tracking_number']?.toString() ?? '-',
-            highlight: true,
+            label: 'No. Resi / AWB',
+            value: tracking?.trackingNumber ?? '-',
+            highlight: tracking?.trackingNumber != null,
+            trailing: tracking?.trackingNumber != null
+                ? GestureDetector(
+                    onTap: () {
+                      Clipboard.setData(
+                        ClipboardData(text: tracking!.trackingNumber!),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Resi disalin!'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                    child: const Icon(
+                      Icons.copy_rounded,
+                      size: 14,
+                      color: AppColors.primary,
+                    ),
+                  )
+                : null,
           ),
+          if (tracking?.trackingUrl != null) ...[
+            const SizedBox(height: 16),
+            AppButton(
+              label: 'Lacak Paket (Biteship)',
+              icon: Icons.open_in_new_rounded,
+              backgroundColor: AppColors.primaryLight,
+              foregroundColor: AppColors.primary,
+              onPressed: () => _openTrackingUrl(tracking!.trackingUrl!),
+            ),
+          ],
         ],
       ),
     );
@@ -134,12 +232,14 @@ class _InfoTile extends StatelessWidget {
   final String label;
   final String value;
   final bool highlight;
+  final Widget? trailing;
 
   const _InfoTile({
     required this.icon,
     required this.label,
     required this.value,
     this.highlight = false,
+    this.trailing,
   });
 
   @override
@@ -161,11 +261,14 @@ class _InfoTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 9,
-                        color: AppColors.textLight,
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: AppColors.textLight,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 Text(
                   value,
                   style: TextStyle(
@@ -179,6 +282,7 @@ class _InfoTile extends StatelessWidget {
               ],
             ),
           ),
+          if (trailing != null) trailing!,
         ],
       ),
     );
