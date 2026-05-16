@@ -260,7 +260,11 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
           ),
         );
         ref.invalidate(staffMedicinesProvider);
-        context.pop();
+        if (isEdit) {
+          context.go('/staff/inventory');
+        } else {
+          context.pop();
+        }
       }
     } catch (e) {
       String errorMessage = e.toString();
