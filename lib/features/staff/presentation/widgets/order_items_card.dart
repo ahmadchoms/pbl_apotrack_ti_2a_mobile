@@ -39,14 +39,17 @@ class OrderItemsCard extends StatelessWidget {
           const Divider(height: 24),
           _PriceRow(label: 'Subtotal Produk', value: formatRupiah(subtotal)),
           const SizedBox(height: 6),
-          _PriceRow(label: 'Biaya Ongkir', value: formatRupiah(shippingCost)),
+          _PriceRow(
+            label: 'Biaya Layanan/Ongkir',
+            value: formatRupiah(shippingCost),
+          ),
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: AppColors.primaryLight,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.primary.withOpacity(0.1)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -77,12 +80,11 @@ class OrderItemsCard extends StatelessWidget {
 
   Widget _buildItemRow(OrderItem item) {
     final med = item.medicine;
-    // Note: medicine field in OrderItem model is still Map<String, dynamic> 
-    // because it might be a nested object from API. 
-    // We can parse it here or update model later.
     final medName = med['name']?.toString() ?? 'Obat';
-    final medUnit = med['unit'] is Map ? med['unit']['name'] : med['unit']?.toString() ?? 'Unit';
-    
+    final medUnit = med['unit'] is Map
+        ? med['unit']['name']
+        : med['unit']?.toString() ?? 'Unit';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -92,10 +94,13 @@ class OrderItemsCard extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: AppColors.primary.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(11),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.medication_rounded,
-                color: AppColors.primary, size: 22),
+            child: const Icon(
+              Icons.medication_rounded,
+              color: AppColors.primary,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -146,16 +151,22 @@ class _PriceRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: const TextStyle(
-                color: AppColors.textMid,
-                fontSize: 12,
-                fontWeight: FontWeight.w600)),
-        Text(value,
-            style: const TextStyle(
-                color: AppColors.textDark,
-                fontSize: 13,
-                fontWeight: FontWeight.w800)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.textMid,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: AppColors.textDark,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ],
     );
   }

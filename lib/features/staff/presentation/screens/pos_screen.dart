@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-import 'package:dio/dio.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../providers/staff_provider.dart';
@@ -22,6 +22,7 @@ class PosScreen extends ConsumerStatefulWidget {
 class _PosScreenState extends ConsumerState<PosScreen> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
+  final _notesController = TextEditingController();
   String _selectedCategory = 'Semua';
   Timer? _debounce;
 
@@ -33,7 +34,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       ref.read(staffMedicinesProvider.notifier).fetchNextPage();
     }
   }
@@ -51,6 +53,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     _scrollController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -65,14 +68,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }).toList();
   }
 
-  List<String> _getCategories(List<Medicine> medicines) {
-    final cats = <String>{'Semua'};
-    for (final m in medicines) {
-      if (m.category != null && m.category!.isNotEmpty) cats.add(m.category!);
-    }
-    return cats.toList();
-  }
-
   int _getCartQty(String id) {
     final cart = ref.read(posCartProvider);
     final idx = cart.indexWhere((item) => item.medicine.id == id);
@@ -85,7 +80,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final cart = ref.watch(posCartProvider);
     final cartNotifier = ref.read(posCartProvider.notifier);
     final user = ref.watch(authNotifierProvider).user;
-
     final categories = ref.watch(medicineCategoriesProvider);
 
     return Scaffold(
@@ -99,7 +93,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             Expanded(child: _buildErrorState(state.error!))
           else ...[
             _buildSearchAndFilter(categories),
-            Expanded(child: _buildGrid(_applyFilter(state.items), state.isLoadingNextPage)),
+            Expanded(
+              child: _buildGrid(
+                _applyFilter(state.items),
+                state.isLoadingNextPage,
+              ),
+            ),
           ],
           _buildStickyCartBar(cart, cartNotifier),
         ],
@@ -111,28 +110,31 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 16,
-        bottom: 20,
+        bottom: 24,
         left: 20,
         right: 20,
       ),
       decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withOpacity(0.15),
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: Colors.white,
-                size: 20,
               ),
             ),
           ),
@@ -145,12 +147,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   'Point of Sale',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 2),
                 Text(
                   pharmacyName,
                   style: TextStyle(
@@ -162,29 +163,31 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFF10B981).withOpacity(0.5),
-              ),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.circle, color: Color(0xFF10B981), size: 8),
-                SizedBox(width: 6),
-                Text(
-                  'Kasir Aktif',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+          _buildStatusBadge(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.success.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.circle, color: AppColors.success, size: 8),
+          SizedBox(width: 8),
+          Text(
+            'Kasir Aktif',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -193,92 +196,79 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Widget _buildSearchAndFilter(List<String> categories) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-          child: Container(
-            height: 48,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+      child: Column(
+        children: [
+          Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: TextField(
               controller: _searchController,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textDark,
-                fontWeight: FontWeight.w500,
-              ),
               decoration: InputDecoration(
-                hintText: 'Cari SKU atau nama obat...',
-                hintStyle: const TextStyle(
-                  color: AppColors.textLight,
-                  fontSize: 14,
-                ),
+                hintText: 'Cari nama obat atau SKU...',
                 prefixIcon: const Icon(
                   Icons.search_rounded,
-                  color: AppColors.textMid,
-                  size: 22,
+                  color: AppColors.primary,
                 ),
                 suffixIcon: _searchController.text.isNotEmpty
-                    ? GestureDetector(
-                        onTap: () {
-                          _searchController.clear();
-                          setState(() {});
-                        },
-                        child: const Icon(
-                          Icons.cancel_rounded,
-                          color: AppColors.textLight,
-                          size: 18,
-                        ),
+                    ? IconButton(
+                        icon: const Icon(Icons.cancel_rounded),
+                        onPressed: () => _searchController.clear(),
                       )
                     : null,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 15),
               ),
             ),
           ),
-        ),
-        SizedBox(
-          height: 38,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (_, i) => _buildChip(categories[i]),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 38,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: categories.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, i) => _buildCategoryChip(categories[i]),
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildChip(String cat) {
+  Widget _buildCategoryChip(String cat) {
     final isSelected = _selectedCategory == cat;
     return GestureDetector(
-      onTap: () => setState(() => _selectedCategory = cat),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _selectedCategory = cat);
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.textDark : Colors.white,
+          color: isSelected ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.textDark : AppColors.divider,
+            color: isSelected ? AppColors.primary : AppColors.divider,
           ),
         ),
         child: Text(
           cat,
           style: TextStyle(
             color: isSelected ? Colors.white : AppColors.textMid,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
             fontSize: 13,
           ),
         ),
@@ -287,42 +277,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Widget _buildGrid(List<Medicine> filtered, bool isLoadingNextPage) {
-    if (filtered.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.inventory_2_outlined,
-                size: 48,
-                color: AppColors.textLight,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Data tidak ditemukan',
-              style: TextStyle(
-                color: AppColors.textDark,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Coba kata kunci atau kategori lain',
-              style: TextStyle(color: AppColors.textLight, fontSize: 13),
-            ),
-          ],
-        ),
-      );
-    }
-    
+    if (filtered.isEmpty) return _buildEmptyState();
+
     return GridView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -330,132 +286,134 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.65,
+        childAspectRatio: 0.62,
       ),
-      itemCount: filtered.length + (isLoadingNextPage ? 2 : 0), // +2 to keep grid even if needed, but we can just use item builder
+      itemCount: filtered.length + (isLoadingNextPage ? 2 : 0),
       itemBuilder: (_, i) {
-        if (i >= filtered.length) {
-          return const Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary));
-        }
+        if (i >= filtered.length)
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
         final med = filtered[i];
         return PosProductCard(
           medicine: med,
           cartQty: _getCartQty(med.id),
-          onAdd: () {
-            HapticFeedback.lightImpact();
-            try {
-              ref.read(posCartProvider.notifier).addItem(med);
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(e.toString().replaceAll('Exception: ', '')),
-                  backgroundColor: AppColors.danger,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            }
-          },
+          onAdd: () => ref.read(posCartProvider.notifier).addItem(med),
+          onRemove: () =>
+              ref.read(posCartProvider.notifier).subtractItem(med.id),
         );
       },
     );
   }
 
-  Widget _buildStickyCartBar(List<CartItem> cart, PosCartNotifier notifier) {
-    final totalItems = cart.fold(0, (sum, item) => sum + item.quantity);
-    final totalPrice = notifier.totalPrice;
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.inventory_2_outlined,
+            size: 64,
+            color: AppColors.textSubtle.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Produk tidak ditemukan',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: AppColors.textDark,
+            ),
+          ),
+          const Text(
+            'Coba gunakan kata kunci lain',
+            style: TextStyle(color: AppColors.textLight),
+          ),
+        ],
+      ),
+    );
+  }
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-      height: cart.isNotEmpty ? 90 : 0,
+  Widget _buildStickyCartBar(List<CartItem> cart, PosCartNotifier notifier) {
+    if (cart.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        MediaQuery.of(context).padding.bottom + 16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
         ],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Total ($totalItems item)',
-                        style: const TextStyle(
-                          color: AppColors.textLight,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _formatRupiah(totalPrice),
-                        style: const TextStyle(
-                          color: AppColors.textDark,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
+                Text(
+                  'Total Tagihan',
+                  style: TextStyle(
+                    color: AppColors.textLight,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (ctx) =>
-                          _CartSheetWrapper(onCheckout: _showPaymentModal),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.shopping_bag_outlined,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Keranjang',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+                Text(
+                  _formatRupiah(notifier.totalPrice),
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
                   ),
                 ),
               ],
             ),
           ),
-        ),
+          ElevatedButton.icon(
+            onPressed: () => _openCartSheet(),
+            icon: const Icon(
+              Icons.shopping_cart_checkout_rounded,
+              color: Colors.white,
+            ),
+            label: const Text(
+              'KERANJANG',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openCartSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _CartSheetWrapper(
+        onCheckout: _showPaymentModal,
+        notesController: _notesController,
       ),
     );
   }
@@ -465,42 +423,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.danger.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.cloud_off_rounded,
-              color: AppColors.danger,
-              size: 40,
-            ),
-          ),
+          const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.danger),
           const SizedBox(height: 16),
-          const Text(
-            'Koneksi Terputus',
-            style: TextStyle(
-              color: AppColors.textDark,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              error,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textLight, fontSize: 13),
-            ),
-          ),
-          const SizedBox(height: 24),
-          AppButton(
-            width: 160,
-            label: 'Muat Ulang',
-            icon: Icons.refresh_rounded,
-            onPressed: () => ref.read(staffMedicinesProvider.notifier).refresh(),
+          Text(error, textAlign: TextAlign.center),
+          TextButton(
+            onPressed: () =>
+                ref.read(staffMedicinesProvider.notifier).refresh(),
+            child: const Text('Coba Lagi'),
           ),
         ],
       ),
@@ -511,76 +440,75 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final method = await showModalBottomSheet<String>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).padding.bottom + 20,
-            left: 20,
-            right: 20,
-            top: 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Pilih Metode Pembayaran',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: AppColors.divider.withOpacity(0.5)),
-                ),
-                leading: const Icon(
-                  Icons.money_rounded,
-                  color: AppColors.primary,
-                  size: 28,
-                ),
-                title: const Text(
-                  'Tunai (CASH)',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                onTap: () => Navigator.pop(context, 'CASH'),
-              ),
-              const SizedBox(height: 12),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: AppColors.divider.withOpacity(0.5)),
-                ),
-                leading: const Icon(
-                  Icons.qr_code_2_rounded,
-                  color: AppColors.primary,
-                  size: 28,
-                ),
-                title: const Text(
-                  'QRIS',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                onTap: () => Navigator.pop(context, 'QRIS'),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (context) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(context).padding.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Metode Pembayaran',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 20),
+            _buildPaymentOption(
+              context,
+              'CASH',
+              'Tunai / Cash',
+              Icons.payments_rounded,
+            ),
+            const SizedBox(height: 12),
+            _buildPaymentOption(
+              context,
+              'QRIS',
+              'QRIS Dinamis',
+              Icons.qr_code_scanner_rounded,
+            ),
+          ],
+        ),
+      ),
     );
 
-    if (method != null) {
-      return await _submitOrder(method);
-    }
+    if (method != null) return await _submitOrder(method);
     return false;
+  }
+
+  Widget _buildPaymentOption(
+    BuildContext context,
+    String value,
+    String label,
+    IconData icon,
+  ) {
+    return ListTile(
+      onTap: () => Navigator.pop(context, value),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.primaryLight,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: AppColors.primary),
+      ),
+      title: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+      ),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        color: AppColors.textLight,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.divider),
+      ),
+    );
   }
 
   Future<bool> _submitOrder(String paymentMethod) async {
@@ -599,51 +527,28 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         )
         .toList();
 
-    final orderTotal = notifier.totalPrice;
-
     try {
       processingNotifier.state = true;
-
       await service.storePosOrder({
         'items': items,
-        'total': orderTotal,
+        'total': notifier.totalPrice,
         'payment_method': paymentMethod,
+        'notes': _notesController.text.trim(),
       });
 
       if (mounted) {
         notifier.clearCart();
+        _notesController.clear();
         ref.read(staffMedicinesProvider.notifier).refresh();
-        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Transaksi Berhasil disimpan!'),
             backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
           ),
         );
       }
       return true;
     } catch (e) {
-      if (mounted) {
-        String errorMsg = 'Gagal memproses transaksi';
-
-        if (e is DioException && e.response != null) {
-          if (e.response?.statusCode == 422) {
-            final data = e.response?.data;
-            if (data is Map && data.containsKey('message')) {
-              errorMsg = data['message'];
-            }
-          }
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMsg),
-            backgroundColor: AppColors.danger,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
       return false;
     } finally {
       processingNotifier.state = false;
@@ -651,9 +556,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 }
 
+// --- Cart Sheet Wrapper & UI Components (As Refactored Previously) ---
+
 class _CartSheetWrapper extends ConsumerWidget {
   final Future<bool> Function() onCheckout;
-  const _CartSheetWrapper({required this.onCheckout});
+  final TextEditingController notesController;
+
+  const _CartSheetWrapper({
+    required this.onCheckout,
+    required this.notesController,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -665,51 +577,16 @@ class _CartSheetWrapper extends ConsumerWidget {
       cart: cart,
       totalPrice: notifier.totalPrice,
       isProcessing: isProcessing,
+      notesController: notesController,
       onRemove: (id) => notifier.removeItem(id),
-      onUpdateQty: (id, delta) {
-        try {
-          notifier.updateQuantity(id, delta);
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
-              backgroundColor: AppColors.warning,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      },
+      onUpdateQty: (id, delta) => notifier.updateQuantity(id, delta),
       onClearCart: () {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Kosongkan Keranjang?'),
-            content: const Text('Semua item akan dihapus dari keranjang.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Batal'),
-              ),
-              TextButton(
-                onPressed: () {
-                  notifier.clearCart();
-                  Navigator.pop(ctx);
-                  Navigator.pop(context);
-                },
-                child: const Text(
-                  'Kosongkan',
-                  style: TextStyle(color: AppColors.danger),
-                ),
-              ),
-            ],
-          ),
-        );
+        notifier.clearCart();
+        Navigator.pop(context);
       },
       onCheckout: () async {
-        await onCheckout();
-        if (context.mounted) {
-          Navigator.pop(context); // Tutup sheet baik saat sukses maupun error
-        }
+        final success = await onCheckout();
+        if (success && context.mounted) Navigator.pop(context);
       },
     );
   }
@@ -719,6 +596,7 @@ class _CartSheet extends StatelessWidget {
   final List<CartItem> cart;
   final double totalPrice;
   final bool isProcessing;
+  final TextEditingController notesController;
   final Function(String) onRemove;
   final Function(String, int) onUpdateQty;
   final VoidCallback onClearCart;
@@ -728,6 +606,7 @@ class _CartSheet extends StatelessWidget {
     required this.cart,
     required this.totalPrice,
     required this.isProcessing,
+    required this.notesController,
     required this.onRemove,
     required this.onUpdateQty,
     required this.onClearCart,
@@ -740,66 +619,34 @@ class _CartSheet extends StatelessWidget {
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
         color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Column(
         children: [
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 48,
-              height: 5,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(10),
-              ),
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+            padding: const EdgeInsets.all(24),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
                   'Rincian Pesanan',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textDark,
-                  ),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                 ),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${cart.length} Produk',
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline_rounded,
-                        color: AppColors.danger,
-                      ),
-                      onPressed: cart.isEmpty || isProcessing
-                          ? null
-                          : onClearCart,
-                      tooltip: 'Kosongkan Keranjang',
-                    ),
-                  ],
+                IconButton(
+                  onPressed: onClearCart,
+                  icon: const Icon(
+                    Icons.delete_sweep_rounded,
+                    color: AppColors.danger,
+                  ),
                 ),
               ],
             ),
@@ -815,42 +662,116 @@ class _CartSheet extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            padding: EdgeInsets.only(
-              left: 24,
-              right: 24,
-              top: 20,
-              bottom: MediaQuery.of(context).padding.bottom + 20,
-            ),
-            decoration: const BoxDecoration(color: Colors.white),
-            child: Column(
+          _buildNotesSection(),
+          _buildFooter(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotesSection() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.primaryLight.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Total Tagihan',
-                      style: TextStyle(color: AppColors.textMid),
-                    ),
-                    Text(
-                      _formatRupiah(totalPrice),
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
+                Icon(
+                  Icons.sticky_note_2_outlined,
+                  size: 16,
+                  color: AppColors.primary,
                 ),
-                const SizedBox(height: 24),
-                AppButton(
-                  label: isProcessing ? 'Memproses...' : 'Proses Pembayaran',
-                  icon: isProcessing ? null : Icons.payments_outlined,
-                  isLoading: isProcessing,
-                  onPressed: cart.isEmpty || isProcessing ? null : onCheckout,
+                SizedBox(width: 8),
+                Text(
+                  'Catatan',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                  ),
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: notesController,
+              maxLines: 2,
+              style: const TextStyle(fontSize: 13),
+              decoration: InputDecoration(
+                hintText: 'Tulis instruksi penggunaan...',
+                hintStyle: TextStyle(
+                  color: AppColors.textLight.withOpacity(0.7),
+                  fontSize: 13,
+                ),
+                fillColor: Colors.white,
+                filled: true,
+                contentPadding: const EdgeInsets.all(12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooter(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        24,
+        20,
+        24,
+        MediaQuery.of(context).padding.bottom + 20,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Total Tagihan',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textMid,
+                ),
+              ),
+              Text(
+                _formatRupiah(totalPrice),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          AppButton(
+            label: isProcessing ? 'Memproses...' : 'Proses Pembayaran',
+            onPressed: cart.isEmpty || isProcessing ? null : onCheckout,
+            isLoading: isProcessing,
           ),
         ],
       ),
@@ -858,22 +779,16 @@ class _CartSheet extends StatelessWidget {
   }
 
   Widget _buildCartRow(CartItem item) {
-    final isObatKeras =
-        item.medicine.category?.toLowerCase().contains('obat keras') == true ||
-        item.medicine.requiresPrescription;
-
     return Row(
       children: [
         Container(
-          width: 64,
-          height: 64,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
             color: AppColors.background,
             borderRadius: BorderRadius.circular(12),
           ),
-          child:
-              item.medicine.imageUrl != null &&
-                  item.medicine.imageUrl!.isNotEmpty
+          child: item.medicine.imageUrl != null
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.network(
@@ -881,10 +796,7 @@ class _CartSheet extends StatelessWidget {
                     fit: BoxFit.cover,
                   ),
                 )
-              : const Icon(
-                  Icons.medication_outlined,
-                  color: AppColors.textLight,
-                ),
+              : const Icon(Icons.medication),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -893,108 +805,50 @@ class _CartSheet extends StatelessWidget {
             children: [
               Text(
                 item.medicine.name,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Text(
-                    _formatRupiah(item.medicine.price),
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (isObatKeras) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.danger.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: AppColors.danger.withOpacity(0.3),
-                        ),
-                      ),
-                      child: const Text(
-                        'Obat Keras',
-                        style: TextStyle(
-                          color: AppColors.danger,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+              Text(
+                _formatRupiah(item.medicine.price),
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
         ),
         Row(
           children: [
-            _buildActionBtn(
-              Icons.remove_rounded,
-              item.quantity == 1
-                  ? null
-                  : () => onUpdateQty(item.medicine.id, -1),
-              isRemove: item.quantity == 1,
-            ),
+            _buildQtyBtn(Icons.remove, () => onUpdateQty(item.medicine.id, -1)),
             SizedBox(
-              width: 32,
+              width: 30,
               child: Text(
-                item.quantity.toString(),
+                '${item.quantity}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.w800),
+                style: const TextStyle(fontWeight: FontWeight.w900),
               ),
             ),
-            _buildActionBtn(
-              Icons.add_rounded,
-              item.quantity >= item.medicine.totalActiveStock
-                  ? null
-                  : () => onUpdateQty(item.medicine.id, 1),
-              isDisabled: item.quantity >= item.medicine.totalActiveStock,
-            ),
+            _buildQtyBtn(Icons.add, () => onUpdateQty(item.medicine.id, 1)),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildActionBtn(
-    IconData icon,
-    VoidCallback? onTap, {
-    bool isRemove = false,
-    bool isDisabled = false,
-  }) {
+  Widget _buildQtyBtn(IconData icon, VoidCallback onTap) {
     return GestureDetector(
-      onTap: onTap == null
-          ? null
-          : () {
-              HapticFeedback.lightImpact();
-              onTap();
-            },
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: isDisabled
-              ? AppColors.divider.withOpacity(0.5)
-              : (isRemove
-                    ? AppColors.danger.withOpacity(0.1)
-                    : AppColors.background),
+          color: AppColors.background,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
-          icon,
-          size: 18,
-          color: isDisabled
-              ? AppColors.textLight
-              : (isRemove ? AppColors.danger : AppColors.textDark),
-        ),
+        child: Icon(icon, size: 16, color: AppColors.textDark),
       ),
     );
   }
@@ -1003,9 +857,8 @@ class _CartSheet extends StatelessWidget {
 String _formatRupiah(num value) {
   final str = value.toStringAsFixed(0);
   final buffer = StringBuffer();
-  final len = str.length;
-  for (int i = 0; i < len; i++) {
-    if (i > 0 && (len - i) % 3 == 0) buffer.write('.');
+  for (int i = 0; i < str.length; i++) {
+    if (i > 0 && (str.length - i) % 3 == 0) buffer.write('.');
     buffer.write(str[i]);
   }
   return 'Rp ${buffer.toString()}';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/features/staff/presentation/screens/staff_orders_screen.dart';
 import '../features/staff/data/models/medicine.dart';
 import '../features/staff/data/models/order.dart';
 import '../features/staff/data/models/audit_log.dart';
@@ -35,16 +36,17 @@ class AppRouter {
   static const String forgotPassword = '/forgot-password';
   static const String customerHome = '/customer';
   static const String staffHome = '/staff';
-  
+
   // Perbaikan Rute: Samakan dengan pemanggilan di UI
   static const String staffInventory = '/staff/inventory';
   static const String staffOrderDetail = '/staff/order-detail';
+  static const String staffOrders = '/staff/orders';
   static const String staffMedicineDetail = '/staff/medicine-detail';
   static const String staffMedicineForm = '/staff/medicine-form';
   static const String staffNotifications = '/staff/notifications';
   static const String staffPos = '/staff/pos';
   static const String staffAuditLogDetail = '/staff/audit-log-detail';
-  
+
   static const String staffEditProfile = '/staff/edit-profile';
   static const String staffChangePassword = '/staff/change-password';
   static const String staffActivityHistory = '/staff/activity-history';
@@ -57,18 +59,18 @@ class AppRouter {
     return GoRouter(
       initialLocation: splash,
       refreshListenable: notifier,
-      
+
       redirect: (context, state) {
         final authState = ref.read(authNotifierProvider);
         final isAuthenticated = authState.user != null;
         final isLoading = authState.isLoading;
-        
+
         final matchedLoc = state.matchedLocation;
         final isLoggingIn = matchedLoc == login;
         final isRegistering = matchedLoc == register;
         final isForgotPw = matchedLoc == forgotPassword;
         final isSplash = matchedLoc == splash;
-        
+
         final isAuthPage = isLoggingIn || isRegistering || isForgotPw;
 
         // 1. Jika BELUM Login
@@ -91,61 +93,103 @@ class AppRouter {
             return authState.user?.role == 'STAFF' ? staffHome : customerHome;
           }
         }
-        
+
         return null;
       },
 
       routes: [
-        GoRoute(path: splash, builder: (context, state) => const SplashScreen()),
-        GoRoute(path: login, builder: (context, state) => const LoginScreen()),
-        GoRoute(path: register, builder: (context, state) => const RegisterScreen()),
-        GoRoute(path: forgotPassword, builder: (context, state) => const ForgotPasswordScreen()),
-        GoRoute(path: customerHome, builder: (context, state) => const CustomerHomeScreen()),
-        
-        // Dashboard Utama (MainScreen mengelola tab Pesanan & Profile)
-        GoRoute(path: staffHome, builder: (context, state) => const MainScreen()),
-        
-        // Halaman yang berdiri sendiri
-        GoRoute(path: staffInventory, builder: (context, state) => const StaffInventoryScreen()),
         GoRoute(
-          path: staffOrderDetail, 
+          path: splash,
+          builder: (context, state) => const SplashScreen(),
+        ),
+        GoRoute(path: login, builder: (context, state) => const LoginScreen()),
+        GoRoute(
+          path: register,
+          builder: (context, state) => const RegisterScreen(),
+        ),
+        GoRoute(
+          path: forgotPassword,
+          builder: (context, state) => const ForgotPasswordScreen(),
+        ),
+        GoRoute(
+          path: customerHome,
+          builder: (context, state) => const CustomerHomeScreen(),
+        ),
+
+        // Dashboard Utama (MainScreen mengelola tab Pesanan & Profile)
+        GoRoute(
+          path: staffHome,
+          builder: (context, state) => const MainScreen(),
+        ),
+
+        // Halaman yang berdiri sendiri
+        GoRoute(
+          path: staffInventory,
+          builder: (context, state) => const StaffInventoryScreen(),
+        ),
+        GoRoute(
+          path: staffOrders,
+          builder: (context, state) => const StaffOrdersScreen(),
+        ),
+        GoRoute(
+          path: staffOrderDetail,
           builder: (context, state) {
             final extra = state.extra;
             if (extra is Order) return OrderDetailScreen(order: extra);
-            return OrderDetailScreen(order: Order.fromJson(extra as Map<String, dynamic>));
-          }
+            return OrderDetailScreen(
+              order: Order.fromJson(extra as Map<String, dynamic>),
+            );
+          },
         ),
         GoRoute(
-          path: staffMedicineDetail, 
+          path: staffMedicineDetail,
           builder: (context, state) {
             final extra = state.extra;
             if (extra is Medicine) return MedicineDetailScreen(medicine: extra);
-            return MedicineDetailScreen(medicine: Medicine.fromJson(extra as Map<String, dynamic>));
-          }
+            return MedicineDetailScreen(
+              medicine: Medicine.fromJson(extra as Map<String, dynamic>),
+            );
+          },
         ),
         GoRoute(
-          path: staffMedicineForm, 
+          path: staffMedicineForm,
           builder: (context, state) {
             final extra = state.extra;
             if (extra == null) return const MedicineFormScreen(medicine: null);
             if (extra is Medicine) return MedicineFormScreen(medicine: extra);
-            return MedicineFormScreen(medicine: Medicine.fromJson(extra as Map<String, dynamic>));
-          }
+            return MedicineFormScreen(
+              medicine: Medicine.fromJson(extra as Map<String, dynamic>),
+            );
+          },
         ),
-        GoRoute(path: staffNotifications, builder: (context, state) => const NotificationScreen()),
+        GoRoute(
+          path: staffNotifications,
+          builder: (context, state) => const NotificationScreen(),
+        ),
         GoRoute(path: staffPos, builder: (context, state) => const PosScreen()),
         GoRoute(
-          path: staffAuditLogDetail, 
+          path: staffAuditLogDetail,
           builder: (context, state) {
             final extra = state.extra;
             if (extra is AuditLog) return AuditLogDetailScreen(activity: extra);
-            return AuditLogDetailScreen(activity: AuditLog.fromJson(extra as Map<String, dynamic>));
-          }
+            return AuditLogDetailScreen(
+              activity: AuditLog.fromJson(extra as Map<String, dynamic>),
+            );
+          },
         ),
-        
-        GoRoute(path: staffEditProfile, builder: (context, state) => const EditProfileScreen()),
-        GoRoute(path: staffChangePassword, builder: (context, state) => const ChangePasswordScreen()),
-        GoRoute(path: staffActivityHistory, builder: (context, state) => const ActivityHistoryScreen()),
+
+        GoRoute(
+          path: staffEditProfile,
+          builder: (context, state) => const EditProfileScreen(),
+        ),
+        GoRoute(
+          path: staffChangePassword,
+          builder: (context, state) => const ChangePasswordScreen(),
+        ),
+        GoRoute(
+          path: staffActivityHistory,
+          builder: (context, state) => const ActivityHistoryScreen(),
+        ),
       ],
     );
   });
@@ -153,7 +197,7 @@ class AppRouter {
 
 final routerNotifierProvider = ChangeNotifierProvider((ref) {
   final notifier = RouterNotifier();
-  
+
   // Hanya picu refresh navigasi jika objek user berubah (Login/Logout)
   // Abaikan perubahan status isLoading agar halaman tidak ter-reset saat API bekerja
   ref.listen(authNotifierProvider, (previous, next) {
@@ -161,7 +205,7 @@ final routerNotifierProvider = ChangeNotifierProvider((ref) {
       notifier.notify();
     }
   });
-  
+
   return notifier;
 });
 

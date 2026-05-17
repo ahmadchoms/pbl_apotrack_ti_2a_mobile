@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -18,24 +17,12 @@ class MedicineDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
-  bool _isUpdatingStock = false;
   late Medicine _medicine;
 
   @override
   void initState() {
     super.initState();
     _medicine = widget.medicine;
-  }
-
-  String _formatRupiah(num value) {
-    final str = value.toStringAsFixed(0);
-    final buffer = StringBuffer();
-    final len = str.length;
-    for (int i = 0; i < len; i++) {
-      if (i > 0 && (len - i) % 3 == 0) buffer.write('.');
-      buffer.write(str[i]);
-    }
-    return 'Rp ${buffer.toString()}';
   }
 
   Future<void> _refreshDetail() async {
@@ -48,7 +35,7 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
         ref.refresh(staffMedicinesProvider);
       }
     } catch (e) {
-      // ignore
+      debugPrint(e.toString());
     }
   }
 
@@ -58,19 +45,24 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
       backgroundColor: AppColors.background,
       body: RefreshIndicator(
         onRefresh: _refreshDetail,
+        edgeOffset: 100,
+        color: AppColors.primary,
         child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
-            _buildSliverHeader(context, _medicine),
+            _MedicineHeroAppBar(medicine: _medicine),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
-                    _buildMainInfoCard(_medicine),
-                    const SizedBox(height: 16),
-                    _buildInventoryCard(_medicine),
-                    const SizedBox(height: 16),
-                    _buildDescriptionCard(_medicine),
+                    const SizedBox(height: 24),
+                    _MedicinePrimaryInfo(medicine: _medicine),
+                    const SizedBox(height: 20),
+                    _InventoryInsightCard(medicine: _medicine),
+                    const SizedBox(height: 20),
+                    _ClinicalDetailSection(medicine: _medicine),
+                    const SizedBox(height: 140),
                   ],
                 ),
               ),
@@ -78,389 +70,8 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
           ],
         ),
       ),
-      bottomSheet: _buildActionBottom(context),
-    );
-  }
-
-  Widget _buildSliverHeader(BuildContext context, Medicine med) {
-    return SliverAppBar(
-      expandedHeight: 220,
-      pinned: true,
-      backgroundColor: AppColors.primary,
-      leading: IconButton(
-        icon: const Icon(
-          Icons.arrow_back_ios_new_rounded,
-          color: Colors.white,
-          size: 20,
-        ),
-        onPressed: () => context.pop(),
-      ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.edit_note_rounded, color: Colors.white),
-          onPressed: () => context.push('/staff/medicine-form', extra: med),
-        ),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          color: AppColors.primary,
-          child: Center(
-            child: med.imageUrl != null && med.imageUrl!.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Image.network(
-                      med.imageUrl!,
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          _buildPlaceholderIcon(med.icon),
-                    ),
-                  )
-                : _buildPlaceholderIcon(med.icon),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderIcon(IconData icon) {
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Icon(icon, color: Colors.white, size: 50),
-    );
-  }
-
-  Widget _buildMainInfoCard(Medicine med) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (med.category != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    med.category!,
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              if (med.requiresPrescription)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.description_outlined,
-                        color: Color(0xFFF59E0B),
-                        size: 12,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'RESEP DOKTER',
-                        style: TextStyle(
-                          color: Color(0xFFF59E0B),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            med.name,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              color: AppColors.textDark,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            med.genericName ?? '-',
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textLight,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Divider(height: 1),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              _buildSimpleStat('Tipe', med.type ?? '-'),
-              _buildSimpleStat('Satuan', med.unit ?? '-'),
-              _buildSimpleStat('Form', med.form ?? '-'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSimpleStat(String label, String value) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textLight,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textDark,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInventoryCard(Medicine med) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'STOK SAAT INI',
-                  style: TextStyle(
-                    color: AppColors.textLight,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${med.totalActiveStock}',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 5),
-                      child: Text(
-                        med.unit ?? 'unit',
-                        style: const TextStyle(
-                          color: AppColors.textLight,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Container(width: 1, height: 40, color: AppColors.divider),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'HARGA JUAL',
-                  style: TextStyle(
-                    color: AppColors.textLight,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _formatRupiah(med.price),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDescriptionCard(Medicine med) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'DESKRIPSI & DOSIS',
-            style: TextStyle(
-              color: AppColors.textLight,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.0,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            med.description ?? 'Tidak ada deskripsi.',
-            style: const TextStyle(
-              color: AppColors.textMid,
-              height: 1.6,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.info_outline_rounded,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Petunjuk Dosis',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                          color: AppColors.textDark,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        med.dosage ?? 'Ikuti petunjuk dokter.',
-                        style: const TextStyle(
-                          color: AppColors.textMid,
-                          fontSize: 12,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionBottom(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () => _showBatchManagement(context),
-          icon: const Icon(Icons.inventory_2_outlined, size: 20),
-          label: const Text(
-            'Kelola Batch & Stok',
-            style: TextStyle(fontWeight: FontWeight.w900),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 8,
-            shadowColor: AppColors.primary.withOpacity(0.3),
-          ),
-        ),
+      bottomSheet: _PersistentActionFooter(
+        onTap: () => _showBatchManagement(context),
       ),
     );
   }
@@ -474,8 +85,456 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
         medicine: _medicine,
         onUpdate: (updatedMed) {
           setState(() => _medicine = updatedMed);
-          ref.refresh(staffMedicinesProvider);
         },
+      ),
+    );
+  }
+}
+
+class _MedicineHeroAppBar extends StatelessWidget {
+  final Medicine medicine;
+  const _MedicineHeroAppBar({required this.medicine});
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverAppBar(
+      expandedHeight: 340,
+      pinned: true,
+      elevation: 0,
+      stretch: true,
+      backgroundColor: AppColors.primary,
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: CircleAvatar(
+          backgroundColor: Colors.black.withOpacity(0.2),
+          child: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+            onPressed: () => context.pop(),
+          ),
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CircleAvatar(
+            backgroundColor: Colors.black.withOpacity(0.2),
+            child: IconButton(
+              icon: const Icon(
+                Icons.edit_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              onPressed: () =>
+                  context.push('/staff/medicine-form', extra: medicine),
+            ),
+          ),
+        ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        stretchModes: const [StretchMode.zoomBackground],
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (medicine.imageUrl != null && medicine.imageUrl!.isNotEmpty)
+              Image.network(medicine.imageUrl!, fit: BoxFit.cover)
+            else
+              Container(
+                color: AppColors.primary,
+                child: Icon(
+                  medicine.icon,
+                  color: Colors.white.withOpacity(0.5),
+                  size: 100,
+                ),
+              ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black26,
+                    Colors.transparent,
+                    Colors.transparent,
+                    Colors.black45,
+                  ],
+                  stops: [0.0, 0.2, 0.7, 1.0],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MedicinePrimaryInfo extends StatelessWidget {
+  final Medicine medicine;
+  const _MedicinePrimaryInfo({required this.medicine});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _buildBadge(
+              medicine.category ?? 'Uncategorized',
+              AppColors.primary,
+              AppColors.primaryLight,
+            ),
+            const SizedBox(width: 8),
+            if (medicine.requiresPrescription)
+              _buildBadge(
+                'BUTUH RESEP',
+                AppColors.warning,
+                AppColors.warningLight,
+                icon: Icons.receipt_long_rounded,
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          medicine.name,
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textDark,
+            letterSpacing: -1,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          medicine.genericName ?? '-',
+          style: const TextStyle(
+            fontSize: 16,
+            color: AppColors.textLight,
+            fontWeight: FontWeight.w500,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildInfoItem(
+                'Tipe',
+                medicine.type ?? '-',
+                Icons.medication_rounded,
+              ),
+              _buildVerticalDivider(),
+              _buildInfoItem(
+                'Bentuk',
+                medicine.form ?? '-',
+                Icons.waves_rounded,
+              ),
+              _buildVerticalDivider(),
+              _buildInfoItem(
+                'Satuan',
+                medicine.unit ?? '-',
+                Icons.straighten_rounded,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBadge(String label, Color color, Color bg, {IconData? icon}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, size: 18, color: AppColors.textSubtle),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            color: AppColors.textLight,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textDark,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerticalDivider() =>
+      Container(width: 1, height: 30, color: AppColors.divider);
+}
+
+class _InventoryInsightCard extends StatelessWidget {
+  final Medicine medicine;
+  const _InventoryInsightCard({required this.medicine});
+
+  @override
+  Widget build(BuildContext context) {
+    final int stock = medicine.totalActiveStock;
+    final bool isLow = stock <= 20;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: isLow
+              ? AppColors.danger.withOpacity(0.1)
+              : AppColors.primary.withOpacity(0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'KETERSEDIAAN STOK',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: isLow ? AppColors.danger : AppColors.primary,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      '$stock',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textDark,
+                        letterSpacing: -2,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      medicine.unit ?? 'Unit',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          _buildPriceTag(medicine.price),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceTag(num price) {
+    final str = price.toStringAsFixed(0);
+    final buf = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
+      buf.write(str[i]);
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textDark.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'HARGA JUAL',
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Rp ${buf.toString()}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClinicalDetailSection extends StatelessWidget {
+  final Medicine medicine;
+  const _ClinicalDetailSection({required this.medicine});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'INFORMASI KLINIS',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textSubtle,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildDetailRow(
+            'Deskripsi Produk',
+            medicine.description ?? 'N/A',
+            Icons.info_outline_rounded,
+          ),
+          const Divider(height: 32),
+          _buildDetailRow(
+            'Petunjuk Dosis',
+            medicine.dosage ?? 'Ikuti instruksi dokter.',
+            Icons.auto_graph_rounded,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String title, String content, IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: AppColors.primary),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          content,
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textMid,
+            height: 1.6,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PersistentActionFooter extends StatelessWidget {
+  final VoidCallback onTap;
+  const _PersistentActionFooter({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -10),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        height: 54,
+        child: ElevatedButton.icon(
+          onPressed: onTap,
+          icon: const Icon(
+            Icons.inventory_2_rounded,
+            size: 20,
+            color: Colors.white,
+          ),
+          label: const Text(
+            'KELOLA BATCH & STOK',
+            style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+        ),
       ),
     );
   }
@@ -501,30 +560,32 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
     _medicine = widget.medicine;
   }
 
-  Future<void> _addBatch(
-    String number,
-    String exp,
-    int stock,
-    String note,
-  ) async {
+  Future<void> _refresh() async {
+    final updated = await ref
+        .read(staffServiceProvider)
+        .getMedicine(_medicine.id);
+    setState(() => _medicine = updated);
+    widget.onUpdate(updated);
+    ref.invalidate(staffMedicinesProvider);
+  }
+
+  Future<void> _addBatch(String number, String exp, int stock) async {
     setState(() => _isLoading = true);
     try {
-      final service = ref.read(staffServiceProvider);
-      await service.updateStock(_medicine.id, {
+      await ref.read(staffServiceProvider).updateStock(_medicine.id, {
         'type': 'IN',
         'batch_number': number,
         'expired_date': exp,
         'quantity': stock,
       });
-      await _refreshMedicine();
-      if (mounted) {
+      await _refresh();
+      if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Batch berhasil ditambahkan!'),
             backgroundColor: AppColors.success,
           ),
         );
-      }
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
@@ -538,24 +599,22 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
     }
   }
 
-  Future<void> _adjustStock(String batchId, int newStock, String note) async {
+  Future<void> _adjustStock(String batchId, int newStock) async {
     setState(() => _isLoading = true);
     try {
-      final service = ref.read(staffServiceProvider);
-      await service.updateStock(_medicine.id, {
+      await ref.read(staffServiceProvider).updateStock(_medicine.id, {
         'type': 'ADJUSTMENT',
         'batch_id': batchId,
         'new_stock': newStock,
       });
-      await _refreshMedicine();
-      if (mounted) {
+      await _refresh();
+      if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Stok berhasil disesuaikan!'),
+            content: Text('Stok disesuaikan!'),
             backgroundColor: AppColors.success,
           ),
         );
-      }
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
@@ -567,15 +626,6 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  Future<void> _refreshMedicine() async {
-    final updated = await ref
-        .read(staffServiceProvider)
-        .getMedicine(_medicine.id);
-    setState(() => _medicine = updated);
-    ref.invalidate(staffMedicinesProvider);
-    widget.onUpdate(updated);
   }
 
   @override
@@ -604,37 +654,51 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
                 const Icon(
                   Icons.inventory_2_rounded,
                   color: AppColors.primary,
-                  size: 24,
+                  size: 28,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 const Expanded(
                   child: Text(
-                    'Kelola Batch & Stok',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                    'Inventory Management',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
                   ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
                 ),
               ],
             ),
           ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+            child: Stack(
               children: [
-                _buildAddBatchSection(),
-                const SizedBox(height: 32),
-                const Text(
-                  'DAFTAR BATCH AKTIF',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textLight,
-                    letterSpacing: 1.5,
+                ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  children: [
+                    _buildQuickAddCard(),
+                    const SizedBox(height: 32),
+                    const Text(
+                      'DAFTAR BATCH AKTIF',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textLight,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...(_medicine.batches ?? []).map(
+                      (b) => _BatchItemCard(batch: b, onAdjust: _adjustStock),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+                if (_isLoading)
+                  Container(
+                    color: Colors.white.withOpacity(0.5),
+                    child: const Center(child: CircularProgressIndicator()),
                   ),
-                ),
-                const SizedBox(height: 16),
-                ...(_medicine.batches ?? []).map(
-                  (b) => _BatchItemCard(batch: b, onAdjust: _adjustStock),
-                ),
               ],
             ),
           ),
@@ -643,50 +707,40 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
     );
   }
 
-  Widget _buildAddBatchSection() {
+  Widget _buildQuickAddCard() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.primaryLight.withOpacity(0.5),
+        color: AppColors.primaryLight.withOpacity(0.4),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.primary.withOpacity(0.1)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.add_circle_outline_rounded,
-                color: AppColors.primary,
-                size: 18,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Tambah Batch Baru',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
+          const Text(
+            'Butuh penambahan stok baru?',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: _isLoading ? null : () => _showAddBatchDialog(),
+            onPressed: () => _showAddBatchDialog(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
-              minimumSize: const Size(double.infinity, 48),
+              minimumSize: const Size(double.infinity, 52),
+              elevation: 0,
             ),
             child: const Text(
-              'Input Data Batch Baru',
-              style: TextStyle(fontWeight: FontWeight.w800),
+              'INPUT DATA BATCH BARU',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -694,12 +748,8 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
     );
   }
 
-  void _showAddBatchDialog() {
-    String number = '';
-    String exp = '';
-    String stock = '';
-    bool isSaving = false;
-
+  void _showAddBatchDialog(BuildContext context) {
+    String number = '', exp = '', stock = '';
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -707,24 +757,40 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
           ),
-          title: Row(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          title: Column(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Icon(
                   Icons.add_business_rounded,
                   color: AppColors.primary,
-                  size: 20,
+                  size: 28,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(height: 16),
               const Text(
-                'Batch Baru',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                'Input Batch Baru',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Pastikan data sesuai dengan label fisik obat',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textLight,
+                ),
               ),
             ],
           ),
@@ -732,20 +798,20 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const SizedBox(height: 8),
                 MedicineFormBatchField(
-                  label: 'Nomor Batch',
                   initialValue: number,
-                  hint: 'Contoh: B-2024-001',
+                  label: 'NOMOR BATCH',
+                  hint: 'B-2024-XXX',
                   icon: Icons.tag_rounded,
                   onChanged: (v) => number = v,
                 ),
                 const SizedBox(height: 16),
                 MedicineFormBatchField(
-                  label: 'Tgl Kadaluwarsa',
-                  initialValue: exp,
-                  hint: 'YYYY-MM-DD',
-                  readOnly: true,
+                  label: 'TANGGAL KADALUWARSA',
+                  hint: 'Pilih Tanggal',
                   icon: Icons.calendar_today_rounded,
+                  readOnly: true,
                   onTap: () async {
                     final date = await showDatePicker(
                       context: context,
@@ -754,21 +820,29 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
                       ),
                       firstDate: DateTime.now(),
                       lastDate: DateTime.now().add(const Duration(days: 3650)),
+                      builder: (context, child) => Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: const ColorScheme.light(
+                            primary: AppColors.primary,
+                          ),
+                        ),
+                        child: child!,
+                      ),
                     );
-                    if (date != null) {
+                    if (date != null)
                       setDialogState(
                         () => exp = date.toString().split(' ').first,
                       );
-                    }
                   },
+                  initialValue: exp,
                   onChanged: (v) => exp = v,
                 ),
                 const SizedBox(height: 16),
                 MedicineFormBatchField(
-                  label: 'Stok Awal',
                   initialValue: stock,
+                  label: 'STOK AWAL',
                   hint: '0',
-                  icon: Icons.inventory_2_outlined,
+                  icon: Icons.inventory_2_rounded,
                   keyboard: TextInputType.number,
                   isDigitsOnly: true,
                   onChanged: (v) => stock = v,
@@ -776,63 +850,56 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
               ],
             ),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
           actions: [
-            TextButton(
-              onPressed: isSaving ? null : () => Navigator.pop(ctx),
-              child: const Text(
-                'Batal',
-                style: TextStyle(
-                  color: AppColors.textLight,
-                  fontWeight: FontWeight.w700,
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Batal',
+                      style: TextStyle(
+                        color: AppColors.textLight,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: isSaving
-                  ? null
-                  : () async {
-                      if (number.isEmpty || exp.isEmpty || stock.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Lengkapi data batch!'),
-                            backgroundColor: AppColors.warning,
-                          ),
-                        );
-                        return;
-                      }
-                      setDialogState(() => isSaving = true);
-                      try {
-                        await _addBatch(
-                          number,
-                          exp,
-                          int.tryParse(stock) ?? 0,
-                          '',
-                        );
-                        if (ctx.mounted) Navigator.pop(ctx);
-                      } finally {
-                        if (ctx.mounted) setDialogState(() => isSaving = false);
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (number.isNotEmpty &&
+                          exp.isNotEmpty &&
+                          stock.isNotEmpty) {
+                        _addBatch(number, exp, int.tryParse(stock) ?? 0);
+                        Navigator.pop(ctx);
                       }
                     },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    )
-                  : const Text(
-                      'Tambah Batch',
-                      style: TextStyle(fontWeight: FontWeight.w800),
                     ),
+                    child: const Text(
+                      'Simpan Batch',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -843,73 +910,66 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
 
 class _BatchItemCard extends StatelessWidget {
   final Map<String, dynamic> batch;
-  final Function(String, int, String) onAdjust;
+  final Function(String, int) onAdjust;
   const _BatchItemCard({required this.batch, required this.onAdjust});
 
   @override
   Widget build(BuildContext context) {
-    final expStr = batch['expired_date']?.toString() ?? '-';
     final stock = batch['stock'] ?? 0;
-    final isExpiring = _isNearExpiry(expStr);
+    final exp = batch['expired_date']?.toString() ?? '-';
+    bool isExpiring = false;
+    try {
+      isExpiring = DateTime.parse(exp).difference(DateTime.now()).inDays < 90;
+    } catch (_) {}
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isExpiring
+              ? AppColors.danger.withOpacity(0.2)
+              : AppColors.divider,
+        ),
       ),
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: AppColors.background,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.tag_rounded,
-                  size: 18,
-                  color: AppColors.textLight,
+                child: Icon(
+                  Icons.qr_code_2_rounded,
+                  color: isExpiring ? AppColors.danger : AppColors.textLight,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      batch['batch_number']?.toString() ?? '-',
+                      batch['batch_number'] ?? '-',
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.event_rounded,
-                          size: 12,
-                          color: isExpiring
-                              ? AppColors.danger
-                              : AppColors.textLight,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Exp: $expStr',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isExpiring
-                                ? AppColors.danger
-                                : AppColors.textLight,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'Exp: $exp',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isExpiring
+                            ? AppColors.danger
+                            : AppColors.textLight,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -922,7 +982,6 @@ class _BatchItemCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      color: AppColors.textDark,
                     ),
                   ),
                   const Text(
@@ -930,7 +989,7 @@ class _BatchItemCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       color: AppColors.textLight,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
@@ -946,7 +1005,7 @@ class _BatchItemCard extends StatelessWidget {
               onPressed: () => _showAdjustDialog(context),
               icon: const Icon(Icons.edit_location_alt_outlined, size: 16),
               label: const Text(
-                'Penyesuaian Stok',
+                'PENYESUAIAN STOK',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
               ),
               style: TextButton.styleFrom(
@@ -963,119 +1022,118 @@ class _BatchItemCard extends StatelessWidget {
     );
   }
 
-  bool _isNearExpiry(String exp) {
-    try {
-      final dt = DateTime.parse(exp);
-      return dt.difference(DateTime.now()).inDays < 90;
-    } catch (e) {
-      return false;
-    }
-  }
-
   void _showAdjustDialog(BuildContext context) {
     String stock = batch['stock']?.toString() ?? '0';
-    bool isSaving = false;
-
     showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.warningLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.settings_backup_restore_rounded,
-                  color: AppColors.warning,
-                  size: 20,
-                ),
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        title: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.infoLight,
+                borderRadius: BorderRadius.circular(20),
               ),
-              const SizedBox(width: 12),
-              const Text(
-                'Penyesuaian Stok',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+              child: const Icon(
+                Icons.tune_rounded,
+                color: AppColors.primary,
+                size: 28,
               ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Penyesuaian Stok',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
                 'Batch: ${batch['batch_number']}',
                 style: const TextStyle(
                   fontSize: 12,
-                  color: AppColors.textLight,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textMid,
+                  letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 20),
-              MedicineFormBatchField(
-                label: 'Stok Baru Seharusnya',
-                initialValue: stock,
-                icon: Icons.inventory_2_rounded,
-                keyboard: TextInputType.number,
-                isDigitsOnly: true,
-                onChanged: (v) => stock = v,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: isSaving ? null : () => Navigator.pop(ctx),
-              child: const Text(
-                'Batal',
-                style: TextStyle(
-                  color: AppColors.textLight,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: isSaving
-                  ? null
-                  : () async {
-                      setDialogState(() => isSaving = true);
-                      try {
-                        await onAdjust(
-                          batch['id'],
-                          int.tryParse(stock) ?? 0,
-                          '',
-                        );
-                        if (ctx.mounted) Navigator.pop(ctx);
-                      } finally {
-                        if (ctx.mounted) setDialogState(() => isSaving = false);
-                      }
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.warning,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Simpan Perubahan',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
             ),
           ],
         ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            MedicineFormBatchField(
+              label: 'STOK TERBARU (AKTUAL)',
+              initialValue: stock,
+              icon: Icons.inventory_2_rounded,
+              keyboard: TextInputType.number,
+              isDigitsOnly: true,
+              onChanged: (v) => stock = v,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '*Gunakan fitur ini hanya jika terdapat selisih stok fisik',
+              style: TextStyle(
+                fontSize: 10,
+                color: AppColors.textLight,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: AppColors.textLight,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton(
+                  onPressed: () {
+                    onAdjust(batch['id'].toString(), int.tryParse(stock) ?? 0);
+                    Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Update Stok',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

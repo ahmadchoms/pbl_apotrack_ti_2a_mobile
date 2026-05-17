@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../routes/app_router.dart';
-import '../../../../shared/widgets/app_button.dart';
 import '../providers/staff_provider.dart';
 import '../widgets/medicine_inventory_card.dart';
 import '../../data/models/medicine.dart';
@@ -12,7 +11,8 @@ class StaffInventoryScreen extends ConsumerStatefulWidget {
   const StaffInventoryScreen({super.key});
 
   @override
-  ConsumerState<StaffInventoryScreen> createState() => _StaffInventoryScreenState();
+  ConsumerState<StaffInventoryScreen> createState() =>
+      _StaffInventoryScreenState();
 }
 
 class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
@@ -27,7 +27,8 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
   }
 
   void _onScroll() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
       ref.read(staffMedicinesProvider.notifier).fetchNextPage();
     }
   }
@@ -39,7 +40,6 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
     super.dispose();
   }
 
-  // Terapkan pencarian teks lokal di atas data yang sudah difilter/sort oleh provider
   List<Medicine> _applySearch(List<Medicine> medicines) {
     final q = _searchCtrl.text.toLowerCase().trim();
     if (q.isEmpty) return medicines;
@@ -55,260 +55,283 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
     final filteredList = ref.watch(filteredMedicinesProvider);
     final state = ref.watch(staffMedicinesProvider);
     final filterState = ref.watch(inventoryFilterProvider);
-
-    if (state.isLoading && state.items.isEmpty) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: const Center(child: CircularProgressIndicator()),
-        floatingActionButton: _buildFab(),
-      );
-    }
-
-    if (state.error != null && state.items.isEmpty) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: _buildErrorState(state.error!),
-        floatingActionButton: _buildFab(),
-      );
-    }
-
-    final allMedicines = state.items;
-    final criticalCount = allMedicines.where((m) => m.totalActiveStock <= 10).length;
-    final lowStockCount = allMedicines.where((m) {
-      final s = m.totalActiveStock;
-      return s <= 20 && s > 10;
-    }).length;
-
     final displayList = _applySearch(filteredList);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          _buildHeader(allMedicines.length),
-          if (criticalCount > 0 || lowStockCount > 0)
-            _buildAlertBanner(criticalCount, lowStockCount),
-          _buildSearchAndFilter(filterState),
-          _buildStatRow(displayList.length, filterState),
+          _buildFixedHeader(state.items.length),
+          _buildInsightSection(state.items),
+          _buildSearchSection(filterState),
           Expanded(
             child: RefreshIndicator(
-              onRefresh: () async {
-                ref.read(staffMedicinesProvider.notifier).refresh();
-              },
-              child: _buildList(displayList, state.isLoadingNextPage),
+              onRefresh: () async =>
+                  ref.read(staffMedicinesProvider.notifier).refresh(),
+              color: AppColors.primary,
+              child: _buildScrollableList(displayList, state),
             ),
           ),
         ],
       ),
-      floatingActionButton: _buildFab(),
+      floatingActionButton: _buildModernFab(),
     );
   }
 
-  Widget _buildErrorState(String error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.cloud_off_rounded, color: AppColors.danger, size: 64),
-            const SizedBox(height: 16),
-            const Text('Gagal Memuat Inventori', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(error, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textLight)),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => ref.read(staffMedicinesProvider.notifier).refresh(),
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(int count) {
-    final filterState = ref.watch(inventoryFilterProvider);
+  Widget _buildFixedHeader(int count) {
     return Container(
-      decoration: const BoxDecoration(color: AppColors.primary),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: Row(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Stok Obat', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
-                  Text('$count produk terdaftar', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
-                ],
-              ),
-              const Spacer(),
-              _buildHeaderIcon(Icons.filter_list_rounded, () => _showFilterSheet(context)),
-              const SizedBox(width: 8),
-              _buildHeaderIcon(Icons.sort_rounded, () => _showSortSheet(context, filterState.sortBy)),
-            ],
-          ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeaderIcon(IconData icon, VoidCallback onTap) {
-    return Container(
-      width: 38, height: 38,
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
-      child: IconButton(icon: Icon(icon, color: Colors.white, size: 18), onPressed: onTap, padding: EdgeInsets.zero),
-    );
-  }
-
-  Widget _buildAlertBanner(int criticalCount, int lowStockCount) {
-    final isCritical = criticalCount > 0;
-    return GestureDetector(
-      onTap: () => ref.read(inventoryFilterProvider.notifier).setStockFilter(isCritical ? 'Stok Kritis' : 'Stok Rendah'),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: isCritical ? AppColors.dangerLight : AppColors.warningLight,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isCritical ? AppColors.danger.withOpacity(0.3) : AppColors.warning.withOpacity(0.3), width: 1.5),
-        ),
-        child: Row(
-          children: [
-            Icon(isCritical ? Icons.error_outline_rounded : Icons.warning_amber_rounded, color: isCritical ? AppColors.danger : AppColors.warning),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                isCritical ? '$criticalCount produk hampir habis!' : '$lowStockCount produk stok rendah.',
-                style: TextStyle(color: isCritical ? AppColors.danger : AppColors.warning, fontWeight: FontWeight.w700, fontSize: 13),
-              ),
-            ),
-            Icon(Icons.chevron_right_rounded, color: isCritical ? AppColors.danger : AppColors.warning),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchAndFilter(InventoryFilterState filterState) {
-    final stockFilters = ['Semua', 'Stok Kritis', 'Stok Rendah', 'Normal'];
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, 3))],
-            ),
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Cari nama atau kategori obat...',
-                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
-                suffixIcon: _searchCtrl.text.isNotEmpty
-                    ? IconButton(icon: const Icon(Icons.close_rounded, size: 18), onPressed: () { _searchCtrl.clear(); setState(() {}); })
-                    : null,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 34,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: stockFilters.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, i) => _buildFilterChip(stockFilters[i], filterState.stockFilter,
-                  onTap: () => ref.read(inventoryFilterProvider.notifier).setStockFilter(stockFilters[i])),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, String selected, {required VoidCallback onTap}) {
-    final isSelected = selected == label;
-    Color chipColor = AppColors.primary;
-    if (label == 'Stok Kritis') chipColor = AppColors.danger;
-    else if (label == 'Stok Rendah') chipColor = AppColors.warning;
-    else if (label == 'Normal') chipColor = AppColors.success;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected ? chipColor : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? chipColor : AppColors.divider, width: 1.5),
-        ),
-        child: Text(label, style: TextStyle(color: isSelected ? Colors.white : AppColors.textMid, fontWeight: FontWeight.w700, fontSize: 12)),
-      ),
-    );
-  }
-
-  Widget _buildStatRow(int count, InventoryFilterState filterState) {
-    final sortLabel = _getSortLabel(filterState.sortBy);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
       child: Row(
         children: [
-          Text('$count produk ditemukan', style: const TextStyle(fontSize: 12, color: AppColors.textLight, fontWeight: FontWeight.w600)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'MANAJEMEN STOK',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Inventori Produk',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.95),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ),
           const Spacer(),
-          Icon(Icons.sort_rounded, size: 14, color: AppColors.primary),
-          const SizedBox(width: 4),
-          Text(sortLabel, style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w700)),
+          _buildHeaderAction(Icons.sort_rounded, () => _showSortSheet(context)),
+          const SizedBox(width: 8),
+          _buildHeaderAction(
+            Icons.tune_rounded,
+            () => _showFilterSheet(context),
+          ),
         ],
       ),
     );
   }
 
-  String _getSortLabel(MedicineSortBy sort) {
-    return switch (sort) {
-      MedicineSortBy.nameAsc   => 'A–Z',
-      MedicineSortBy.nameDesc  => 'Z–A',
-      MedicineSortBy.stockAsc  => 'Stok ↑',
-      MedicineSortBy.stockDesc => 'Stok ↓',
-      MedicineSortBy.priceAsc  => 'Harga ↑',
-      MedicineSortBy.priceDesc => 'Harga ↓',
-    };
+  Widget _buildHeaderAction(IconData icon, VoidCallback onTap) {
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(icon, color: Colors.white, size: 22),
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.white.withOpacity(0.12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
-  Widget _buildList(List<Medicine> medicines, bool isLoadingNextPage) {
-    if (medicines.isEmpty) {
-      return ListView( // Pakai ListView agar RefreshIndicator tetap bekerja walau kosong
+  Widget _buildInsightSection(List<Medicine> medicines) {
+    final critical = medicines.where((m) => m.totalActiveStock <= 10).length;
+
+    final low = medicines
+        .where((m) => m.totalActiveStock <= 20 && m.totalActiveStock > 10)
+        .length;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
         children: [
-          const SizedBox(height: 100),
-          const Icon(Icons.search_off_rounded, size: 48, color: AppColors.textSubtle),
-          const SizedBox(height: 12),
-          const Center(child: Text('Tidak ada obat ditemukan', style: TextStyle(color: AppColors.textLight))),
+          Expanded(
+            child: _buildInsightCard(
+              'Total Produk',
+              medicines.length.toString(),
+              Icons.analytics_outlined,
+              AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildInsightCard(
+              'Stok Kritis',
+              critical.toString(),
+              Icons.bolt_rounded,
+              AppColors.danger,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildInsightCard(
+              'Stok Rendah',
+              low.toString(),
+              Icons.low_priority_rounded,
+              AppColors.warning,
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInsightCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      height: 110,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  value,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                  ),
+                ),
+              ),
+              Icon(icon, color: color.withOpacity(0.3), size: 20),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchSection(InventoryFilterState filterState) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: TextField(
+          controller: _searchCtrl,
+          decoration: InputDecoration(
+            hintText: 'Cari nama atau kategori obat...',
+            hintStyle: const TextStyle(
+              color: AppColors.textSubtle,
+              fontSize: 14,
+            ),
+            prefixIcon: const Icon(
+              Icons.search_rounded,
+              color: AppColors.primary,
+              size: 22,
+            ),
+            suffixIcon: _searchCtrl.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(
+                      Icons.cancel_rounded,
+                      color: AppColors.textSubtle,
+                      size: 20,
+                    ),
+                    onPressed: () => _searchCtrl.clear(),
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScrollableList(List<Medicine> medicines, dynamic state) {
+    if (state.isLoading && state.items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (medicines.isEmpty) {
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: 300,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.inventory_2_outlined,
+                  size: 48,
+                  color: AppColors.divider,
+                ),
+
+                const SizedBox(height: 12),
+
+                const Text(
+                  'Data tidak ditemukan',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
+
     return ListView.builder(
       controller: _scrollCtrl,
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-      itemCount: medicines.length + (isLoadingNextPage ? 1 : 0),
-      itemBuilder: (_, i) {
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 100),
+      itemCount: medicines.length + (state.isLoadingNextPage ? 1 : 0),
+      itemBuilder: (ctx, i) {
         if (i == medicines.length) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: SizedBox(
-                width: 24, height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-              ),
-            ),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           );
         }
         final med = medicines[i];
@@ -316,9 +339,41 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
           medicine: med,
           onTap: () => context.push(AppRouter.staffMedicineDetail, extra: med),
           onEdit: () => context.push(AppRouter.staffMedicineForm, extra: med),
-          formatRupiah: _formatRupiah,
+          formatRupiah: (val) {
+            final str = val.toStringAsFixed(0);
+            final buf = StringBuffer();
+            for (int i = 0; i < str.length; i++) {
+              if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
+              buf.write(str[i]);
+            }
+            return 'Rp ${buf.toString()}';
+          },
         );
       },
+    );
+  }
+
+  Widget _buildModernFab() {
+    return Container(
+      height: 48,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: FloatingActionButton.extended(
+        onPressed: () => context.push(AppRouter.staffMedicineForm),
+        backgroundColor: AppColors.primary,
+        elevation: 6,
+        highlightElevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+        label: const Text(
+          'TAMBAH PRODUK',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+            fontSize: 12,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
     );
   }
 
@@ -332,53 +387,138 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
       isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) => Container(
-          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          padding: const EdgeInsets.fromLTRB(28, 12, 28, 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Filter Produk', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textDark)),
-              const SizedBox(height: 20),
-
-              // Filter Stok
-              const Text('STATUS STOK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textLight, letterSpacing: 1)),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8, runSpacing: 8,
-                children: ['Semua', 'Stok Kritis', 'Stok Rendah', 'Normal'].map((f) => _buildFilterChip(f, filterState.stockFilter,
-                  onTap: () { ref.read(inventoryFilterProvider.notifier).setStockFilter(f); setSheetState(() {}); },
-                )).toList(),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               ),
-              const SizedBox(height: 20),
-
-              // Filter Kategori
-              const Text('KATEGORI OBAT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textLight, letterSpacing: 1)),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8, runSpacing: 8,
-                children: categories.map((c) => _buildFilterChip(c, filterState.categoryFilter,
-                  onTap: () { ref.read(inventoryFilterProvider.notifier).setCategoryFilter(c); setSheetState(() {}); },
-                )).toList(),
-              ),
-
               const SizedBox(height: 24),
+              const Text(
+                'Filter Inventori',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'STATUS KETERSEDIAAN',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textLight,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: ['Semua', 'Stok Kritis', 'Stok Rendah', 'Normal']
+                    .map(
+                      (s) => _buildChoiceChip(
+                        s,
+                        filterState.stockFilter == s,
+                        onSelected: (val) {
+                          ref
+                              .read(inventoryFilterProvider.notifier)
+                              .setStockFilter(s);
+                          setSheetState(() {});
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'KATEGORI PRODUK',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textLight,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                // maxHeight: 200,
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: categories
+                        .map(
+                          (c) => _buildChoiceChip(
+                            c,
+                            filterState.categoryFilter == c,
+                            onSelected: (val) {
+                              ref
+                                  .read(inventoryFilterProvider.notifier)
+                                  .setCategoryFilter(c);
+                              setSheetState(() {});
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
-                      onPressed: () { ref.read(inventoryFilterProvider.notifier).reset(); Navigator.pop(ctx); },
-                      child: const Text('Reset'),
+                    child: TextButton(
+                      onPressed: () {
+                        ref.read(inventoryFilterProvider.notifier).reset();
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text(
+                        'Reset',
+                        style: TextStyle(
+                          color: AppColors.textLight,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     flex: 2,
-                    child: AppButton(label: 'Terapkan', onPressed: () => Navigator.pop(ctx)),
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text(
+                        'Terapkan Filter',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -386,40 +526,73 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
     );
   }
 
-  void _showSortSheet(BuildContext context, MedicineSortBy current) {
+  void _showSortSheet(BuildContext context) {
+    final filterState = ref.watch(inventoryFilterProvider);
     final options = [
-      (MedicineSortBy.nameAsc,   'Nama A–Z',       Icons.sort_by_alpha_rounded),
-      (MedicineSortBy.nameDesc,  'Nama Z–A',       Icons.sort_by_alpha_rounded),
-      (MedicineSortBy.stockAsc,  'Stok Terkecil',  Icons.arrow_upward_rounded),
-      (MedicineSortBy.stockDesc, 'Stok Terbesar',  Icons.arrow_downward_rounded),
-      (MedicineSortBy.priceAsc,  'Harga Termurah', Icons.arrow_upward_rounded),
-      (MedicineSortBy.priceDesc, 'Harga Termahal', Icons.arrow_downward_rounded),
+      (MedicineSortBy.nameAsc, 'Nama (A-Z)', Icons.sort_by_alpha_rounded),
+      (MedicineSortBy.nameDesc, 'Nama (Z-A)', Icons.sort_by_alpha_rounded),
+      (
+        MedicineSortBy.stockAsc,
+        'Stok Terendah',
+        Icons.keyboard_double_arrow_up_rounded,
+      ),
+      (
+        MedicineSortBy.stockDesc,
+        'Stok Tertinggi',
+        Icons.keyboard_double_arrow_down_rounded,
+      ),
+      (MedicineSortBy.priceAsc, 'Harga Termurah', Icons.payments_outlined),
+      (MedicineSortBy.priceDesc, 'Harga Termahal', Icons.payments_outlined),
     ];
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Urutkan Berdasarkan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 16),
-            ...options.map((o) {
-              final isActive = current == o.$1;
+            const Text(
+              'Urutkan Inventori',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 20),
+            ...options.map((opt) {
+              final isSelected = filterState.sortBy == opt.$1;
               return ListTile(
-                leading: Icon(o.$3, color: isActive ? AppColors.primary : AppColors.textLight, size: 20),
-                title: Text(o.$2, style: TextStyle(fontWeight: isActive ? FontWeight.w900 : FontWeight.w600, color: isActive ? AppColors.primary : AppColors.textDark)),
-                trailing: isActive ? const Icon(Icons.check_rounded, color: AppColors.primary) : null,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                tileColor: isActive ? AppColors.primaryLight : Colors.transparent,
                 onTap: () {
-                  ref.read(inventoryFilterProvider.notifier).setSortBy(o.$1);
+                  ref.read(inventoryFilterProvider.notifier).setSortBy(opt.$1);
                   Navigator.pop(ctx);
                 },
+                leading: Icon(
+                  opt.$3,
+                  color: isSelected ? AppColors.primary : AppColors.textLight,
+                ),
+                title: Text(
+                  opt.$2,
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                    color: isSelected ? AppColors.primary : AppColors.textDark,
+                  ),
+                ),
+                trailing: isSelected
+                    ? const Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.primary,
+                      )
+                    : null,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                tileColor: isSelected
+                    ? AppColors.primary.withOpacity(0.05)
+                    : null,
               );
             }),
           ],
@@ -428,23 +601,28 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
     );
   }
 
-  Widget _buildFab() {
-    return FloatingActionButton.extended(
-      onPressed: () => context.push(AppRouter.staffMedicineForm),
-      backgroundColor: AppColors.primary,
-      icon: const Icon(Icons.add_rounded, color: Colors.white),
-      label: const Text('Tambah Produk', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+  Widget _buildChoiceChip(
+    String label,
+    bool selected, {
+    required Function(bool) onSelected,
+  }) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: onSelected,
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : AppColors.textMid,
+        fontWeight: FontWeight.w700,
+        fontSize: 12,
+      ),
+      selectedColor: AppColors.primary,
+      backgroundColor: Colors.white,
+      side: BorderSide(
+        color: selected ? AppColors.primary : AppColors.divider,
+        width: 1.5,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      showCheckmark: false,
     );
   }
-}
-
-String _formatRupiah(num value) {
-  final str = value.toStringAsFixed(0);
-  final buf = StringBuffer();
-  final len = str.length;
-  for (int i = 0; i < len; i++) {
-    if (i > 0 && (len - i) % 3 == 0) buf.write('.');
-    buf.write(str[i]);
-  }
-  return 'Rp ${buf.toString()}';
 }

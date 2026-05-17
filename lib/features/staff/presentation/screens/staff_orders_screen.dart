@@ -18,13 +18,12 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
   late TabController _tabController;
 
   final _tabs = const [
-    {'status': 'PENDING', 'label': 'Pending'},
-    {'status': 'PROCESSING', 'label': 'Diproses'},
+    {'status': 'PENDING', 'label': 'Baru'},
+    {'status': 'PROCESSING', 'label': 'Proses'},
     {'status': 'READY_FOR_PICKUP', 'label': 'Siap'},
-    {'status': 'SHIPPED', 'label': 'Dikirim'},
-    {'status': 'DELIVERED', 'label': 'Diterima'},
+    {'status': 'SHIPPED', 'label': 'Kirim'},
     {'status': 'COMPLETED', 'label': 'Selesai'},
-    {'status': 'CANCELLED', 'label': 'Dibatalkan'},
+    {'status': 'CANCELLED', 'label': 'Batal'},
   ];
 
   @override
@@ -39,9 +38,6 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
     super.dispose();
   }
 
-  int _countByStatus(List<Order> orders, String status) =>
-      orders.where((o) => o.orderStatus == status).length;
-
   @override
   Widget build(BuildContext context) {
     final ordersAsync = ref.watch(staffOrdersProvider);
@@ -51,25 +47,19 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
       body: ordersAsync.when(
         data: (allOrders) => Column(
           children: [
-            _buildHeader(),
-            _buildSummaryStrip(allOrders),
-            _buildTabBar(allOrders),
+            _buildFixedHeader(),
+            _buildStickyTabBar(allOrders),
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: () => ref.refresh(staffOrdersProvider.future),
-                child: TabBarView(
-                  controller: _tabController,
-                  children: _tabs
-                      .map(
-                        (t) => _OrderListView(
-                          status: t['status']!,
-                          orders: allOrders
-                              .where((o) => o.orderStatus == t['status'])
-                              .toList(),
-                        ),
-                      )
-                      .toList(),
-                ),
+              child: TabBarView(
+                controller: _tabController,
+                children: _tabs.map((t) {
+                  return _OrderListView(
+                    status: t['status'] as String,
+                    orders: allOrders
+                        .where((o) => o.orderStatus == t['status'])
+                        .toList(),
+                  );
+                }).toList(),
               ),
             ),
           ],
@@ -80,146 +70,128 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
     );
   }
 
-  Widget _buildErrorState(String error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.wifi_off_rounded,
-              color: AppColors.danger,
-              size: 64,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Gagal Mengambil Data',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textLight),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => ref.refresh(staffOrdersProvider),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-              ),
-              child: const Text(
-                'Coba Lagi',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
+  Widget _buildFixedHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
+      child: Row(
+        children: [
+          _buildHeaderAction(
+            Icons.arrow_back_ios_new_rounded,
+            () => context.go("/staff"),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'OPERASIONAL TOKO',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Pesanan Pelanggan',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.95),
+                    fontSize:
+                        22, // Ukuran sedikit disesuaikan agar proporsional
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildHeaderAction(Icons.notifications_none_rounded, () {}),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeaderAction(IconData icon, VoidCallback onTap) {
     return Container(
-      decoration: const BoxDecoration(color: AppColors.primary),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: Row(
-            children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Manajemen Pesanan',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.4,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        onPressed: onTap,
+        icon: Icon(icon, color: Colors.white, size: 22),
+      ),
+    );
+  }
+
+  Widget _buildStickyTabBar(List<Order> orders) {
+    return Container(
+      color: AppColors.background,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: TabBar(
+        controller: _tabController,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        indicatorColor: AppColors.primary,
+        indicatorWeight: 3,
+        indicatorPadding: const EdgeInsets.symmetric(horizontal: 16),
+        labelColor: AppColors.primary,
+        unselectedLabelColor: AppColors.textLight,
+        labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+        dividerColor: Colors.transparent,
+        tabs: _tabs.map((t) {
+          final count = orders
+              .where((o) => o.orderStatus == t['status'])
+              .length;
+
+          return Tab(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(t['label'] as String),
+                if (count > 0) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
                     ),
-                  ),
-                  Text(
-                    'Data riil dari Apotek Anda',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                    decoration: BoxDecoration(
+                      color: t['status'] == 'PENDING'
+                          ? AppColors.danger
+                          : AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      count.toString(),
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: t['status'] == 'PENDING'
+                            ? Colors.white
+                            : AppColors.primary,
+                      ),
                     ),
                   ),
                 ],
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => context.push('/staff/notifications'),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.notifications_none_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryStrip(List<Order> orders) {
-    final stats = [
-      {'label': 'Total', 'value': orders.length, 'color': AppColors.primary},
-      {
-        'label': 'Siap',
-        'value': _countByStatus(orders, 'READY_FOR_PICKUP'),
-        'color': AppColors.success,
-      },
-      {
-        'label': 'Dikirim',
-        'value': _countByStatus(orders, 'SHIPPED'),
-        'color': AppColors.accentIndigo,
-      },
-      {
-        'label': 'Selesai',
-        'value': _countByStatus(orders, 'COMPLETED'),
-        'color': AppColors.textMid,
-      },
-    ];
-
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      child: Row(
-        children: stats.map((s) {
-          return Expanded(
-            child: Column(
-              children: [
-                Text(
-                  s['value'].toString(),
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: s['color'] as Color,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  s['label'] as String,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textLight,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
               ],
             ),
           );
@@ -228,56 +200,30 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
     );
   }
 
-  Widget _buildTabBar(List<Order> orders) {
-    return Container(
-      color: Colors.white,
+  Widget _buildErrorState(String error) {
+    return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Divider(height: 1, color: AppColors.divider),
-          TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textLight,
-            indicatorColor: AppColors.primary,
-            indicatorWeight: 2.5,
-            tabs: _tabs.map((t) {
-              final count = _countByStatus(orders, t['status']!);
-              return Tab(
-                child: Row(
-                  children: [
-                    Text(t['label']!),
-                    if (count > 0 && t['status'] != 'COMPLETED') ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 1,
-                        ),
-                        decoration: BoxDecoration(
-                          color: t['status'] == 'PENDING'
-                              ? AppColors.warningLight
-                              : AppColors.primaryLight,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          count.toString(),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            color: t['status'] == 'PENDING'
-                                ? AppColors.warning
-                                : AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              );
-            }).toList(),
+          const Icon(
+            Icons.cloud_off_rounded,
+            size: 64,
+            color: AppColors.danger,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Koneksi Terputus',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+          ),
+          Text(error, style: const TextStyle(color: AppColors.textLight)),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => ref.refresh(staffOrdersProvider),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text(
+              'Coba Lagi',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -293,96 +239,89 @@ class _OrderListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (orders.isEmpty) {
-      return const Center(child: Text('Tidak ada pesanan'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox_rounded, size: 48, color: AppColors.divider),
+            const SizedBox(height: 16),
+            Text(
+              'Tidak ada pesanan $status',
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textLight,
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+      physics: const BouncingScrollPhysics(),
       itemCount: orders.length,
       itemBuilder: (_, i) {
         final order = orders[i];
-        final statusCfg =
-            _statusMap[order.orderStatus] ?? _statusMap['PENDING']!;
         return OrderListCard(
           order: order,
-          statusConfig: {
-            'label': statusCfg.label,
-            'color': statusCfg.color,
-            'bgColor': statusCfg.bgColor,
-            'icon': statusCfg.icon,
+          statusConfig: _statusMap[order.orderStatus] ?? _statusMap['PENDING']!,
+          formatRupiah: (val) {
+            final str = val.toStringAsFixed(0);
+            final buf = StringBuffer();
+            for (int j = 0; j < str.length; j++) {
+              if (j > 0 && (str.length - j) % 3 == 0) buf.write('.');
+              buf.write(str[j]);
+            }
+            return 'Rp ${buf.toString()}';
           },
-          formatRupiah: _formatRupiah,
         );
       },
     );
   }
 }
 
-const Map<String, _StatusConfig> _statusMap = {
-  'PENDING': _StatusConfig(
-    label: 'Pending',
-    color: AppColors.warning,
-    bgColor: AppColors.warningLight,
-    icon: Icons.hourglass_top_rounded,
-  ),
-  'PROCESSING': _StatusConfig(
-    label: 'Diproses',
-    color: AppColors.primary,
-    bgColor: AppColors.primaryLight,
-    icon: Icons.autorenew_rounded,
-  ),
-  'READY_FOR_PICKUP': _StatusConfig(
-    label: 'Siap',
-    color: AppColors.success,
-    bgColor: AppColors.successLight,
-    icon: Icons.check_circle_rounded,
-  ),
-  'SHIPPED': _StatusConfig(
-    label: 'Dikirim',
-    color: AppColors.accentIndigo,
-    bgColor: AppColors.primaryLight,
-    icon: Icons.local_shipping_rounded,
-  ),
-  'DELIVERED': _StatusConfig(
-    label: 'Diterima',
-    color: AppColors.success,
-    bgColor: AppColors.successLight,
-    icon: Icons.inventory_2_rounded,
-  ),
-  'COMPLETED': _StatusConfig(
-    label: 'Selesai',
-    color: AppColors.textMid,
-    bgColor: AppColors.background,
-    icon: Icons.done_all_rounded,
-  ),
-  'CANCELLED': _StatusConfig(
-    label: 'Dibatalkan',
-    color: AppColors.danger,
-    bgColor: AppColors.dangerLight,
-    icon: Icons.cancel_rounded,
-  ),
+final Map<String, dynamic> _statusMap = {
+  'PENDING': {
+    'label': 'Baru',
+    'color': AppColors.warning,
+    'bgColor': AppColors.warningLight,
+    'icon': Icons.hourglass_top_rounded,
+  },
+  'PROCESSING': {
+    'label': 'Proses',
+    'color': AppColors.primary,
+    'bgColor': AppColors.primaryLight,
+    'icon': Icons.autorenew_rounded,
+  },
+  'READY_FOR_PICKUP': {
+    'label': 'Siap',
+    'color': AppColors.success,
+    'bgColor': AppColors.successLight,
+    'icon': Icons.check_circle_rounded,
+  },
+  'SHIPPED': {
+    'label': 'Kirim',
+    'color': AppColors.accentIndigo,
+    'bgColor': AppColors.primaryLight,
+    'icon': Icons.local_shipping_rounded,
+  },
+  'DELIVERED': {
+    'label': 'Diterima',
+    'color': AppColors.accentPink,
+    'bgColor': AppColors.background,
+    'icon': Icons.done_all_rounded,
+  },
+  'COMPLETED': {
+    'label': 'Selesai',
+    'color': AppColors.textMid,
+    'bgColor': AppColors.background,
+    'icon': Icons.done_all_rounded,
+  },
+  'CANCELLED': {
+    'label': 'Batal',
+    'color': AppColors.danger,
+    'bgColor': AppColors.dangerLight,
+    'icon': Icons.cancel_rounded,
+  },
 };
-
-class _StatusConfig {
-  final String label;
-  final Color color;
-  final Color bgColor;
-  final IconData icon;
-  const _StatusConfig({
-    required this.label,
-    required this.color,
-    required this.bgColor,
-    required this.icon,
-  });
-}
-
-String _formatRupiah(num value) {
-  final str = value.toStringAsFixed(0);
-  final buf = StringBuffer();
-  final len = str.length;
-  for (int i = 0; i < len; i++) {
-    if (i > 0 && (len - i) % 3 == 0) buf.write('.');
-    buf.write(str[i]);
-  }
-  return 'Rp ${buf.toString()}';
-}

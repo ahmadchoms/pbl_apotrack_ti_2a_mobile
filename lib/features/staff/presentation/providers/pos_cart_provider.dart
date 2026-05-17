@@ -10,10 +10,7 @@ class CartItem {
   double get subtotal => (medicine.price * quantity).toDouble();
 
   CartItem copyWith({int? quantity}) {
-    return CartItem(
-      medicine: medicine,
-      quantity: quantity ?? this.quantity,
-    );
+    return CartItem(medicine: medicine, quantity: quantity ?? this.quantity);
   }
 }
 
@@ -21,7 +18,9 @@ class PosCartNotifier extends StateNotifier<List<CartItem>> {
   PosCartNotifier() : super([]);
 
   void addItem(Medicine medicine) {
-    final existingIndex = state.indexWhere((item) => item.medicine.id == medicine.id);
+    final existingIndex = state.indexWhere(
+      (item) => item.medicine.id == medicine.id,
+    );
     final maxStock = medicine.totalActiveStock;
 
     if (existingIndex >= 0) {
@@ -29,19 +28,41 @@ class PosCartNotifier extends StateNotifier<List<CartItem>> {
       if (existingItem.quantity + 1 > maxStock) {
         throw Exception('Stok tidak mencukupi. Sisa stok: $maxStock');
       }
-      
+
       state = [
         for (int i = 0; i < state.length; i++)
           if (i == existingIndex)
             existingItem.copyWith(quantity: existingItem.quantity + 1)
           else
-            state[i]
+            state[i],
       ];
     } else {
       if (1 > maxStock) {
         throw Exception('Stok obat ini sedang kosong.');
       }
       state = [...state, CartItem(medicine: medicine, quantity: 1)];
+    }
+  }
+
+  void subtractItem(String medicineId) {
+    final existingIndex = state.indexWhere(
+      (item) => item.medicine.id == medicineId,
+    );
+
+    if (existingIndex < 0) return;
+
+    final existingItem = state[existingIndex];
+
+    if (existingItem.quantity <= 1) {
+      removeItem(medicineId);
+    } else {
+      state = [
+        for (int i = 0; i < state.length; i++)
+          if (i == existingIndex)
+            existingItem.copyWith(quantity: existingItem.quantity - 1)
+          else
+            state[i],
+      ];
     }
   }
 
@@ -52,12 +73,14 @@ class PosCartNotifier extends StateNotifier<List<CartItem>> {
           () {
             final newQty = item.quantity + delta;
             if (newQty > item.medicine.totalActiveStock) {
-              throw Exception('Stok tidak mencukupi. Sisa stok: ${item.medicine.totalActiveStock}');
+              throw Exception(
+                'Stok tidak mencukupi. Sisa stok: ${item.medicine.totalActiveStock}',
+              );
             }
             return item.copyWith(quantity: newQty.clamp(1, 999));
           }()
         else
-          item
+          item,
     ];
   }
 
@@ -74,7 +97,9 @@ class PosCartNotifier extends StateNotifier<List<CartItem>> {
   }
 }
 
-final posCartProvider = StateNotifierProvider<PosCartNotifier, List<CartItem>>((ref) {
+final posCartProvider = StateNotifierProvider<PosCartNotifier, List<CartItem>>((
+  ref,
+) {
   return PosCartNotifier();
 });
 

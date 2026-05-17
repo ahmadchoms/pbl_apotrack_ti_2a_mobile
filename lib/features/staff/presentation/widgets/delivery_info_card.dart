@@ -58,13 +58,11 @@ class DeliveryInfoCard extends StatelessWidget {
     final tracking = order.tracking;
     final address = order.address;
 
-    // Get UX Friendly Status
     final statusKey = tracking?.status?.toUpperCase() ?? 'WAITING';
     final statusInfo =
         _statusMap[statusKey] ??
         {'label': statusKey, 'color': AppColors.textMid};
 
-    // Get UX Friendly Courier Name
     final rawCourier =
         tracking?.courierCode?.toLowerCase() ??
         tracking?.courierName?.toLowerCase() ??
@@ -85,29 +83,6 @@ class DeliveryInfoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Recipient block
-          Row(
-            children: [
-              const Icon(
-                Icons.person_outline_rounded,
-                size: 14,
-                color: AppColors.textLight,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${order.customer['username'] ?? 'Penerima'} • ${order.customer['phone'] ?? '-'}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Address block
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -126,8 +101,8 @@ class DeliveryInfoCard extends StatelessWidget {
                   ),
                   child: const Icon(
                     Icons.location_on_rounded,
-                    color: AppColors.primary,
                     size: 18,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -160,7 +135,7 @@ class DeliveryInfoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Courier info
+          // Info Kurir & Status
           Row(
             children: [
               Expanded(
@@ -183,8 +158,8 @@ class DeliveryInfoCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          // Resi tile with copy
+          const SizedBox(height: 12),
+          // Nomor Resi
           _InfoTile(
             icon: Icons.qr_code_rounded,
             label: 'No. Resi / AWB',
@@ -245,7 +220,9 @@ class _InfoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.all(
+        12,
+      ), // Padding disamakan dengan Alamat Tujuan
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
@@ -255,7 +232,16 @@ class _InfoTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: AppColors.textLight),
+          // Kontainer Ikon disamakan dengan Alamat Tujuan (34x34)
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(icon, size: 18, color: AppColors.primary),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -264,7 +250,7 @@ class _InfoTile extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 9,
+                    fontSize: 11,
                     color: AppColors.textLight,
                     fontWeight: FontWeight.w600,
                   ),
@@ -272,7 +258,7 @@ class _InfoTile extends StatelessWidget {
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: highlight ? AppColors.primary : AppColors.textDark,
                   ),

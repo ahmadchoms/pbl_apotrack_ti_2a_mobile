@@ -20,27 +20,20 @@ class OrderListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = order.orderStatus;
-    final isCompleted = status == 'COMPLETED' || status == 'CANCELLED';
     final isDelivery = order.serviceType == 'DELIVERY';
-
-    final Map<String, String> nextAction = {
-      'PENDING': 'Mulai Proses',
-      'PROCESSING': 'Tandai Siap',
-      'READY': 'Selesaikan',
-    };
-
-    final customerName = order.customer['username']?.toString() ?? 'Pembeli Umum';
+    final customerName =
+        order.customer['username']?.toString() ?? 'Pembeli Umum';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: AppColors.textDark.withOpacity(0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -51,162 +44,285 @@ class OrderListCard extends StatelessWidget {
             HapticFeedback.selectionClick();
             context.push('/staff/order-detail', extra: order);
           },
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          borderRadius: BorderRadius.circular(24),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        _buildTimeIndicator(),
+                        const Spacer(),
+                        StatusBadge(
+                          label: statusConfig['label'],
+                          color: statusConfig['color'],
+                          backgroundColor: statusConfig['bgColor'],
+                          icon: statusConfig['icon'],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildCustomerAvatar(customerName),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                customerName,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.textDark,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              _buildOrderMeta(isDelivery),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: AppColors.background,
-                        borderRadius: BorderRadius.circular(7),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Text(
-                        '#${order.orderNumber}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 11,
-                          color: AppColors.textMid,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.access_time_rounded, size: 12, color: AppColors.textLight),
-                    const SizedBox(width: 3),
-                    Text(
-                      _formatTime(order.createdAt),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textLight,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Spacer(),
-                    StatusBadge(
-                      label: statusConfig['label'],
-                      color: statusConfig['color'],
-                      backgroundColor: statusConfig['bgColor'],
-                      icon: statusConfig['icon'],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            customerName,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.textDark,
-                              letterSpacing: -0.3,
+                          const Text(
+                            'Total Pembayaran',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textMid,
                             ),
                           ),
-                          const SizedBox(height: 4),
                           Text(
-                            '${order.items.length} item pesanan',
+                            formatRupiah(order.grandTotal),
                             style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textLight,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              color: AppColors.primary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    Text(
-                      formatRupiah(order.grandTotal),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 17,
-                        color: AppColors.primary,
-                      ),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Row(
+              ),
+              const Divider(height: 1, color: AppColors.divider),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                child: Row(
                   children: [
-                    StatusBadge(
-                      label: isDelivery ? 'Delivery' : 'Pickup',
-                      color: isDelivery ? AppColors.primary : AppColors.success,
-                      backgroundColor: isDelivery ? AppColors.primaryLight : AppColors.successLight,
-                      icon: isDelivery ? Icons.delivery_dining_rounded : Icons.store_rounded,
+                    Text(
+                      '#${order.orderNumber}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textSubtle,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                     const Spacer(),
-                    if (isCompleted)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.background,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Text(
-                          'Pesanan Selesai',
-                          style: TextStyle(
-                            color: AppColors.textLight,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
-                      )
-                    else
-                      GestureDetector(
-                        onTap: () {
-                          HapticFeedback.mediumImpact();
-                          context.push('/staff/order-detail', extra: order);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            nextAction[status] ?? 'Lihat Detail',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ),
+                    _buildActionButton(status),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  String _formatTime(dynamic dateStr) {
-    if (dateStr == null) return '--:--';
-    final str = dateStr.toString();
-    final parts = str.split(' ');
-    if (parts.length >= 2) {
-      final timeParts = parts[1].split(':');
-      if (timeParts.length >= 2) return '${timeParts[0]}:${timeParts[1]}';
+  Widget _buildTimeIndicator() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.access_time_rounded,
+            size: 14,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _formatFullDateTime(order.createdAt),
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.primary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderMeta(bool isDelivery) {
+    return Row(
+      children: [
+        _buildMetaItem(
+          Icons.inventory_2_outlined,
+          '${order.items.length} Produk',
+        ),
+        const SizedBox(width: 12),
+        _buildMetaItem(
+          isDelivery ? Icons.local_shipping_outlined : Icons.storefront_rounded,
+          isDelivery ? "Antar ke Rumah" : "Ambil di Apotek",
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetaItem(IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: AppColors.textLight),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: AppColors.textLight,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCustomerAvatar(String name) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary.withOpacity(0.8), AppColors.primary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Center(
+        child: Text(
+          name[0].toUpperCase(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(String status) {
+    final Map<String, String> actions = {
+      'PENDING': 'Mulai Proses',
+      'PROCESSING': 'Siapkan Order',
+      'READY_FOR_PICKUP': 'Selesaikan',
+    };
+
+    final isCompleted =
+        status == 'COMPLETED' || status == 'CANCELLED' || status == 'DELIVERED';
+
+    if (isCompleted) {
+      return const Text(
+        'Lihat Detail',
+        style: TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w900,
+          fontSize: 13,
+        ),
+      );
     }
-    return str.length > 5 ? str.substring(0, 5) : str;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Text(
+        actions[status] ?? 'Kelola Order',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+
+  String _formatFullDateTime(dynamic dateStr) {
+    if (dateStr == null) return '--.--, -- --- ----';
+    try {
+      final str = dateStr.toString();
+      final parts = str.split(' ');
+      if (parts.length >= 2) {
+        final dateParts = parts[0].split('-');
+        final timeParts = parts[1].split(':');
+
+        if (dateParts.length == 3 && timeParts.length >= 2) {
+          final year = dateParts[0];
+          final month = _getMonthName(dateParts[1]);
+          final day = dateParts[2];
+          final hour = timeParts[0];
+          final minute = timeParts[1];
+
+          return '$hour.$minute, $day $month $year';
+        }
+      }
+      return str;
+    } catch (e) {
+      return dateStr.toString();
+    }
+  }
+
+  String _getMonthName(String monthNum) {
+    const months = {
+      '01': 'Jan',
+      '02': 'Feb',
+      '03': 'Mar',
+      '04': 'Apr',
+      '05': 'Mei',
+      '06': 'Jun',
+      '07': 'Jul',
+      '08': 'Agt',
+      '09': 'Sep',
+      '10': 'Okt',
+      '11': 'Nov',
+      '12': 'Des',
+    };
+    return months[monthNum] ?? monthNum;
   }
 }
