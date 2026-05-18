@@ -11,7 +11,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final auditsAsync = ref.watch(staffAuditsProvider);
+    final auditsState = ref.watch(staffAuditsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -37,17 +37,25 @@ class ActivityHistoryScreen extends ConsumerWidget {
         centerTitle: true,
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(staffAuditsProvider.future),
-        child: auditsAsync.when(
-          data: (audits) {
-            if (audits.isEmpty) {
-              return _buildEmptyState();
-            }
-            return _buildActivityList(audits);
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => _buildErrorState(e.toString(), ref),
-        ),
+        onRefresh: () async => ref.read(staffAuditsProvider.notifier).refresh(),
+        child: auditsState.isLoading && auditsState.items.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : auditsState.error != null && auditsState.items.isEmpty
+                ? _buildErrorState(auditsState.error!, ref)
+                : auditsState.items.isEmpty
+                    ? _buildEmptyState()
+                    : NotificationListener<ScrollNotification>(
+                        onNotification: (ScrollNotification scrollInfo) {
+                          if (!auditsState.isLoadingNextPage &&
+                              auditsState.hasMore &&
+                              scrollInfo.metrics.pixels >=
+                                  scrollInfo.metrics.maxScrollExtent - 200) {
+                            ref.read(staffAuditsProvider.notifier).fetchNextPage();
+                          }
+                          return false;
+                        },
+                        child: _buildActivityList(auditsState.items, auditsState.isLoadingNextPage),
+                      ),
       ),
     );
   }
@@ -95,7 +103,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => ref.refresh(staffAuditsProvider),
+              onPressed: () => ref.read(staffAuditsProvider.notifier).refresh(),
               child: const Text('Coba Lagi'),
             ),
           ],
@@ -104,7 +112,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActivityList(List<AuditLog> audits) {
+  Widget _buildActivityList(List<AuditLog> audits, bool isLoadingNextPage) {
     // Group by date
     final Map<String, List<AuditLog>> grouped = {};
     for (final audit in audits) {
@@ -116,8 +124,15 @@ class ActivityHistoryScreen extends ConsumerWidget {
 
     return ListView.builder(
       padding: const EdgeInsets.all(24),
-      itemCount: sortedKeys.length,
+      itemCount: sortedKeys.length + (isLoadingNextPage ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index == sortedKeys.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
         final dateKey = sortedKeys[index];
         final dayAudits = grouped[dateKey]!;
         final dateLabel = _getFriendlyDate(dateKey);
@@ -137,7 +152,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            ...dayAudits.map((audit) => _buildTimelineItem(context, audit)),
+            ...dayAudits.map((audit) => LogItemCard(audit: audit)),
             const SizedBox(height: 16),
           ],
         );
@@ -158,141 +173,129 @@ class ActivityHistoryScreen extends ConsumerWidget {
     final date = DateTime.parse(dateKey);
     return DateFormat('EEEE, d MMM yyyy', 'id_ID').format(date);
   }
+}
 
-  Widget _buildTimelineItem(BuildContext context, AuditLog audit) {
-    final IconData icon;
-    final Color color;
+class LogItemCard extends StatelessWidget {
+  final AuditLog audit;
+
+  const LogItemCard({super.key, required this.audit});
+
+  @override
+  Widget build(BuildContext context) {
+    IconData icon;
+    Color color;
 
     final action = audit.action.toUpperCase();
     if (action.contains('LOGIN')) {
       icon = Icons.login_rounded;
-      color = const Color(0xFF6366F1); // Indigo
+      color = AppColors.accentIndigo;
     } else if (action.contains('LOGOUT')) {
       icon = Icons.logout_rounded;
-      color = const Color(0xFF94A3B8); // Slate
-    } else if (action.contains('MEDICINE') || action.contains('STOCK')) {
-      icon = Icons.medication_rounded;
-      color = const Color(0xFF10B981); // Emerald
-    } else if (action.contains('ORDER') || action.contains('POS')) {
-      icon = Icons.shopping_cart_rounded;
-      color = const Color(0xFFF59E0B); // Amber
+      color = AppColors.textLight;
+    } else if (action.contains('ADD_MEDICINE') || action.contains('UPDATE_MEDICINE')) {
+      icon = Icons.check_circle_outline_rounded;
+      color = AppColors.success;
+    } else if (action.contains('DELETE_MEDICINE')) {
+      icon = Icons.delete_outline_rounded;
+      color = AppColors.danger;
+    } else if (action.contains('ADJUST_STOCK') || action.contains('STOCK')) {
+      icon = Icons.warning_amber_rounded;
+      color = AppColors.warning;
+    } else if (action.contains('ORDER') || action.contains('POS') || action.contains('SHIP') || action.contains('VERIFY')) {
+      icon = Icons.shopping_bag_outlined;
+      color = AppColors.primary;
     } else if (action.contains('PROFILE') || action.contains('PASSWORD')) {
-      icon = Icons.person_rounded;
-      color = const Color(0xFF8B5CF6); // Violet
+      icon = Icons.person_outline_rounded;
+      color = AppColors.accentPurple;
     } else {
       icon = Icons.bolt_rounded;
-      color = const Color(0xFF3B82F6); // Blue
+      color = AppColors.info;
     }
 
-    return InkWell(
-      onTap: () => context.push('/staff/audit-log-detail', extra: audit),
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: IntrinsicHeight(
+    final displayTime = audit.relativeTime.isNotEmpty 
+        ? audit.relativeTime 
+        : DateFormat('HH:mm').format(audit.createdAt);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () => context.push('/staff/audit-log-detail', extra: audit),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+            border: Border.all(color: color.withOpacity(0.1), width: 1.5),
+          ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- TIMELINE INDICATOR ---
-              SizedBox(
-                width: 44,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: color.withOpacity(0.2), width: 2),
-                      ),
-                      child: Icon(icon, color: color, size: 18),
-                    ),
-                    Expanded(
-                      child: Container(
-                        width: 2,
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              color.withOpacity(0.5),
-                              color.withOpacity(0.0),
-                            ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            audit.action.replaceAll('_', ' ').toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: color,
+                              letterSpacing: 1.2,
+                            ),
                           ),
                         ),
+                        Text(
+                          displayTime,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      audit.description,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'ID: ${audit.id.substring(0, 8).toUpperCase()}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textLight.withOpacity(0.7),
                       ),
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              
-              // --- CONTENT CARD ---
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                    border: Border.all(color: color.withOpacity(0.05), width: 1),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              audit.action.replaceAll('_', ' ').toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                color: color,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            DateFormat('HH:mm').format(audit.createdAt),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textLight,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        audit.description,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textDark,
-                          height: 1.3,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'ID: ${audit.id.substring(0, 8).toUpperCase()}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textLight.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ],

@@ -87,6 +87,12 @@ class StaffService {
     final list = response.data['data'] as List? ?? [];
     return list.map((e) => AuditLog.fromJson(e)).toList();
   }
+
+  Future<List<AuditLog>> fetchAuditLogs({Map<String, dynamic>? queryParams}) async {
+    final response = await _repository.getAudits(queryParams);
+    final list = response.data['data'] as List? ?? [];
+    return list.map((e) => AuditLog.fromJson(e)).toList();
+  }
 }
 
 final staffServiceProvider = Provider<StaffService>((ref) {

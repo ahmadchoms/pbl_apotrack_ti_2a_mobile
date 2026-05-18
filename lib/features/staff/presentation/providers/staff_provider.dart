@@ -218,8 +218,63 @@ final medicineCategoriesProvider = Provider<List<String>>((ref) {
   return cats.toList();
 });
 
-/// Provider untuk mengambil riwayat aktivitas staf secara asinkron.
-final staffAuditsProvider = FutureProvider<List<AuditLog>>((ref) async {
-  final service = ref.watch(staffServiceProvider);
-  return service.getAudits();
+class StaffAuditsNotifier extends StateNotifier<PaginationState<AuditLog>> {
+  final Ref ref;
+  static const int _perPage = 20;
+
+  StaffAuditsNotifier(this.ref) : super(const PaginationState()) {
+    fetchFirstPage();
+  }
+
+  Future<void> fetchFirstPage() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final service = ref.read(staffServiceProvider);
+      final newItems = await service.fetchAuditLogs(queryParams: {
+        'page': 1,
+        'per_page': _perPage,
+      });
+
+      state = state.copyWith(
+        items: newItems,
+        isLoading: false,
+        page: 1,
+        hasMore: newItems.length >= _perPage,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> fetchNextPage() async {
+    if (!state.hasMore || state.isLoadingNextPage || state.isLoading) return;
+
+    state = state.copyWith(isLoadingNextPage: true, error: null);
+    try {
+      final nextPage = state.page + 1;
+      final service = ref.read(staffServiceProvider);
+      final newItems = await service.fetchAuditLogs(queryParams: {
+        'page': nextPage,
+        'per_page': _perPage,
+      });
+
+      state = state.copyWith(
+        items: [...state.items, ...newItems],
+        isLoadingNextPage: false,
+        page: nextPage,
+        hasMore: newItems.length >= _perPage,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoadingNextPage: false, error: e.toString());
+    }
+  }
+
+  void refresh() {
+    fetchFirstPage();
+  }
+}
+
+/// Provider untuk mengelola state riwayat aktivitas staf dengan Paginasi.
+final staffAuditsProvider = StateNotifierProvider<StaffAuditsNotifier, PaginationState<AuditLog>>((ref) {
+  return StaffAuditsNotifier(ref);
 });

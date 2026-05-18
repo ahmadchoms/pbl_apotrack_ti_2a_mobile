@@ -8,6 +8,7 @@ class AuditLog {
   final String status;
   final Map<String, dynamic>? metadata;
   final DateTime createdAt;
+  final String relativeTime;
   final String? username;
 
   AuditLog({
@@ -18,6 +19,7 @@ class AuditLog {
     required this.status,
     this.metadata,
     required this.createdAt,
+    required this.relativeTime,
     this.username,
   });
 
@@ -37,11 +39,12 @@ class AuditLog {
       userId: json['user_id']?.toString(),
       action: json['action'] ?? 'UNKNOWN',
       description: json['description'] ?? '',
-      status: json['status'] ?? 'info',
+      status: json['status'] ?? 'SUCCESS',
       metadata: meta,
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
+      relativeTime: json['relative_time'] ?? '',
       username: json['user']?['username'],
     );
   }

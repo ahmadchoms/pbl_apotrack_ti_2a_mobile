@@ -1,9 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile/features/staff/data/models/audit_log.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/widgets/app_card.dart';
 
 class AuditLogDetailScreen extends StatelessWidget {
   final AuditLog activity;
@@ -21,10 +21,10 @@ class AuditLogDetailScreen extends StatelessWidget {
         slivers: [
           // --- PREMIUM SLIVER HEADER ---
           SliverAppBar(
-            expandedHeight: 220,
+            expandedHeight: 280,
             pinned: true,
             stretch: true,
-            backgroundColor: AppColors.primary,
+            backgroundColor: color,
             leading: IconButton(
               icon: const Icon(
                 Icons.arrow_back_ios_new_rounded,
@@ -44,64 +44,127 @@ class AuditLogDetailScreen extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.primary,
-                      AppColors.primary.withBlue(220),
+                      color,
+                      color.withOpacity(0.8),
+                      color.withOpacity(0.6),
                     ],
                   ),
                 ),
                 child: Stack(
-                  alignment: Alignment.center,
                   children: [
+                    // Background large glow icon
                     Positioned(
-                      right: -50,
-                      top: -50,
+                      right: -60,
+                      top: -40,
                       child: Icon(
                         _getCategoryIcon(category),
-                        size: 250,
-                        color: Colors.white.withOpacity(0.1),
+                        size: 300,
+                        color: Colors.white.withOpacity(0.15),
+                      ),
+                    ),
+                    // Glassmorphism overlay
+                    Positioned.fill(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          color: Colors.white.withOpacity(0.05),
+                        ),
                       ),
                     ),
                     SafeArea(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
-                                width: 2,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(22),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: color.withOpacity(0.4),
+                                    blurRadius: 20,
+                                    spreadRadius: 5,
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.4),
+                                  width: 2,
+                                ),
+                              ),
+                              child: Icon(
+                                _getCategoryIcon(category),
+                                color: Colors.white,
+                                size: 44,
                               ),
                             ),
-                            child: Icon(
-                              _getCategoryIcon(category),
-                              color: Colors.white,
-                              size: 40,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              category.toUpperCase(),
-                              style: TextStyle(
-                                color: color,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.2,
+                            const SizedBox(height: 16),
+                            // Action Name
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Text(
+                                activity.action.replaceAll('_', ' ').toUpperCase(),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 1.5,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 12),
+                            // Glow Status Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: activity.status.toUpperCase() == 'SUCCESS'
+                                    ? AppColors.success.withOpacity(0.9)
+                                    : AppColors.danger.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: activity.status.toUpperCase() == 'SUCCESS'
+                                        ? AppColors.success.withOpacity(0.6)
+                                        : AppColors.danger.withOpacity(0.6),
+                                    blurRadius: 12,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.5),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    activity.status.toUpperCase() == 'SUCCESS'
+                                        ? Icons.check_circle_outline_rounded
+                                        : Icons.error_outline_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    activity.status.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -113,9 +176,9 @@ class AuditLogDetailScreen extends StatelessWidget {
           // --- CONTENT ---
           SliverToBoxAdapter(
             child: Transform.translate(
-              offset: const Offset(0, -30),
+              offset: const Offset(0, -32),
               child: Container(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
+                padding: const EdgeInsets.fromLTRB(28, 36, 28, 48),
                 decoration: const BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
@@ -123,151 +186,166 @@ class AuditLogDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- ACTION TITLE ---
-                    Text(
-                      activity.action.replaceAll('_', ' '),
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.textDark,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    // --- TIME AND RELATIVE INFO ---
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(
-                          Icons.access_time_filled_rounded,
-                          color: AppColors.textLight,
-                          size: 14,
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.access_time_filled_rounded,
+                                color: color,
+                                size: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              DateFormat(
+                                'EEEE, d MMM yyyy - HH:mm',
+                                'id_ID',
+                              ).format(activity.createdAt),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textMid,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          DateFormat(
-                            'EEEE, d MMM yyyy - HH:mm',
-                            'id_ID',
-                          ).format(activity.createdAt),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textLight,
-                            fontWeight: FontWeight.w600,
+                        if (activity.relativeTime.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.textLight.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              activity.relativeTime,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textMid,
+                              ),
+                            ),
                           ),
-                        ),
                       ],
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 36),
 
                     // --- DETAILS CARD ---
                     const Text(
                       'LOG DATA PEMERIKSAAN',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w900,
                         color: AppColors.textLight,
                         letterSpacing: 1.5,
                       ),
                     ),
                     const SizedBox(height: 16),
-                    AppCard(
-                      padding: const EdgeInsets.all(24),
+                    _buildGlassCard(
+                      color: color,
                       child: Column(
                         children: [
                           _buildDetailRow(
-                            Icons.info_outline_rounded,
-                            'Deskripsi',
-                            activity.description,
+                            icon: Icons.info_outline_rounded,
+                            label: 'Deskripsi Aktivitas',
+                            value: activity.description,
+                            color: color,
                           ),
                           _buildDivider(),
                           _buildDetailRow(
-                            Icons.event_note_rounded,
-                            'Status Sistem',
-                            activity.status.toUpperCase(),
+                            icon: Icons.fingerprint_rounded,
+                            label: 'ID Log Sistem',
+                            value: activity.id.toUpperCase(),
+                            color: color,
                           ),
                           _buildDivider(),
                           _buildDetailRow(
-                            Icons.fingerprint_rounded,
-                            'ID Log',
-                            activity.id.substring(0, 8).toUpperCase(),
-                          ),
-                          _buildDivider(),
-                          _buildDetailRow(
-                            Icons.person_pin_rounded,
-                            'Otoritas',
-                            activity.username ?? 'Staff Apotek',
+                            icon: Icons.person_pin_rounded,
+                            label: 'Otoritas Pengguna',
+                            value: activity.username ?? 'Staff Apotek / Apoteker',
+                            color: color,
                           ),
                         ],
                       ),
                     ),
 
-                    if (activity.metadata != null &&
-                        activity.metadata!.isNotEmpty) ...[
-                      const SizedBox(height: 32),
+                    // --- DYNAMIC METADATA CARD ---
+                    if (activity.metadata != null && activity.metadata!.isNotEmpty) ...[
+                      const SizedBox(height: 36),
                       const Text(
-                        'METADATA TAMBAHAN',
+                        'METADATA TAMBAHAN (TERSTRUKTUR)',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w900,
                           color: AppColors.textLight,
                           letterSpacing: 1.5,
                         ),
                       ),
                       const SizedBox(height: 16),
-                      AppCard(
-                        padding: const EdgeInsets.all(20),
+                      _buildGlassCard(
+                        color: color,
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: activity.metadata!.entries.map((e) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    '${e.key}: ',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13,
-                                      color: AppColors.textMid,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      e.value.toString(),
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: AppColors.textDark,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            final isLast = e.key == activity.metadata!.keys.last;
+                            return Column(
+                              children: [
+                                _buildMetadataRow(
+                                  key: e.key,
+                                  value: e.value.toString(),
+                                  color: color,
+                                ),
+                                if (!isLast) _buildDivider(),
+                              ],
                             );
                           }).toList(),
                         ),
                       ),
                     ],
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 40),
 
                     // --- STATUS BADGE SECTION ---
                     Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(20),
+                        color: AppColors.success.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(28),
                         border: Border.all(
-                          color: AppColors.success.withOpacity(0.1),
-                          width: 1.5,
+                          color: AppColors.success.withOpacity(0.2),
+                          width: 2,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.success.withOpacity(0.04),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.verified_user_rounded,
-                            color: AppColors.success,
-                            size: 24,
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.verified_user_rounded,
+                              color: AppColors.success,
+                              size: 28,
+                            ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 20),
                           const Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,14 +354,15 @@ class AuditLogDetailScreen extends StatelessWidget {
                                   'Aktivitas Terverifikasi',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 14,
+                                    fontSize: 16,
                                     color: AppColors.textDark,
                                   ),
                                 ),
+                                SizedBox(height: 6),
                                 Text(
                                   'Log ini telah dicatat secara otomatis oleh sistem keamanan ApoTrack.',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 13,
                                     color: AppColors.textMid,
                                     height: 1.4,
                                   ),
@@ -304,55 +383,220 @@ class AuditLogDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: AppColors.textLight.withOpacity(0.7)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textLight,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: AppColors.textDark,
-                    fontWeight: FontWeight.w800,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
+  Widget _buildGlassCard({required Widget child, required Color color}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
+        border: Border.all(color: Colors.white, width: 2),
       ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, size: 20, color: color),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textLight,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textDark,
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetadataRow({
+    required String key,
+    required String value,
+    required Color color,
+  }) {
+    final label = _mapMetadataKey(key);
+    final icon = _getMetadataIcon(key);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, size: 20, color: color),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textLight,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textDark,
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildDivider() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Divider(height: 1, color: AppColors.divider.withOpacity(0.5)),
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Divider(height: 1, color: AppColors.divider.withOpacity(0.6)),
     );
+  }
+
+  String _mapMetadataKey(String key) {
+    switch (key.toLowerCase()) {
+      case 'order_id':
+      case 'order_number':
+      case 'invoice':
+      case 'invoice_number':
+        return 'Nomor Transaksi / Invoice';
+      case 'total':
+      case 'grand_total':
+        return 'Total Pembayaran';
+      case 'status':
+      case 'order_status':
+        return 'Status Pesanan';
+      case 'courier':
+      case 'courier_code':
+      case 'courier_service':
+        return 'Kurir Pengiriman';
+      case 'medicine_id':
+      case 'medicine_name':
+        return 'Identitas Obat';
+      case 'old_stock':
+        return 'Stok Lama';
+      case 'new_stock':
+        return 'Stok Baru';
+      case 'user_id':
+      case 'staff_id':
+        return 'ID Pengguna / Staf';
+      case 'device':
+      case 'user_agent':
+        return 'Perangkat / Akses';
+      case 'reason':
+      case 'rejection_reason':
+        return 'Keterangan / Alasan';
+      default:
+        return key
+            .replaceAll('_', ' ')
+            .split(' ')
+            .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+            .join(' ');
+    }
+  }
+
+  IconData _getMetadataIcon(String key) {
+    switch (key.toLowerCase()) {
+      case 'order_id':
+      case 'order_number':
+      case 'invoice':
+      case 'invoice_number':
+        return Icons.tag_rounded;
+      case 'total':
+      case 'grand_total':
+        return Icons.payments_rounded;
+      case 'status':
+      case 'order_status':
+        return Icons.info_outline_rounded;
+      case 'courier':
+      case 'courier_code':
+      case 'courier_service':
+        return Icons.local_shipping_rounded;
+      case 'medicine_id':
+      case 'medicine_name':
+        return Icons.medication_rounded;
+      case 'old_stock':
+        return Icons.history_toggle_off_rounded;
+      case 'new_stock':
+        return Icons.update_rounded;
+      case 'user_id':
+      case 'staff_id':
+        return Icons.badge_rounded;
+      case 'device':
+      case 'user_agent':
+        return Icons.devices_rounded;
+      case 'reason':
+      case 'rejection_reason':
+        return Icons.notes_rounded;
+      default:
+        return Icons.data_object_rounded;
+    }
   }
 
   String _getCategory(String action) {
     final act = action.toUpperCase();
     if (act.contains('MEDICINE') || act.contains('STOCK')) return 'Inventori';
-    if (act.contains('ORDER')) return 'Transaksi';
+    if (act.contains('ORDER') || act.contains('POS') || act.contains('SHIP') || act.contains('VERIFY')) return 'Transaksi';
     if (act.contains('PROFILE') || act.contains('PASSWORD')) return 'Akun';
     if (act.contains('LOGIN') || act.contains('LOGOUT')) return 'Sistem';
     return 'Umum';
@@ -380,9 +624,9 @@ class AuditLogDetailScreen extends StatelessWidget {
       case 'Transaksi':
         return AppColors.success;
       case 'Akun':
-        return Colors.purple;
+        return AppColors.accentPurple;
       case 'Sistem':
-        return AppColors.textLight;
+        return AppColors.accentIndigo;
       default:
         return AppColors.textMid;
     }

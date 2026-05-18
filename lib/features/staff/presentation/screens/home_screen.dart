@@ -9,15 +9,49 @@ import '../providers/staff_provider.dart';
 import '../../data/models/medicine.dart';
 import '../../data/models/order.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  bool _isCollapsed = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _scrollController.addListener(_handleScroll);
+  }
+
+  void _handleScroll() {
+    final shouldCollapse = _scrollController.offset > 100;
+
+    if (shouldCollapse != _isCollapsed) {
+      setState(() {
+        _isCollapsed = shouldCollapse;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_handleScroll);
+
+    _scrollController.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(authNotifierProvider).user;
     final ordersAsync = ref.watch(staffOrdersProvider);
     final medicinesState = ref.watch(staffMedicinesProvider);
-
     final orders = ordersAsync.whenOrNull(data: (d) => d) ?? [];
     final medicines = medicinesState.items;
 
@@ -32,6 +66,7 @@ class HomeScreen extends ConsumerWidget {
             ref.invalidate(staffMedicinesProvider);
           },
           child: CustomScrollView(
+            controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
               _buildModernHeader(user),
@@ -63,11 +98,48 @@ class HomeScreen extends ConsumerWidget {
     final pharmacy = user?.pharmacyName ?? 'Apotek ApoTrack';
 
     return SliverAppBar(
-      expandedHeight: 200,
+      expandedHeight: 160,
       pinned: true,
       stretch: true,
       elevation: 0,
       backgroundColor: AppColors.primary,
+      centerTitle: false,
+      titleSpacing: 20,
+      title: AnimatedSlide(
+        duration: const Duration(milliseconds: 250),
+        offset: _isCollapsed ? Offset.zero : const Offset(0, -1),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 250),
+          opacity: _isCollapsed ? 1 : 0,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.person_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                firstName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [
           StretchMode.zoomBackground,
@@ -85,7 +157,6 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            // Elemen Dekoratif Premium
             Positioned(
               top: -20,
               right: -20,
@@ -96,48 +167,55 @@ class HomeScreen extends ConsumerWidget {
             ),
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPharmacyBadge(pharmacy),
-                    const Spacer(),
-                    const Text(
-                      'Selamat bekerja,',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                padding: const EdgeInsets.all(24),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: _isCollapsed ? 0 : 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPharmacyBadge(pharmacy),
+                      const Spacer(),
+                      const Text(
+                        'Selamat bekerja,',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '$firstName',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1,
+                      Text(
+                        firstName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
+
       actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(
-            Icons.notifications_active_outlined,
-            color: Colors.white,
-          ),
-          style: IconButton.styleFrom(
-            backgroundColor: Colors.white.withOpacity(0.15),
+        Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.notifications_active_outlined,
+              color: Colors.white,
+            ),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withOpacity(0.15),
+            ),
           ),
         ),
-        const SizedBox(width: 16),
       ],
     );
   }

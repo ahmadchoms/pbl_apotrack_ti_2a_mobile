@@ -52,6 +52,7 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
             Expanded(
               child: TabBarView(
                 controller: _tabController,
+                physics: const BouncingScrollPhysics(),
                 children: _tabs.map((t) {
                   return _OrderListView(
                     status: t['status'] as String,
@@ -141,61 +142,88 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
     return Container(
       color: AppColors.background,
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: TabBar(
-        controller: _tabController,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        indicatorColor: AppColors.primary,
-        indicatorWeight: 3,
-        indicatorPadding: const EdgeInsets.symmetric(horizontal: 16),
-        labelColor: AppColors.primary,
-        unselectedLabelColor: AppColors.textLight,
-        labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-        ),
-        dividerColor: Colors.transparent,
-        tabs: _tabs.map((t) {
-          final count = orders
-              .where((o) => o.orderStatus == t['status'])
-              .length;
 
-          return Tab(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(t['label'] as String),
-                if (count > 0) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: t['status'] == 'PENDING'
-                          ? AppColors.danger
-                          : AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      count.toString(),
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        color: t['status'] == 'PENDING'
-                            ? Colors.white
-                            : AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+      child: SizedBox(
+        height: 48,
+        width: double.infinity,
+        child: Align(
+          alignment: Alignment.centerLeft,
+
+          child: TabBar(
+            controller: _tabController,
+
+            isScrollable: true,
+
+            labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+
+            indicatorColor: AppColors.primary,
+            indicatorWeight: 3,
+
+            indicatorPadding: const EdgeInsets.symmetric(horizontal: 8),
+
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textLight,
+
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
             ),
-          );
-        }).toList(),
+
+            unselectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+
+            dividerColor: Colors.transparent,
+
+            tabs: _tabs.map((t) {
+              final count = orders
+                  .where((o) => o.orderStatus == t['status'])
+                  .length;
+
+              return Tab(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+
+                  spacing: 6,
+
+                  children: [
+                    Text(t['label'] as String),
+
+                    if (count > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+
+                        decoration: BoxDecoration(
+                          color: t['status'] == 'PENDING'
+                              ? AppColors.danger
+                              : AppColors.primary.withOpacity(0.1),
+
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+
+                        child: Text(
+                          count.toString(),
+
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+
+                            color: t['status'] == 'PENDING'
+                                ? Colors.white
+                                : AppColors.primary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
       ),
     );
   }
