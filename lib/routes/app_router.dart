@@ -15,6 +15,11 @@ import '../features/auth/presentation/screens/splash_screen.dart';
 
 // Customer
 import '../features/customer/presentation/screens/home_screen.dart';
+import '../features/customer/presentation/screens/customer_profile_screen.dart';
+import '../features/customer/presentation/screens/edit_profile_screen.dart';
+import '../features/customer/presentation/screens/change_password_screen.dart';
+import '../features/customer/presentation/screens/edit_address_screen.dart';
+import '../features/customer/data/models/customer_address.dart';
 
 // Staff
 import '../features/staff/presentation/screens/main_screen.dart';
@@ -37,7 +42,13 @@ class AppRouter {
   static const String customerHome = '/customer';
   static const String staffHome = '/staff';
 
-  // Perbaikan Rute: Samakan dengan pemanggilan di UI
+  static const String customerAccountHub = '/customer/account-hub';
+  static const String customerEditProfile = '/customer/edit-profile';
+  static const String customerChangePassword = '/customer/change-password';
+  static const String customerEditAddress = '/customer/edit-address';
+  static const String customerOrderDetail = '/customer/order-detail';
+  static const String customerTrackOrder = '/customer/track-order';
+
   static const String staffInventory = '/staff/inventory';
   static const String staffOrderDetail = '/staff/order-detail';
   static const String staffOrders = '/staff/orders';
@@ -120,6 +131,33 @@ class AppRouter {
         GoRoute(
           path: staffHome,
           builder: (context, state) => const MainScreen(),
+        ),
+        GoRoute(
+          path: customerAccountHub,
+          builder: (context, state) => const AccountHubScreen(),
+        ),
+
+        GoRoute(
+          path: customerEditProfile,
+          builder: (context, state) => const CustomerEditProfileScreen(),
+        ),
+
+        GoRoute(
+          path: customerChangePassword,
+          builder: (context, state) => const CustomerChangePasswordScreen(),
+        ),
+
+        GoRoute(
+          path: customerEditAddress,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+
+            final isAdd = extra?['isAdd'] as bool? ?? false;
+
+            final address = extra?['address'] as CustomerAddress?;
+
+            return CustomerEditAddressScreen(isAdd: isAdd, address: address);
+          },
         ),
 
         // Halaman yang berdiri sendiri
