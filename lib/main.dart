@@ -42,6 +42,7 @@ class ApoTrackApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Membaca router dari provider yang sudah kita buat
     final router = ref.watch(AppRouter.routerProvider);
 
     return MaterialApp.router(
