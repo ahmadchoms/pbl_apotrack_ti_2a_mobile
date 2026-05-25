@@ -20,6 +20,12 @@ import '../features/customer/presentation/screens/edit_profile_screen.dart';
 import '../features/customer/presentation/screens/change_password_screen.dart';
 import '../features/customer/presentation/screens/edit_address_screen.dart';
 import '../features/customer/data/models/customer_address.dart';
+// ── NEW customer screens ──
+import '../features/customer/presentation/screens/pharma_scan_map_screen.dart';
+import '../features/customer/presentation/screens/medicine_list_screen.dart';
+import '../features/customer/presentation/screens/qris_payment_screen.dart';
+import '../features/customer/presentation/screens/verifikasi_pengambilan_screen.dart';
+import '../features/customer/presentation/screens/beri_ulasan_screen.dart';
 
 // Staff
 import '../features/staff/presentation/screens/main_screen.dart';
@@ -33,6 +39,8 @@ import '../features/staff/presentation/screens/edit_profile_screen.dart';
 import '../features/staff/presentation/screens/change_password_screen.dart';
 import '../features/staff/presentation/screens/activity_history_screen.dart';
 import '../features/staff/presentation/screens/staff_inventory_screen.dart';
+// ── NEW staff screens ──
+import '../features/staff/presentation/screens/scanner_screen.dart';
 
 class AppRouter {
   static const String splash = '/';
@@ -48,6 +56,12 @@ class AppRouter {
   static const String customerEditAddress = '/customer/edit-address';
   static const String customerOrderDetail = '/customer/order-detail';
   static const String customerTrackOrder = '/customer/track-order';
+  // ── NEW customer route constants ──
+  static const String customerPharmacySearch = '/customer/pharmacy-search';
+  static const String customerMedicineList = '/customer/medicine-list';
+  static const String customerPayment = '/customer/payment';
+  static const String customerVerifikasi = '/customer/verifikasi';
+  static const String customerUlasan = '/customer/ulasan';
 
   static const String staffInventory = '/staff/inventory';
   static const String staffOrderDetail = '/staff/order-detail';
@@ -57,14 +71,13 @@ class AppRouter {
   static const String staffNotifications = '/staff/notifications';
   static const String staffPos = '/staff/pos';
   static const String staffAuditLogDetail = '/staff/audit-log-detail';
-
   static const String staffEditProfile = '/staff/edit-profile';
   static const String staffChangePassword = '/staff/change-password';
   static const String staffActivityHistory = '/staff/activity-history';
+  // ── NEW staff route constants ──
+  static const String staffScanner = '/staff/scanner';
 
   static final routerProvider = Provider<GoRouter>((ref) {
-    // Gunakan ref.read agar GoRouter tidak di-rebuild saat notifier berubah.
-    // GoRouter akan merespon perubahan lewat refreshListenable secara internal.
     final notifier = ref.read(routerNotifierProvider);
 
     return GoRouter(
@@ -84,21 +97,12 @@ class AppRouter {
 
         final isAuthPage = isLoggingIn || isRegistering || isForgotPw;
 
-        // 1. Jika BELUM Login
         if (!isAuthenticated) {
-          // A. Jika di halaman Auth (Login/Register/Lupa Password), tetap di sana
           if (isAuthPage) return null;
-
-          // B. Jika di Splash: tetap di sana jika sedang loading (cek session), ke login jika sudah selesai
-          if (isSplash) {
-            return isLoading ? null : login;
-          }
-
-          // C. Jika di halaman internal lain, lempar ke login
+          if (isSplash) return isLoading ? null : login;
           return login;
         }
 
-        // 2. Jika SUDAH Login
         if (isAuthenticated) {
           if (isSplash || isAuthPage) {
             return authState.user?.role == 'STAFF' ? staffHome : customerHome;
@@ -127,40 +131,94 @@ class AppRouter {
           builder: (context, state) => const CustomerHomeScreen(),
         ),
 
-        // Dashboard Utama (MainScreen mengelola tab Pesanan & Profile)
-        GoRoute(
-          path: staffHome,
-          builder: (context, state) => const MainScreen(),
-        ),
+        // ── Customer Account ──────────────────────────────────────
         GoRoute(
           path: customerAccountHub,
           builder: (context, state) => const AccountHubScreen(),
         ),
-
         GoRoute(
           path: customerEditProfile,
           builder: (context, state) => const CustomerEditProfileScreen(),
         ),
-
         GoRoute(
           path: customerChangePassword,
           builder: (context, state) => const CustomerChangePasswordScreen(),
         ),
-
         GoRoute(
           path: customerEditAddress,
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>?;
-
             final isAdd = extra?['isAdd'] as bool? ?? false;
-
             final address = extra?['address'] as CustomerAddress?;
-
             return CustomerEditAddressScreen(isAdd: isAdd, address: address);
           },
         ),
 
-        // Halaman yang berdiri sendiri
+        // ── Customer — NEW routes ─────────────────────────────────
+        GoRoute(
+          path: customerPharmacySearch,
+          builder: (context, state) => const PharmaScanMapScreen(),
+        ),
+        GoRoute(
+          path: customerMedicineList,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return MedicineListScreen(
+              pharmacyId: extra['pharmacyId'] as String,
+              pharmacyName: extra['pharmacyName'] as String,
+              pharmacyRating:
+                  (extra['pharmacyRating'] as num?)?.toDouble() ?? 4.5,
+            );
+          },
+        ),
+        GoRoute(
+          path: customerPayment,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return QrisPaymentScreen(
+              pharmacyId: extra['pharmacyId'] as String,
+              pharmacyName: extra['pharmacyName'] as String,
+              items: List<Map<String, dynamic>>.from(extra['items'] as List),
+              subtotal: extra['subtotal'] as int,
+              shippingCost: extra['shippingCost'] as int? ?? 0,
+            );
+          },
+        ),
+        GoRoute(
+          path: customerVerifikasi,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return VerifikasiPengambilanScreen(
+              orderId: extra['orderId'] as String,
+              orderNumber: extra['orderNumber'] as String,
+              verificationCode: extra['verificationCode'] as String,
+              pharmacyName: extra['pharmacyName'] as String,
+              pharmacyId: extra['pharmacyId'] as String,
+              items: List<Map<String, dynamic>>.from(extra['items'] as List),
+              total: extra['total'] as int,
+            );
+          },
+        ),
+        GoRoute(
+          path: customerUlasan,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return BeriUlasanScreen(
+              orderNumber: extra['orderNumber'] as String,
+              pharmacyId: extra['pharmacyId'] as String,
+              pharmacyName: extra['pharmacyName'] as String,
+              items: extra['items'] != null
+                  ? List<Map<String, dynamic>>.from(extra['items'] as List)
+                  : [],
+            );
+          },
+        ),
+
+        // ── Staff ─────────────────────────────────────────────────
+        GoRoute(
+          path: staffHome,
+          builder: (context, state) => const MainScreen(),
+        ),
         GoRoute(
           path: staffInventory,
           builder: (context, state) => const StaffInventoryScreen(),
@@ -204,7 +262,10 @@ class AppRouter {
           path: staffNotifications,
           builder: (context, state) => const NotificationScreen(),
         ),
-        GoRoute(path: staffPos, builder: (context, state) => const PosScreen()),
+        GoRoute(
+          path: staffPos,
+          builder: (context, state) => const PosScreen(),
+        ),
         GoRoute(
           path: staffAuditLogDetail,
           builder: (context, state) {
@@ -215,7 +276,6 @@ class AppRouter {
             );
           },
         ),
-
         GoRoute(
           path: staffEditProfile,
           builder: (context, state) => const EditProfileScreen(),
@@ -228,6 +288,12 @@ class AppRouter {
           path: staffActivityHistory,
           builder: (context, state) => const ActivityHistoryScreen(),
         ),
+
+        // ── Staff — NEW routes ────────────────────────────────────
+        GoRoute(
+          path: staffScanner,
+          builder: (context, state) => const ScannerScreen(),
+        ),
       ],
     );
   });
@@ -236,8 +302,6 @@ class AppRouter {
 final routerNotifierProvider = ChangeNotifierProvider((ref) {
   final notifier = RouterNotifier();
 
-  // Hanya picu refresh navigasi jika objek user berubah (Login/Logout)
-  // Abaikan perubahan status isLoading agar halaman tidak ter-reset saat API bekerja
   ref.listen(authNotifierProvider, (previous, next) {
     if (previous?.user != next.user) {
       notifier.notify();
