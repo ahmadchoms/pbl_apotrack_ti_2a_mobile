@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 
 class PasswordField extends StatelessWidget {
   final String label;
@@ -32,20 +33,16 @@ class PasswordField extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: hasError
-                  ? const Color(0xFFEF4444)
-                  : const Color(0xFF64748B),
+              color: hasError ? AppColors.danger : AppColors.textSlate,
             ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: hasError
-                  ? const Color(0xFFEF4444)
-                  : const Color(0xFFF1F5F9),
+              color: hasError ? AppColors.danger : AppColors.surfaceLight,
               width: hasError ? 1.5 : 1,
             ),
           ),
@@ -57,9 +54,7 @@ class PasswordField extends StatelessWidget {
             decoration: InputDecoration(
               prefixIcon: Icon(
                 Icons.lock_outline_rounded,
-                color: hasError
-                    ? const Color(0xFFEF4444)
-                    : const Color(0xFF94A3B8),
+                color: hasError ? AppColors.danger : AppColors.textMuted,
                 size: 20,
               ),
               suffixIcon: IconButton(
@@ -67,7 +62,7 @@ class PasswordField extends StatelessWidget {
                   obscure
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.textMuted,
                   size: 20,
                 ),
                 onPressed: () => onToggle(!obscure),
@@ -89,14 +84,14 @@ class PasswordField extends StatelessWidget {
                 const Icon(
                   Icons.error_outline_rounded,
                   size: 13,
-                  color: Color(0xFFEF4444),
+                  color: AppColors.danger,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   errorText!,
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Color(0xFFEF4444),
+                    color: AppColors.danger,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

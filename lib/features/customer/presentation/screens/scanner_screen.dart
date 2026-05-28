@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/qr_scanner_overlay.dart';
 import '../../../../shared/widgets/qr_scanner_view.dart';
 
@@ -30,7 +30,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.black,
       body: Stack(
         children: [
           QrScannerView(
@@ -41,7 +41,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             child: Container(
               decoration: ShapeDecoration(
                 shape: QrScannerOverlayShape(
-                  borderColor: const Color(0xFF1D70F5),
+                  borderColor: AppColors.primary,
                   borderRadius: 24,
                   borderLength: 30,
                   borderWidth: 10,
@@ -55,11 +55,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
             top: 60,
             left: 20,
             child: CircleAvatar(
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: AppColors.white.withOpacity(0.2),
               child: IconButton(
                 icon: const Icon(
                   Icons.close,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
                 onPressed: () => Navigator.pop(context),
               ),
@@ -74,7 +74,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               'Arahkan kamera ke QR Undangan',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.white,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),

@@ -1,25 +1,24 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mobile/features/staff/data/models/audit_log.dart';
-import '../../data/services/staff_service.dart';
+import '../../../../core/network/secure_storage_service.dart';
+import '../../../auth/data/models/user_model.dart';
+import '../../data/models/audit_log.dart';
 import '../../data/models/medicine.dart';
 import '../../data/models/order.dart';
+import '../../data/services/staff_service.dart';
+import '../../../customer/data/models/customer_address.dart';
 
 // ─────────────────────────────────────────────
-// STATE: Sort & Filter untuk Inventory
+// Inventory Filter
 // ─────────────────────────────────────────────
 
 enum MedicineSortBy {
-  nameAsc,
-  nameDesc,
-  stockAsc,
-  stockDesc,
-  priceAsc,
-  priceDesc,
+  nameAsc, nameDesc, stockAsc, stockDesc, priceAsc, priceDesc,
 }
 
 class InventoryFilterState {
-  final String stockFilter; // 'Semua', 'Stok Kritis', 'Stok Rendah', 'Normal'
-  final String categoryFilter; // 'Semua' atau nama kategori
+  final String stockFilter;
+  final String categoryFilter;
   final MedicineSortBy sortBy;
 
   const InventoryFilterState({
@@ -52,11 +51,11 @@ class InventoryFilterNotifier extends StateNotifier<InventoryFilterState> {
 
 final inventoryFilterProvider =
     StateNotifierProvider<InventoryFilterNotifier, InventoryFilterState>(
-      (ref) => InventoryFilterNotifier(),
-    );
+  (ref) => InventoryFilterNotifier(),
+);
 
 // ─────────────────────────────────────────────
-// PAGINATION STATE
+// Pagination
 // ─────────────────────────────────────────────
 
 class PaginationState<T> {
@@ -107,16 +106,11 @@ class StaffMedicinesNotifier extends StateNotifier<PaginationState<Medicine>> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final service = ref.read(staffServiceProvider);
-      final newItems = await service.getMedicines(queryParams: {
-        'page': 1,
-        'per_page': _perPage,
-      });
-      
+      final newItems = await service.getMedicines(
+          queryParams: {'page': 1, 'per_page': _perPage});
       state = state.copyWith(
-        items: newItems,
-        isLoading: false,
-        page: 1,
-        hasMore: newItems.length >= _perPage,
+        items: newItems, isLoading: false,
+        page: 1, hasMore: newItems.length >= _perPage,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -125,16 +119,12 @@ class StaffMedicinesNotifier extends StateNotifier<PaginationState<Medicine>> {
 
   Future<void> fetchNextPage() async {
     if (!state.hasMore || state.isLoadingNextPage || state.isLoading) return;
-
     state = state.copyWith(isLoadingNextPage: true, error: null);
     try {
       final nextPage = state.page + 1;
       final service = ref.read(staffServiceProvider);
-      final newItems = await service.getMedicines(queryParams: {
-        'page': nextPage,
-        'per_page': _perPage,
-      });
-
+      final newItems = await service.getMedicines(
+          queryParams: {'page': nextPage, 'per_page': _perPage});
       state = state.copyWith(
         items: [...state.items, ...newItems],
         isLoadingNextPage: false,
@@ -145,42 +135,28 @@ class StaffMedicinesNotifier extends StateNotifier<PaginationState<Medicine>> {
       state = state.copyWith(isLoadingNextPage: false, error: e.toString());
     }
   }
-  
-  void refresh() {
-    fetchFirstPage();
-  }
+
+  void refresh() => fetchFirstPage();
 }
 
-// ─────────────────────────────────────────────
-// PROVIDERS
-// ─────────────────────────────────────────────
-
-/// Provider untuk mengambil daftar pesanan staf secara asinkron.
 final staffOrdersProvider = FutureProvider<List<Order>>((ref) async {
   final service = ref.watch(staffServiceProvider);
   return service.getOrders();
 });
 
-/// Provider untuk mengambil daftar obat staf dengan Paginasi.
-final staffMedicinesProvider = StateNotifierProvider<StaffMedicinesNotifier, PaginationState<Medicine>>((ref) {
-  return StaffMedicinesNotifier(ref);
-});
+final staffMedicinesProvider =
+    StateNotifierProvider<StaffMedicinesNotifier, PaginationState<Medicine>>(
+        (ref) => StaffMedicinesNotifier(ref));
 
-/// Provider untuk mengambil daftar obat + menerapkan filter & sorting secara lokal.
 final filteredMedicinesProvider = Provider<List<Medicine>>((ref) {
   final medicinesState = ref.watch(staffMedicinesProvider);
   final filter = ref.watch(inventoryFilterProvider);
-
   var result = List<Medicine>.from(medicinesState.items);
 
-  // Filter kategori
   if (filter.categoryFilter != 'Semua') {
-    result = result
-        .where((m) => m.category == filter.categoryFilter)
-        .toList();
+    result = result.where((m) => m.category == filter.categoryFilter).toList();
   }
 
-  // Filter stok
   result = result.where((m) {
     final stock = m.totalActiveStock;
     return switch (filter.stockFilter) {
@@ -191,29 +167,23 @@ final filteredMedicinesProvider = Provider<List<Medicine>>((ref) {
     };
   }).toList();
 
-  // Sorting
-  result.sort((a, b) {
-    return switch (filter.sortBy) {
-      MedicineSortBy.nameAsc => a.name.compareTo(b.name),
-      MedicineSortBy.nameDesc => b.name.compareTo(a.name),
-      MedicineSortBy.stockAsc => a.totalActiveStock.compareTo(b.totalActiveStock),
-      MedicineSortBy.stockDesc => b.totalActiveStock.compareTo(a.totalActiveStock),
-      MedicineSortBy.priceAsc => a.price.compareTo(b.price),
-      MedicineSortBy.priceDesc => b.price.compareTo(a.price),
-    };
+  result.sort((a, b) => switch (filter.sortBy) {
+    MedicineSortBy.nameAsc  => a.name.compareTo(b.name),
+    MedicineSortBy.nameDesc => b.name.compareTo(a.name),
+    MedicineSortBy.stockAsc  => a.totalActiveStock.compareTo(b.totalActiveStock),
+    MedicineSortBy.stockDesc => b.totalActiveStock.compareTo(a.totalActiveStock),
+    MedicineSortBy.priceAsc  => a.price.compareTo(b.price),
+    MedicineSortBy.priceDesc => b.price.compareTo(a.price),
   });
 
   return result;
 });
 
-/// Ekstrak daftar kategori unik dari data obat untuk digunakan di filter sheet.
 final medicineCategoriesProvider = Provider<List<String>>((ref) {
   final medicinesState = ref.watch(staffMedicinesProvider);
   final cats = <String>{'Semua'};
   for (final m in medicinesState.items) {
-    if (m.category != null && m.category!.isNotEmpty) {
-      cats.add(m.category!);
-    }
+    if (m.category != null && m.category!.isNotEmpty) cats.add(m.category!);
   }
   return cats.toList();
 });
@@ -230,16 +200,11 @@ class StaffAuditsNotifier extends StateNotifier<PaginationState<AuditLog>> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final service = ref.read(staffServiceProvider);
-      final newItems = await service.fetchAuditLogs(queryParams: {
-        'page': 1,
-        'per_page': _perPage,
-      });
-
+      final newItems = await service.fetchAuditLogs(
+          queryParams: {'page': 1, 'per_page': _perPage});
       state = state.copyWith(
-        items: newItems,
-        isLoading: false,
-        page: 1,
-        hasMore: newItems.length >= _perPage,
+        items: newItems, isLoading: false,
+        page: 1, hasMore: newItems.length >= _perPage,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -248,16 +213,12 @@ class StaffAuditsNotifier extends StateNotifier<PaginationState<AuditLog>> {
 
   Future<void> fetchNextPage() async {
     if (!state.hasMore || state.isLoadingNextPage || state.isLoading) return;
-
     state = state.copyWith(isLoadingNextPage: true, error: null);
     try {
       final nextPage = state.page + 1;
       final service = ref.read(staffServiceProvider);
-      final newItems = await service.fetchAuditLogs(queryParams: {
-        'page': nextPage,
-        'per_page': _perPage,
-      });
-
+      final newItems = await service.fetchAuditLogs(
+          queryParams: {'page': nextPage, 'per_page': _perPage});
       state = state.copyWith(
         items: [...state.items, ...newItems],
         isLoadingNextPage: false,
@@ -269,12 +230,195 @@ class StaffAuditsNotifier extends StateNotifier<PaginationState<AuditLog>> {
     }
   }
 
-  void refresh() {
-    fetchFirstPage();
+  void refresh() => fetchFirstPage();
+}
+
+final staffAuditsProvider =
+    StateNotifierProvider<StaffAuditsNotifier, PaginationState<AuditLog>>(
+        (ref) => StaffAuditsNotifier(ref));
+
+// ─────────────────────────────────────────────
+// PROFILE STATE — bersama Customer & Staff
+// ─────────────────────────────────────────────
+
+class ProfileState {
+  const ProfileState({
+    this.profile,
+    this.addresses = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  final UserModel? profile;
+  final List<CustomerAddress> addresses;
+  final bool isLoading;
+  final String? error;
+
+  ProfileState copyWith({
+    UserModel? profile,
+    List<CustomerAddress>? addresses,
+    bool? isLoading,
+    String? error,
+    bool clearError = false,
+  }) {
+    return ProfileState(
+      profile: profile ?? this.profile,
+      addresses: addresses ?? this.addresses,
+      isLoading: isLoading ?? this.isLoading,
+      error: clearError ? null : error ?? this.error,
+    );
   }
 }
 
-/// Provider untuk mengelola state riwayat aktivitas staf dengan Paginasi.
-final staffAuditsProvider = StateNotifierProvider<StaffAuditsNotifier, PaginationState<AuditLog>>((ref) {
-  return StaffAuditsNotifier(ref);
+class ProfileNotifier extends StateNotifier<ProfileState> {
+  ProfileNotifier(this._service, this._storage) : super(const ProfileState());
+
+  final StaffService _service;
+  final SecureStorageService _storage;
+
+  Future<void> loadAll() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final profile = await _service.getProfile();
+      final addresses = profile.isCustomer
+          ? await _service.getAddresses()
+          : <CustomerAddress>[];
+      state = state.copyWith(
+        profile: profile, addresses: addresses, isLoading: false,
+      );
+    } catch (e, s) {
+      debugPrint('[ProfileNotifier] loadAll error: $e\n$s');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Gagal memuat data: ${e.toString()}',
+      );
+    }
+  }
+
+  Future<void> fetchProfile() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final profile = await _service.getProfile();
+      state = state.copyWith(profile: profile, isLoading: false);
+    } catch (e, s) {
+      debugPrint('[ProfileNotifier] fetchProfile error: $e\n$s');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Gagal memuat profil: ${e.toString()}',
+      );
+    }
+  }
+
+  Future<void> updateProfile({
+    required String username,
+    required String email,
+    String? phone,
+    dynamic imageFile,
+  }) async {
+    final updated = await _service.updateProfile(
+      username: username, email: email,
+      phone: phone, imageFile: imageFile,
+    );
+    state = state.copyWith(profile: updated);
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _service.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
+
+  Future<void> addAddress({
+    required String label,
+    required String addressDetail,
+    required double latitude,
+    required double longitude,
+    bool isPrimary = false,
+  }) async {
+    final newAddr = await _service.addAddress(
+      label: label, addressDetail: addressDetail,
+      latitude: latitude, longitude: longitude, isPrimary: isPrimary,
+    );
+    final updated = isPrimary
+        ? state.addresses.map((a) => CustomerAddress(
+              id: a.id, label: a.label, addressDetail: a.addressDetail,
+              completeAddress: a.completeAddress, latitude: a.latitude,
+              longitude: a.longitude, isPrimary: false,
+            )).toList()
+        : List<CustomerAddress>.from(state.addresses);
+    updated.add(newAddr);
+    state = state.copyWith(addresses: updated);
+  }
+
+  Future<void> updateAddress({
+    required String id,
+    required String label,
+    required String addressDetail,
+    required double latitude,
+    required double longitude,
+    bool isPrimary = false,
+  }) async {
+    try {
+      final updated = await _service.updateAddress(
+        id: id, label: label, addressDetail: addressDetail,
+        latitude: latitude, longitude: longitude, isPrimary: isPrimary,
+      );
+      state = state.copyWith(
+        addresses: state.addresses.map((a) {
+          if (a.id == id) return updated;
+          if (isPrimary && a.isPrimary) {
+            return CustomerAddress(
+              id: a.id, label: a.label, addressDetail: a.addressDetail,
+              completeAddress: a.completeAddress, latitude: a.latitude,
+              longitude: a.longitude, isPrimary: false,
+            );
+          }
+          return a;
+        }).toList(),
+      );
+    } catch (e, s) {
+      debugPrint('[ProfileNotifier] updateAddress error: $e\n$s');
+      state = state.copyWith(error: 'Gagal mengubah alamat: ${e.toString()}');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAddress(String id) async {
+    try {
+      await _service.deleteAddress(id);
+      state = state.copyWith(
+        addresses: state.addresses.where((a) => a.id != id).toList(),
+      );
+    } catch (e, s) {
+      debugPrint('[ProfileNotifier] deleteAddress error: $e\n$s');
+      state = state.copyWith(error: 'Gagal menghapus alamat: ${e.toString()}');
+      rethrow;
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      await _service.logout();
+    } catch (e) {
+      debugPrint('[ProfileNotifier] logout error: $e');
+    } finally {
+      try {
+        await _storage.clearAll();
+      } catch (e) {
+        debugPrint('[ProfileNotifier] clearAll error: $e');
+      }
+      state = const ProfileState();
+    }
+  }
+}
+
+final profileProvider =
+    StateNotifierProvider<ProfileNotifier, ProfileState>((ref) {
+  final service = ref.watch(staffServiceProvider);
+  final storage = ref.watch(secureStorageServiceProvider);
+  return ProfileNotifier(service, storage);
 });

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 
 class MapPickerDialog extends StatefulWidget {
   final double latitude;
   final double longitude;
-  // REVISI: pakai callback langsung agar tidak bergantung pada Navigator.pop return value
   final void Function(double latitude, double longitude) onLocationSelected;
 
   const MapPickerDialog({
@@ -57,12 +57,12 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                   horizontal: 16,
                   vertical: 14,
                 ),
-                color: const Color(0xFF1D70F5),
+                color: AppColors.primary,
                 child: Row(
                   children: [
                     const Icon(
                       Icons.location_on,
-                      color: Colors.white,
+                      color: AppColors.white,
                       size: 20,
                     ),
                     const SizedBox(width: 10),
@@ -70,7 +70,7 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                       child: Text(
                         'Pilih Lokasi di Peta',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
@@ -80,7 +80,7 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                       onTap: () => Navigator.of(context).pop(),
                       child: const Icon(
                         Icons.close_rounded,
-                        color: Colors.white,
+                        color: AppColors.white,
                         size: 20,
                       ),
                     ),
@@ -118,7 +118,7 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                               height: 48,
                               child: const Icon(
                                 Icons.location_on,
-                                color: Color(0xFF1D70F5),
+                                color: AppColors.primary,
                                 size: 48,
                               ),
                             ),
@@ -133,11 +133,11 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                       right: 12,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.12),
+                              color: AppColors.black.withOpacity(0.12),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
@@ -184,13 +184,13 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                             vertical: 7,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.55),
+                            color: AppColors.black.withOpacity(0.55),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text(
                             'Ketuk peta untuk memilih lokasi',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -209,9 +209,9 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                   vertical: 12,
                 ),
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.white,
                   border: Border(
-                    top: BorderSide(color: Color(0xFFE2E8F0)),
+                    top: BorderSide(color: AppColors.divider),
                   ),
                 ),
                 child: Row(
@@ -221,7 +221,7 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                         onPressed: () => Navigator.of(context).pop(),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 13),
-                          side: const BorderSide(color: Color(0xFFE2E8F0)),
+                          side: const BorderSide(color: AppColors.divider),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -229,7 +229,7 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                         child: const Text(
                           'Batal',
                           style: TextStyle(
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSlate,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -238,7 +238,6 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        // REVISI: panggil callback dulu, baru tutup dialog
                         onPressed: () {
                           widget.onLocationSelected(
                             _selectedLat,
@@ -247,7 +246,7 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                           Navigator.of(context).pop();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1D70F5),
+                          backgroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -257,7 +256,7 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                         child: const Text(
                           'Simpan Lokasi',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -286,7 +285,7 @@ class _ZoomButton extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(8),
-        child: Icon(icon, size: 20, color: const Color(0xFF1E293B)),
+        child: Icon(icon, size: 20, color: AppColors.textPrimary),
       ),
     );
   }

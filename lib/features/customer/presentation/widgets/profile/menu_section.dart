@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 
 class MenuSection extends StatelessWidget {
   final String title;
@@ -24,18 +25,18 @@ class MenuSection extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF94A3B8),
+                color: AppColors.textMuted,
                 letterSpacing: 1.5,
               ),
             ),
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: AppColors.black.withOpacity(0.04),
                   blurRadius: 15,
                   offset: const Offset(0, 4),
                 ),
@@ -69,9 +70,7 @@ class MenuItemTile extends StatelessWidget {
     return ListTile(
       leading: Icon(
         icon,
-        color: isDestructive
-            ? const Color(0xFFEF4444)
-            : const Color(0xFF64748B),
+        color: isDestructive ? AppColors.danger : AppColors.textSlate,
         size: 22,
       ),
       title: Text(
@@ -79,16 +78,14 @@ class MenuItemTile extends StatelessWidget {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: isDestructive
-              ? const Color(0xFFEF4444)
-              : const Color(0xFF1E293B),
+          color: isDestructive ? AppColors.danger : AppColors.textPrimary,
         ),
       ),
       trailing: Icon(
         Icons.chevron_right_rounded,
         color: isDestructive
-            ? const Color(0xFFEF4444).withOpacity(0.3)
-            : const Color(0xFFCBD5E1),
+            ? AppColors.danger.withOpacity(0.3)
+            : AppColors.textSubtle,
       ),
       onTap: onTap,
       contentPadding:
