@@ -9,3 +9,5 @@
 .pub/
 .storage
 supabase/.env
+# Supabase temp files
+supabase/.temp/
