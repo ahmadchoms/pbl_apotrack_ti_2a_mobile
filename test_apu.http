@@ -1,8 +1,0 @@
-POST http://127.0.0.1:8000/api/devices/token
-Accept: application/json
-Content-Type: application/json
-
-{
-    "user_id": "019e3568-7413-710b-9e32-58211739db70",
-    "fcm_token": "token_dummy_febyaaa_12345"
-}

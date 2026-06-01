@@ -11,3 +11,8 @@
 supabase/.env
 # Supabase temp files
 supabase/.temp/
+pbl_apotrack_ti_2a_server/
+.vscode/
+package.json
+package-lock.json
+test_apu.http
