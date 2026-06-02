@@ -53,7 +53,7 @@ class AuthService {
       await _storage.saveUserData(jsonEncode(user.toJson()));
       return user;
     } catch (e) {
-      // Hapus sesi hanya jika token expired/invalid (401), bukan error jaringan
+    // Hapus sesi hanya jika token expired/invalid (401), bukan error jaringan
       if (e is DioException) {
         if (e.response?.statusCode == 401) {
           await _storage.clearAll();
@@ -62,7 +62,11 @@ class AuthService {
         // Untuk error jaringan/timeout, coba pakai data user yang di-cache
         final cached = await _storage.getUserData();
         if (cached != null) {
-          return UserModel.fromJson(jsonDecode(cached));
+          try {
+            return UserModel.fromJson(jsonDecode(cached) as Map<String, dynamic>);
+          } catch (_) {
+            // cached data corrupted
+          }
         }
       }
       return null;
@@ -86,6 +90,7 @@ class AuthService {
       if (userMap != null) {
         final user = UserModel.fromJson(userMap);
         await _storage.saveUserRole(user.role);
+        await _storage.saveUserData(jsonEncode(userMap));
         return user;
       }
     }
