@@ -140,7 +140,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   // ── Build ────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    ref.listen<CustomerProfileState>(customerProfileProvider, (prev, next) {
+    ref.listen(customerProfileProvider, (prev, next) {
       if (!next.isLoading && next.addresses.isNotEmpty && !_addressesLoaded) {
         _addressesLoaded = true;
         final converted =

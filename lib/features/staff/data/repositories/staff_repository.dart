@@ -89,6 +89,14 @@ class StaffRepository {
     }
   }
 
+  Future<Response> setPrimaryAddress(String id) async {
+    try {
+      return await _dio.patch('/user/addresses/$id/set-primary');
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<Response> deleteAddress(String id) async {
     try {
       return await _dio.delete('/user/addresses/$id');

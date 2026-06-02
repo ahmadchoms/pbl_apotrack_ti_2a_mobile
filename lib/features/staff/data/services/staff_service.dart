@@ -231,6 +231,16 @@ class StaffService {
     }
   }
 
+  Future<void> setPrimaryAddress(String id) async {
+    try {
+      await _repository.setPrimaryAddress(id);
+    } on DioException catch (e) {
+      throw Exception(
+        _extractLaravelError(e.response?.data) ?? 'Gagal mengatur alamat utama',
+      );
+    }
+  }
+
   Future<void> deleteAddress(String id) async {
     try {
       await _repository.deleteAddress(id);
