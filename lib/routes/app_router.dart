@@ -13,7 +13,7 @@ import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 
 // Customer
-import '../features/customer/presentation/screens/home_screen.dart';
+import '../features/customer/presentation/screens/main_screen.dart';
 import '../features/customer/presentation/screens/customer_profile_screen.dart';
 import '../features/customer/presentation/screens/order_detail_screen.dart'
     as customer_order;
@@ -101,7 +101,7 @@ class AppRouter {
         final isAuthPage = isLoggingIn || isRegistering || isForgotPw;
 
         if (!isAuthenticated) {
-          if (isSplash || isAuthPage) return null;
+          if (isLoggingIn || isRegistering || isForgotPw) return null;
           return login;
         }
 
@@ -133,7 +133,7 @@ class AppRouter {
         // ── Customer ──────────────────────────────────────────────
         GoRoute(
           path: customerHome,
-          builder: (context, state) => const CustomerHomeScreen(),
+          builder: (context, state) => const CustomerMainScreen(),
         ),
         GoRoute(
           path: customerAccountHub,

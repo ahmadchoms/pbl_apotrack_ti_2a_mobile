@@ -6,6 +6,7 @@ import '../../../../core/network/api_client.dart';
 import 'home_screen.dart';
 import 'notification.dart';
 import 'customer_profile_screen.dart';
+import 'order_history_screen.dart';
 import 'scanner_screen.dart';
 import 'scan_result.dart';
 
@@ -22,7 +23,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   final List<Widget> _screens = [
     const CustomerHomeScreen(),
     const NotificationScreen(showBack: false),
-    const Center(child: Text('Riwayat (Coming Soon)')),
+    const OrderHistoryScreen(),
     const AccountHubScreen(),
   ];
 

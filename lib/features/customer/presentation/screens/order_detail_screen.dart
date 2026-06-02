@@ -42,7 +42,10 @@ class CustomerOrderDetailScreen extends ConsumerWidget {
       body: detailAsync.when(
         loading: () =>
             const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _buildErrorState(e.toString()),
+        error: (e, _) => _buildErrorState(
+          e.toString(),
+          onRetry: () => ref.invalidate(orderDetailProvider(order.id)),
+        ),
         data: (detail) => _buildContent(context, detail),
       ),
       bottomNavigationBar: _buildBottomBar(context),
@@ -87,7 +90,7 @@ class CustomerOrderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorState(String error) {
+  Widget _buildErrorState(String error, {VoidCallback? onRetry}) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -100,6 +103,30 @@ class CustomerOrderDetailScreen extends ConsumerWidget {
             Text(error,
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: AppColors.textSlate)),
+            if (onRetry != null) ...[
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: onRetry,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Coba Lagi',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
