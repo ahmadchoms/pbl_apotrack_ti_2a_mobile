@@ -89,6 +89,8 @@ class AppRouter {
         final isAuthenticated = authState.user != null;
         final isLoading = authState.isLoading;
 
+        if (isLoading) return null;
+
         final matchedLoc = state.matchedLocation;
         final isLoggingIn = matchedLoc == login;
         final isRegistering = matchedLoc == register;
@@ -98,15 +100,12 @@ class AppRouter {
         final isAuthPage = isLoggingIn || isRegistering || isForgotPw;
 
         if (!isAuthenticated) {
-          if (isAuthPage) return null;
-          if (isSplash) return isLoading ? null : login;
+          if (isSplash || isAuthPage) return null;
           return login;
         }
 
-        if (isAuthenticated) {
-          if (isSplash || isAuthPage) {
-            return authState.user?.role == 'STAFF' ? staffHome : customerHome;
-          }
+        if (isSplash || isAuthPage) {
+          return authState.user?.role == 'STAFF' ? staffHome : customerHome;
         }
 
         return null;
@@ -303,7 +302,7 @@ final routerNotifierProvider = ChangeNotifierProvider((ref) {
   final notifier = RouterNotifier();
 
   ref.listen(authNotifierProvider, (previous, next) {
-    if (previous?.user != next.user) {
+    if (previous?.user != next.user || previous?.isLoading != next.isLoading) {
       notifier.notify();
     }
   });

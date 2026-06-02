@@ -393,7 +393,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           controller: controller,
           keyboardType: TextInputType.text,
           decoration: InputDecoration(
-            hintText: 'Masukkan 8 digit kode...',
+            hintText: 'Masukkan kode verifikasi',
             filled: true,
             fillColor: const Color(0xFFF1F5F9),
             border: OutlineInputBorder(
