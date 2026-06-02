@@ -36,6 +36,7 @@ class _VerifikasiPengambilanScreenState
     extends ConsumerState<VerifikasiPengambilanScreen> {
   late final OrderService _orderService;
   String _orderStatus = '';
+  String _verificationCode = '';
   bool _loading = true;
   Timer? _pollTimer;
 
@@ -43,6 +44,7 @@ class _VerifikasiPengambilanScreenState
   void initState() {
     super.initState();
     _orderService = ref.read(orderServiceProvider);
+    _verificationCode = widget.verificationCode;
     _cekStatus();
     _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) => _cekStatus());
   }
@@ -65,6 +67,9 @@ class _VerifikasiPengambilanScreenState
       final newStatus = order.orderStatus;
       setState(() {
         _orderStatus = newStatus;
+        if (_verificationCode.isEmpty) {
+          _verificationCode = order.verificationCode;
+        }
         _loading = false;
       });
       if (newStatus == 'COMPLETED') _pollTimer?.cancel();
@@ -227,7 +232,7 @@ class _VerifikasiPengambilanScreenState
                 color: Colors.white,
               ),
               child: QrImageView(
-                data: widget.verificationCode,
+                data: _verificationCode.isEmpty ? ' ' : _verificationCode,
                 version: QrVersions.auto,
                 size: 200,
                 backgroundColor: Colors.white,
@@ -236,7 +241,7 @@ class _VerifikasiPengambilanScreenState
           ),
           GestureDetector(
             onTap: () {
-              Clipboard.setData(ClipboardData(text: widget.verificationCode));
+              Clipboard.setData(ClipboardData(text: _verificationCode));
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Kode disalin!'),
@@ -259,7 +264,7 @@ class _VerifikasiPengambilanScreenState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    widget.verificationCode,
+                    _verificationCode.isEmpty ? 'Memuat...' : _verificationCode,
                     style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 16,

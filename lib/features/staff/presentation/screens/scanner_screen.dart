@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -119,6 +120,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 
   Future<void> _handleCode(String code) async {
+    if (code.isEmpty || code == '---') {
+      _showErrorDialog('Kode tidak terbaca. Silakan coba scan ulang atau input kode manual.');
+      return;
+    }
+
     final service = ref.read(staffServiceProvider);
 
     showDialog(
@@ -149,47 +155,147 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       Navigator.pop(context);
 
       _showSuccessDialog(order);
+    } on DioException catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      final msg = e.response?.data['message']?.toString() ??
+          e.response?.data['errors']?.toString() ??
+          'Kode tidak valid atau pesanan tidak ditemukan.';
+      _showErrorDialog(msg);
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context);
 
-      _showErrorDialog('Kode tidak valid atau pesanan tidak ditemukan.');
+      _showErrorDialog('Terjadi kesalahan: ${e.toString()}');
     }
   }
 
   void _showSuccessDialog(Order order) {
+    final items = order.items;
+    final grandTotal = order.grandTotal;
+    final customerName = order.customer['username']?.toString() ?? 'Pembeli';
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD1FAE5),
-                shape: BoxShape.circle,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD1FAE5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle,
+                    color: Color(0xFF065F46), size: 48),
               ),
-              child: const Icon(Icons.check_circle,
-                  color: Color(0xFF065F46), size: 48),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Verifikasi Berhasil!',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
+              const SizedBox(height: 12),
+              const Text(
+                'Verifikasi Berhasil!',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Pesanan #${order.orderNumber} telah selesai.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF6B7280)),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                'Pesanan #${order.orderNumber}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    color: Color(0xFF1D70F5),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pelanggan: $customerName',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Total: ${_formatRupiah(grandTotal)}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          color: Color(0xFF1D70F5)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Obat yang dipesan:',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: Color(0xFF6B7280)),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...items.map((item) {
+                final med = item.medicine;
+                final medName =
+                    med['name']?.toString() ?? 'Obat';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1D70F5).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.medication_rounded,
+                            color: Color(0xFF1D70F5), size: 18),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              medName,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 13),
+                            ),
+                            Text(
+                              '${item.quantity}x ${_formatRupiah(item.price)}',
+                              style: const TextStyle(
+                                  color: Color(0xFF6B7280), fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        _formatRupiah(item.subtotal),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -215,6 +321,16 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         ],
       ),
     );
+  }
+
+  String _formatRupiah(num value) {
+    final str = value.toStringAsFixed(0);
+    final buf = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
+      buf.write(str[i]);
+    }
+    return 'Rp ${buf.toString()}';
   }
 
   void _showErrorDialog(String message) {
