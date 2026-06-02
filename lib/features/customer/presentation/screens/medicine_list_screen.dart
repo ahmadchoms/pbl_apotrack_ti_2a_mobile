@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/customer/data/models/medicine_model.dart';
 import 'package:mobile/features/customer/data/models/medicine_category_model.dart';
 import 'package:mobile/features/customer/data/services/medicine_service.dart';
-import 'package:mobile/shared/widgets/app_card.dart';
 import 'package:mobile/shared/widgets/status_badge.dart';
 import 'qris_payment_screen.dart';
 
@@ -34,6 +34,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
   String _selectedCategoryId = '';
   String _search = '';
   final Map<String, int> _cart = {};
+  final FocusNode _searchFocus = FocusNode();
 
   String _rupiah(double amount) {
     final str = amount.toStringAsFixed(0);
@@ -101,16 +102,28 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
   Map<String, Color> _typeColor(String? typeName) {
     switch (typeName) {
       case 'Obat Keras':
-        return {'fg': const Color(0xFF8B5CF6), 'bg': const Color(0xFFF3F0FF)};
+        return {'fg': AppColors.accentPurple, 'bg': const Color(0xFFF3F0FF)};
       case 'Obat Bebas Terbatas':
-        return {'fg': const Color(0xFFF59E0B), 'bg': const Color(0xFFFFFBEB)};
+        return {'fg': AppColors.warning, 'bg': AppColors.warningLight};
       case 'Herbal':
-        return {'fg': const Color(0xFF10B981), 'bg': const Color(0xFFECFDF5)};
+        return {'fg': AppColors.success, 'bg': AppColors.successLight};
       case 'Alat Kesehatan':
-        return {'fg': const Color(0xFF3B82F6), 'bg': const Color(0xFFEFF6FF)};
+        return {'fg': AppColors.info, 'bg': AppColors.infoLight};
       default:
-        return {'fg': const Color(0xFF10B981), 'bg': const Color(0xFFECFDF5)};
+        return {'fg': AppColors.success, 'bg': AppColors.successLight};
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _searchFocus.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _searchFocus.dispose();
+    super.dispose();
   }
 
   @override
@@ -119,7 +132,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
     final categoriesAsync = ref.watch(medicineCategoriesProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: _buildAppBar(),
       body: Column(
         children: [
@@ -127,35 +140,50 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
           Expanded(
             child: medicinesAsync.when(
               loading: () => const Center(
-                child:
-                    CircularProgressIndicator(color: Color(0xFF2563EB)),
+                child: CircularProgressIndicator(color: AppColors.primary),
               ),
               error: (e, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.wifi_off_rounded,
-                        size: 48, color: Color(0xFF9CA3AF)),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Gagal memuat data:\n$e',
-                      textAlign: TextAlign.center,
-                      style:
-                          const TextStyle(color: Color(0xFF6B7280)),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => ref
-                          .refresh(medicinesProvider(widget.pharmacyId)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.wifi_off_rounded, size: 56, color: AppColors.textSubtle),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Gagal memuat data',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textLight),
                       ),
-                      child: const Text('Coba Lagi',
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        '$e',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 13, color: AppColors.textSubtle),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        height: 48,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6)),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () => ref.refresh(medicinesProvider(widget.pharmacyId)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                            child: const Text('Coba Lagi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               data: (medicines) {
@@ -166,14 +194,13 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                   padding: EdgeInsets.zero,
                   children: [
                     _buildSearchBar(),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     categoriesAsync.when(
                       loading: () => const SizedBox(height: 52),
                       error: (_, __) => const SizedBox.shrink(),
-                      data: (cats) =>
-                          _buildPopularSection(popular, cats),
+                      data: (cats) => _buildPopularSection(popular, cats),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     _buildAllProductsSection(filtered, medicines),
                     const SizedBox(height: 16),
                   ],
@@ -190,30 +217,23 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
-        onPressed: () => Navigator.pop(context),
-      ),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             widget.pharmacyName,
             style: const TextStyle(
-              color: Color(0xFF111827),
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
             ),
           ),
           Row(
             children: [
-              const Icon(Icons.star, color: Colors.amber, size: 13),
+              const Icon(Icons.star_rounded, color: Colors.amber, size: 13),
               Text(
                 ' ${widget.pharmacyRating}  •  ${widget.pharmacyDistance}  •  ${widget.pharmacyArea}',
-                style: const TextStyle(
-                    color: Color(0xFF6B7280), fontSize: 12),
+                style: const TextStyle(color: AppColors.textLight, fontSize: 12),
               ),
             ],
           ),
@@ -223,42 +243,26 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
         Stack(
           children: [
             IconButton(
-              icon: const Icon(Icons.shopping_cart_outlined,
-                  color: Color(0xFF2563EB)),
-              onPressed: (!widget.isOpen || _cartItemCount == 0)
-                  ? null
-                  : _goToCheckout,
+              icon: const Icon(Icons.shopping_cart_outlined, color: AppColors.primary),
+              onPressed: (!widget.isOpen || _cartItemCount == 0) ? null : _goToCheckout,
             ),
             if (_cartItemCount > 0 && widget.isOpen)
               Positioned(
-                right: 6,
-                top: 6,
+                right: 6, top: 6,
                 child: Container(
-                  width: 17,
-                  height: 17,
-                  decoration: const BoxDecoration(
-                      color: Colors.red, shape: BoxShape.circle),
+                  width: 18, height: 18,
+                  decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
                   child: Center(
                     child: Text(
                       '$_cartItemCount',
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
+                        color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
               ),
           ],
-        ),
-        IconButton(
-          icon: const Icon(Icons.info_outline, color: Color(0xFF6B7280)),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.close, color: Color(0xFF6B7280)),
-          onPressed: () => Navigator.pop(context),
         ),
       ],
     );
@@ -268,19 +272,15 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: const Color(0xFFFFF3CD),
+      color: AppColors.warningLight,
       child: const Row(
         children: [
-          Icon(Icons.access_time, color: Color(0xFF92400E), size: 16),
+          Icon(Icons.access_time_rounded, color: AppColors.warning, size: 16),
           SizedBox(width: 8),
           Expanded(
             child: Text(
               'Apotek sedang tutup. Kamu masih bisa lihat-lihat, tapi tidak bisa memesan sekarang.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF92400E),
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(fontSize: 12, color: AppColors.warning, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -289,33 +289,33 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
   }
 
   Widget _buildSearchBar() {
+    final isFocused = _searchFocus.hasFocus;
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      child: TextField(
-        onChanged: (v) => setState(() => _search = v),
-        decoration: InputDecoration(
-          hintText: 'Cari obat, vitamin, atau alat kesehatan...',
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-          prefixIcon:
-              Icon(Icons.search, color: Colors.grey[400], size: 20),
-          filled: true,
-          fillColor: const Color(0xFFF5F6FA),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(22),
-            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isFocused ? AppColors.primary : AppColors.divider,
+            width: isFocused ? 2 : 1.5,
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(22),
-            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          boxShadow: isFocused
+              ? [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 16, offset: const Offset(0, 4))]
+              : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4))],
+        ),
+        child: TextField(
+          focusNode: _searchFocus,
+          onChanged: (v) => setState(() => _search = v),
+          style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.w500, fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Cari obat, vitamin, atau alat kesehatan...',
+            hintStyle: const TextStyle(color: AppColors.textSubtle, fontWeight: FontWeight.w400, fontSize: 14),
+            prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textLight, size: 20),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(22),
-            borderSide:
-                const BorderSide(color: Color(0xFF2563EB), width: 1.5),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-              vertical: 12, horizontal: 16),
         ),
       ),
     );
@@ -329,44 +329,42 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
 
     final items = _selectedCategoryId.isEmpty
         ? popular
-        : popular
-            .where((m) => m.categoryId == _selectedCategoryId)
-            .toList();
+        : popular.where((m) => m.categoryId == _selectedCategoryId).toList();
 
     final allCategories = [
       MedicineCategoryModel(id: '', name: 'SEMUA'),
       ...cats,
     ];
 
-    return AppCard(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      borderRadius: 0,
-      color: Colors.white,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      decoration: const BoxDecoration(color: Colors.white),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 14),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
                   'Produk Populer',
                   style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textDark,
+                    letterSpacing: -0.3,
                   ),
                 ),
                 GestureDetector(
-                  onTap: () =>
-                      setState(() => _selectedCategoryId = ''),
+                  onTap: () => setState(() => _selectedCategoryId = ''),
                   child: const Text(
                     'Lihat Semua',
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2563EB),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
@@ -377,36 +375,28 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
             height: 36,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(left: 16, right: 8),
+              padding: const EdgeInsets.only(left: 24, right: 8),
               itemCount: allCategories.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
                 final cat = allCategories[i];
                 final selected = _selectedCategoryId == cat.id;
                 return GestureDetector(
-                  onTap: () =>
-                      setState(() => _selectedCategoryId = cat.id),
+                  onTap: () => setState(() => _selectedCategoryId = cat.id),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
-                      color: selected
-                          ? const Color(0xFF2563EB)
-                          : Colors.white,
+                      color: selected ? AppColors.primary : Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: selected
-                            ? const Color(0xFF2563EB)
-                            : const Color(0xFFE5E7EB),
+                        color: selected ? AppColors.primary : AppColors.divider,
                       ),
                     ),
                     child: Text(
                       cat.name,
                       style: TextStyle(
-                        color: selected
-                            ? Colors.white
-                            : const Color(0xFF374151),
+                        color: selected ? Colors.white : AppColors.textMid,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -423,8 +413,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
               child: Center(
                 child: Text(
                   'Tidak ada produk di kategori ini.',
-                  style: TextStyle(
-                      fontSize: 13, color: Color(0xFF9CA3AF)),
+                  style: TextStyle(fontSize: 13, color: AppColors.textLight),
                 ),
               ),
             )
@@ -450,27 +439,28 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
               padding: const EdgeInsets.all(32),
               child: Center(
                 child: Text('Obat tidak ditemukan.',
-                    style: TextStyle(color: Colors.grey[400])),
+                    style: TextStyle(color: AppColors.textLight)),
               ),
             )
           : const SizedBox.shrink();
     }
 
-    return AppCard(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      borderRadius: 0,
-      color: Colors.white,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      decoration: const BoxDecoration(color: Colors.white),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+            padding: EdgeInsets.fromLTRB(24, 0, 24, 14),
             child: Text(
               'Semua Produk',
               style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF111827),
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textDark,
+                letterSpacing: -0.3,
               ),
             ),
           ),
@@ -478,12 +468,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
             return Column(
               children: [
                 if (i > 0)
-                  const Divider(
-                    height: 1,
-                    indent: 16,
-                    endIndent: 16,
-                    color: Color(0xFFF3F4F6),
-                  ),
+                  const Divider(height: 1, indent: 24, endIndent: 24, color: AppColors.divider),
                 _buildMedicineRow(items[i]),
               ],
             );
@@ -505,32 +490,29 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
 
     if (!widget.isOpen) {
       stockLabel = 'Tutup';
-      stockColor = const Color(0xFFB91C1C);
-      stockBg = const Color(0xFFFFEBEE);
+      stockColor = AppColors.danger;
+      stockBg = AppColors.dangerLight;
       stockIcon = Icons.store_outlined;
     } else if (m.requiresPrescription) {
       stockLabel = 'Butuh Resep';
-      stockColor = const Color(0xFF7C3AED);
+      stockColor = AppColors.accentPurple;
       stockBg = const Color(0xFFF3F0FF);
       stockIcon = Icons.description_outlined;
     } else {
       stockLabel = 'Tersedia';
-      stockColor = const Color(0xFF059669);
-      stockBg = const Color(0xFFECFDF5);
+      stockColor = AppColors.success;
+      stockBg = AppColors.successLight;
       stockIcon = Icons.check_circle_outline;
     }
 
     final typeColors = _typeColor(m.typeName);
-    final typeColor =
-        isUnavailable ? const Color(0xFF9CA3AF) : typeColors['fg']!;
-    final typeBg =
-        isUnavailable ? const Color(0xFFF3F4F6) : typeColors['bg']!;
+    final typeColor = isUnavailable ? AppColors.textLight : typeColors['fg']!;
+    final typeBg = isUnavailable ? AppColors.divider : typeColors['bg']!;
 
     return Opacity(
       opacity: isUnavailable ? 0.45 : 1.0,
       child: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -542,14 +524,12 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                     m.name.toUpperCase(),
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                       letterSpacing: 0.3,
-                      color: isUnavailable
-                          ? const Color(0xFF9CA3AF)
-                          : const Color(0xFF111827),
+                      color: isUnavailable ? AppColors.textLight : AppColors.textDark,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 6),
                   StatusBadge(
                     label: m.typeName ?? 'Obat Bebas',
                     color: typeColor,
@@ -558,20 +538,17 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                   const SizedBox(height: 6),
                   Text(
                     m.description,
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF6B7280)),
+                    style: const TextStyle(fontSize: 12, color: AppColors.textLight),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     _rupiah(m.price),
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
-                      color: isUnavailable
-                          ? const Color(0xFF9CA3AF)
-                          : const Color(0xFF111827),
+                      color: isUnavailable ? AppColors.textLight : AppColors.textDark,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -584,7 +561,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Column(
               children: [
                 ColorFiltered(
@@ -595,20 +572,21 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                           0.2126, 0.7152, 0.0722, 0, 0,
                           0, 0, 0, 1, 0,
                         ])
-                      : const ColorFilter.mode(
-                          Colors.transparent, BlendMode.multiply),
-                  child: AppCard(
-                    padding: EdgeInsets.zero,
+                      : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                  child: Container(
                     width: 88,
-                    borderRadius: 12,
-                    color: const Color(0xFFF3F4F6),
+                    height: 88,
+                    decoration: BoxDecoration(
+                      color: AppColors.divider,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                       child: _buildMedicineImage(m.imageUrl),
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 if (isUnavailable)
                   _buildDisabledButton('Tutup')
                 else if (qty == 0)
@@ -627,8 +605,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
     if (imageUrl == null || imageUrl.isEmpty) return _placeholderIcon();
     return Image.network(
       imageUrl,
-      width: 88,
-      height: 88,
+      width: 88, height: 88,
       fit: BoxFit.cover,
       loadingBuilder: (ctx, child, progress) =>
           progress == null ? child : _loadingIndicator(),
@@ -638,20 +615,16 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
 
   Widget _placeholderIcon() {
     return const SizedBox(
-      width: 88,
-      height: 88,
-      child:
-          Icon(Icons.medication, color: Color(0xFF9CA3AF), size: 40),
+      width: 88, height: 88,
+      child: Icon(Icons.medication, color: AppColors.textSubtle, size: 40),
     );
   }
 
   Widget _loadingIndicator() {
     return const SizedBox(
-      width: 88,
-      height: 88,
+      width: 88, height: 88,
       child: Center(
-        child: CircularProgressIndicator(
-            strokeWidth: 2, color: Color(0xFF2563EB)),
+        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
       ),
     );
   }
@@ -662,13 +635,11 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
       child: OutlinedButton(
         onPressed: null,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.grey[300]!),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20)),
+          side: BorderSide(color: Colors.grey.shade300),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           padding: const EdgeInsets.symmetric(vertical: 8),
         ),
-        child: Text(label,
-            style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+        child: Text(label, style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
       ),
     );
   }
@@ -679,18 +650,13 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
       child: OutlinedButton(
         onPressed: () => setState(() => _cart[id] = 1),
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Color(0xFF2563EB)),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20)),
+          side: const BorderSide(color: AppColors.primary),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           padding: const EdgeInsets.symmetric(vertical: 8),
         ),
         child: const Text(
           'Tambah',
-          style: TextStyle(
-            color: Color(0xFF2563EB),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -701,7 +667,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
       width: 88,
       height: 34,
       decoration: BoxDecoration(
-        color: const Color(0xFF2563EB),
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -715,16 +681,11 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                 _cart.remove(id);
               }
             }),
-            child:
-                const Icon(Icons.remove, color: Colors.white, size: 16),
+            child: const Icon(Icons.remove_rounded, color: Colors.white, size: 16),
           ),
           Text(
             '$qty',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
           ),
           GestureDetector(
             onTap: () => setState(() {
@@ -732,7 +693,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                 _cart[id] = (_cart[id] ?? 0) + 1;
               }
             }),
-            child: const Icon(Icons.add, color: Colors.white, size: 16),
+            child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
           ),
         ],
       ),
@@ -740,81 +701,74 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
   }
 
   Widget _buildCheckoutBar() {
-    return AppCard(
-      borderRadius: 0,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      child: ElevatedButton(
-        onPressed: _goToCheckout,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2563EB),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30)),
-          padding: const EdgeInsets.symmetric(
-              vertical: 14, horizontal: 20),
-          elevation: 0,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+      decoration: const BoxDecoration(color: Colors.white),
+      child: SizedBox(
+        width: double.infinity,
+        height: 56,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8)),
+            ],
+          ),
+          child: ElevatedButton(
+            onPressed: _goToCheckout,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Stack(
-                  clipBehavior: Clip.none,
+                Row(
                   children: [
-                    const Icon(Icons.shopping_cart_outlined,
-                        color: Colors.white, size: 22),
-                    if (_cartItemCount > 0)
-                      Positioned(
-                        right: -6,
-                        top: -6,
-                        child: Container(
-                          width: 16,
-                          height: 16,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              '$_cartItemCount',
-                              style: const TextStyle(
-                                color: Color(0xFF2563EB),
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 22),
+                        if (_cartItemCount > 0)
+                          Positioned(
+                            right: -6, top: -6,
+                            child: Container(
+                              width: 16, height: 16,
+                              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                              child: Center(
+                                child: Text(
+                                  '$_cartItemCount',
+                                  style: const TextStyle(color: AppColors.primary, fontSize: 9, fontWeight: FontWeight.bold),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
+                      ],
+                    ),
+                    const SizedBox(width: 14),
+                    Text(
+                      _rupiah(_cartTotal),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
                   ],
                 ),
-                const SizedBox(width: 14),
-                Text(
-                  _rupiah(_cartTotal),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                const Row(
+                  children: [
+                    Text(
+                      'CHECKOUT',
+                      style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5,
+                      ),
+                    ),
+                    SizedBox(width: 6),
+                    Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                  ],
                 ),
               ],
             ),
-            const Row(
-              children: [
-                Text(
-                  'CHECKOUT',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                SizedBox(width: 6),
-                Icon(Icons.arrow_forward, color: Colors.white, size: 18),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );

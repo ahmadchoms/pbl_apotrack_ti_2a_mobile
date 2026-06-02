@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../data/models/order_model.dart';
 import '../../data/services/order_service.dart';
 import 'verifikasi_pengambilan_screen.dart';
@@ -61,15 +62,18 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Text('Waktu Habis'),
-        content: const Text('Waktu pembayaran sudah habis.'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Waktu Habis',
+            style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.textDark)),
+        content: const Text('Waktu pembayaran sudah habis.',
+            style: TextStyle(color: AppColors.textMid)),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: const Text('OK'),
+            child: const Text('OK', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary)),
           ),
         ],
       ),
@@ -81,28 +85,12 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
     _timer?.cancel();
 
     try {
-      // 1. Buat order via API
-      final cartItems = widget.items
-          .map((item) => {
-                'medicine_id': item['medicine_id'],
-                'medicine_name': item['medicine_name'],
-                'quantity': item['quantity'],
-                'price': item['price'],
-                'subtotal': item['subtotal'],
-                'unit_name': item['unit_name'] ?? 'Pcs',
-                'requires_prescription':
-                    item['requires_prescription'] ?? false,
-              })
-          .toList();
-
-      // Convert to CartItemModel for the service
       final cartItemModels = widget.items
           .map((item) => CartItemModel(
                 medicineId: item['medicine_id'] as String,
                 medicineName: item['medicine_name'] as String,
                 unitName: item['unit_name'] as String? ?? 'Pcs',
-                requiresPrescription:
-                    item['requires_prescription'] as bool? ?? false,
+                requiresPrescription: item['requires_prescription'] as bool? ?? false,
                 quantity: item['quantity'] as int,
                 price: item['price'] as int,
                 subtotal: item['subtotal'] as int,
@@ -112,7 +100,7 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       final order = await _orderService.createOrder(
         pharmacyId: widget.pharmacyId,
         serviceType: 'PICK_UP',
-        paymentMethod: 'TRANSFER', // QRIS = TRANSFER/E-WALLET
+        paymentMethod: 'TRANSFER',
         items: cartItemModels,
         subtotal: widget.subtotal.toDouble(),
         shippingCost: widget.shippingCost.toDouble(),
@@ -121,12 +109,10 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       _orderNumber = order.orderNumber;
       _verificationCode = order.verificationCode;
 
-      // 2. Simulasi pembayaran
       await _orderService.simulatePayment(order.id);
 
       if (!mounted) return;
 
-      // 3. Navigasi ke verifikasi
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -136,7 +122,7 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
             verificationCode: _verificationCode,
             pharmacyName: widget.pharmacyName,
             pharmacyId: widget.pharmacyId,
-            items: cartItems,
+            items: widget.items,
             total: widget.subtotal + widget.shippingCost,
           ),
         ),
@@ -148,7 +134,10 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal memproses pesanan: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -174,19 +163,8 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
 
   String _bulan(int b) {
     const list = [
-      '',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agt',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des'
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'
     ];
     return list[b];
   }
@@ -195,280 +173,275 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
+        title: const Text(
+          'Konfirmasi Pembayaran',
+          style: TextStyle(
+            color: AppColors.textDark,
+            fontWeight: FontWeight.w900,
+            fontSize: 17,
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Konfirmasi Pembayaran',
-            style: TextStyle(
-                color: Color(0xFF111827),
-                fontWeight: FontWeight.bold,
-                fontSize: 17)),
-        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            // Card ringkasan
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4))
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(16)),
-                    child: const Icon(Icons.local_pharmacy,
-                        color: Color(0xFF2563EB), size: 30),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(widget.pharmacyName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Color(0xFF111827))),
-                  const SizedBox(height: 6),
-                  Text(_rupiah(widget.subtotal + widget.shippingCost),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 30,
-                          color: Color(0xFF111827))),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 8),
-                    decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7),
-                        borderRadius: BorderRadius.circular(20)),
-                    child: const Text('Menunggu Pembayaran',
-                        style: TextStyle(
-                            color: Color(0xFF92400E),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13)),
-                  ),
-                  const SizedBox(height: 16),
-                  Text('BATAS WAKTU BAYAR',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[400],
-                          letterSpacing: 1)),
-                  const SizedBox(height: 4),
-                  Text(_timerText,
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 4,
-                        color: _secondsLeft < 60
-                            ? Colors.red
-                            : const Color(0xFF111827),
-                      )),
-                ],
-              ),
-            ),
+            _buildPharmacyCard(),
             const SizedBox(height: 16),
-
-            // Info
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Icon(Icons.info_outline,
-                      color: Color(0xFF2563EB), size: 18),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Kamu akan mendapat QR Code untuk pengambilan obat di apotek.',
-                      style:
-                          TextStyle(fontSize: 13, color: Color(0xFF1E3A5F)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildInfoBanner(),
             const SizedBox(height: 16),
-
-            // Rincian pesanan
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2))
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Rincian Pesanan',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Color(0xFF111827))),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('NO. ORDER',
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey[400],
-                                    letterSpacing: 1)),
-                            const SizedBox(height: 4),
-                            Text(
-                              _orderNumber.isEmpty
-                                  ? 'Menunggu...'
-                                  : _orderNumber,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  color: Color(0xFF111827)),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                          height: 36,
-                          width: 1,
-                          color: const Color(0xFFE5E7EB)),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('TANGGAL',
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey[400],
-                                      letterSpacing: 1)),
-                              const SizedBox(height: 4),
-                              Text(
-                                  '${now.day} ${_bulan(now.month)} ${now.year}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: Color(0xFF111827))),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 24),
-                  ...widget.items.map((item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                  '${item['medicine_name']} x${item['quantity']}',
-                                  style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF374151))),
-                            ),
-                            Text(_rupiah(item['subtotal'] as int),
-                                style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Color(0xFF374151))),
-                          ],
-                        ),
-                      )),
-                  const Divider(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Total Bayar',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: Color(0xFF111827))),
-                      Text(
-                          _rupiah(widget.subtotal + widget.shippingCost),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: Color(0xFF2563EB))),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Tombol konfirmasi bayar
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _paying ? null : _konfirmasiBayar,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  disabledBackgroundColor: Colors.grey[300],
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  elevation: 0,
-                ),
-                child: _paying
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.check_circle_outline,
-                              color: Colors.white, size: 22),
-                          SizedBox(width: 10),
-                          Text('Konfirmasi Bayar',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16)),
-                        ],
-                      ),
-              ),
-            ),
-            const SizedBox(height: 8),
+            _buildOrderDetails(now),
+            const SizedBox(height: 28),
+            _buildPayButton(),
+            const SizedBox(height: 10),
             const Text(
               'Setelah konfirmasi, kamu akan mendapat QR Code\nuntuk pengambilan obat di apotek',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 12, color: AppColors.textSubtle, height: 1.5),
             ),
+            const SizedBox(height: 24),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPharmacyCard() {
+    final total = widget.subtotal + widget.shippingCost;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.local_pharmacy_rounded, color: AppColors.primary, size: 30),
+          ),
+          const SizedBox(height: 12),
+          Text(widget.pharmacyName,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textDark)),
+          const SizedBox(height: 8),
+          Text(_rupiah(total),
+              style: const TextStyle(
+                  fontWeight: FontWeight.w900, fontSize: 32, color: AppColors.textDark,
+                  letterSpacing: -0.5)),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.warningLight,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text('Menunggu Pembayaran',
+                style: TextStyle(
+                    color: AppColors.warning, fontWeight: FontWeight.w700, fontSize: 13)),
+          ),
+          const SizedBox(height: 20),
+          const Text('BATAS WAKTU BAYAR',
+              style: TextStyle(
+                  fontSize: 11, color: AppColors.textLight, letterSpacing: 1, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          Text(_timerText,
+              style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 4,
+                color: _secondsLeft < 60 ? AppColors.danger : AppColors.textDark,
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoBanner() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFBFDBFE)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Kamu akan mendapat QR Code untuk pengambilan obat di apotek.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF1E3A5F), height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderDetails(DateTime now) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Rincian Pesanan',
+              style: TextStyle(
+                  fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.textDark)),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('NO. ORDER',
+                        style: TextStyle(fontSize: 11, color: AppColors.textLight, letterSpacing: 1, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text(
+                      _orderNumber.isEmpty ? 'Menunggu...' : _orderNumber,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.textDark),
+                    ),
+                  ],
+                ),
+              ),
+              Container(height: 36, width: 1, color: AppColors.divider),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('TANGGAL',
+                          style: TextStyle(fontSize: 11, color: AppColors.textLight, letterSpacing: 1, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${now.day} ${_bulan(now.month)} ${now.year}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.textDark),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 28),
+          ...widget.items.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${item['medicine_name']} x${item['quantity']}',
+                        style: const TextStyle(fontSize: 13, color: AppColors.textMid),
+                      ),
+                    ),
+                    Text(_rupiah(item['subtotal'] as int),
+                        style: const TextStyle(fontSize: 13, color: AppColors.textMid)),
+                  ],
+                ),
+              )),
+          const Divider(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Total Bayar',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.textDark)),
+              Text(
+                _rupiah(widget.subtotal + widget.shippingCost),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.primary),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPayButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: _paying ? AppColors.primary.withOpacity(0.6) : AppColors.primary,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8)),
+          ],
+        ),
+        child: ElevatedButton(
+          onPressed: _paying ? null : _konfirmasiBayar,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            disabledBackgroundColor: Colors.transparent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: _paying
+                ? const SizedBox(
+                    key: ValueKey('loading'),
+                    width: 24, height: 24,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                  )
+                : const Row(
+                    key: ValueKey('label'),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 22),
+                      SizedBox(width: 10),
+                      Text(
+                        'Konfirmasi Bayar',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
     );

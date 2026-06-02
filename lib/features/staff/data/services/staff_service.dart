@@ -32,6 +32,11 @@ class StaffService {
     await _repository.shipOrder(orderId, courierCode, courierService);
   }
 
+  Future<Order> verifyOrderByCode(String verificationCode) async {
+    final response = await _repository.verifyOrderByCode(verificationCode);
+    return Order.fromJson(response.data['data']);
+  }
+
   // --- INVENTARIS (MEDICINES) ---
 
   Future<List<Medicine>> getMedicines({Map<String, dynamic>? queryParams}) async {

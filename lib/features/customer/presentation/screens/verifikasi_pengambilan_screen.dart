@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../data/services/order_service.dart';
 import 'beri_ulasan_screen.dart';
 
@@ -82,365 +84,385 @@ class _VerifikasiPengambilanScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: const Text(
           'Verifikasi Pengambilan',
           style: TextStyle(
-            color: Color(0xFF111827),
-            fontWeight: FontWeight.bold,
+            color: AppColors.textDark,
+            fontWeight: FontWeight.w900,
             fontSize: 17,
           ),
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Banner sukses
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD1FAE5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.check_circle_outline,
-                      color: Color(0xFF065F46), size: 22),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Pembayaran berhasil! Datang ke apotek dan tunjukkan QR ini.',
-                      style: TextStyle(
-                        color: Color(0xFF065F46),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            const Text(
+            _buildSuccessBanner(),
+            const SizedBox(height: 20),
+            _buildSectionTitle(
               'Tunjukkan QR Ini ke Apotek',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-                color: Color(0xFF111827),
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
               'Datang ke apotek dan tunjukkan QR ini. Apoteker akan scan untuk memproses pengambilan obat.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
             ),
             const SizedBox(height: 20),
+            _buildQrCard(),
+            const SizedBox(height: 24),
+            if (_loading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+              )
+            else if (_bisaUlas)
+              _buildReviewButton()
+            else
+              _buildWaitingCard(),
+            const SizedBox(height: 16),
+            _buildInfoBanner(),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // Card QR
-            Container(
-              width: double.infinity,
+  Widget _buildSuccessBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.successLight,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.check_circle_rounded, color: AppColors.success, size: 22),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Pembayaran berhasil! Datang ke apotek dan tunjukkan QR ini.',
+              style: TextStyle(
+                color: Color(0xFF065F46),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, String subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          subtitle,
+          style: const TextStyle(fontSize: 13, color: AppColors.textLight, height: 1.5),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQrCard() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: const Center(
+              child: Text(
+                'KODE VERIFIKASI PENGAMBILAN OBAT',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textMid,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+            child: Container(
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
+                border: Border.all(color: AppColors.primary, width: 3),
+                borderRadius: BorderRadius.circular(16),
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+              ),
+              child: QrImageView(
+                data: widget.verificationCode,
+                version: QrVersions.auto,
+                size: 200,
+                backgroundColor: Colors.white,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: widget.verificationCode));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Kode disalin!'),
+                  duration: Duration(seconds: 1),
+                  behavior: SnackBarBehavior.floating,
+                  margin: EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.divider),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.verificationCode,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: AppColors.textDark,
+                      letterSpacing: 2,
+                    ),
                   ),
+                  const SizedBox(width: 10),
+                  const Icon(Icons.copy_rounded, size: 16, color: AppColors.textLight),
                 ],
               ),
-              child: Column(
-                children: [
-                  // Header label
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF5F6FA),
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'KODE VERIFIKASI PENGAMBILAN OBAT',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF374151),
-                          letterSpacing: 0.5,
-                        ),
+            ),
+          ),
+          const Divider(height: 1, color: AppColors.divider),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                _InfoRow(
+                  icon: Icons.local_pharmacy_rounded,
+                  label: 'Nama Apotek',
+                  value: widget.pharmacyName,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _InfoRow(
+                        icon: Icons.receipt_outlined,
+                        label: 'No. Pesanan',
+                        value: widget.orderNumber,
                       ),
                     ),
+                    Expanded(
+                      child: _InfoRow(
+                        icon: Icons.inventory_2_outlined,
+                        label: 'Total',
+                        value: _rupiah(widget.total),
+                        valueColor: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-
-                  // QR Placeholder
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 24, horizontal: 32),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: const Color(0xFF2563EB), width: 3),
-                        borderRadius: BorderRadius.circular(16),
-                        color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Obat yang dipesan:',
+                        style: TextStyle(fontSize: 12, color: AppColors.textLight),
                       ),
-                      child: const Icon(
-                        Icons.qr_code_2,
-                        size: 200,
-                        color: Color(0xFF111827),
-                      ),
-                    ),
-                  ),
-
-                  // Kode teks — tap untuk copy
-                  GestureDetector(
-                    onTap: () {
-                      Clipboard.setData(
-                          ClipboardData(text: widget.verificationCode));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Kode disalin!'),
-                          duration: Duration(seconds: 1),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F6FA),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                            color: const Color(0xFFE5E7EB)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            widget.verificationCode,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Color(0xFF111827),
-                              letterSpacing: 2,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          const Icon(Icons.copy,
-                              size: 16, color: Color(0xFF6B7280)),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const Divider(height: 1),
-
-                  // Info rows
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        _InfoRow(
-                          icon: Icons.local_pharmacy,
-                          label: 'Nama Apotek',
-                          value: widget.pharmacyName,
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _InfoRow(
-                                icon: Icons.receipt_outlined,
-                                label: 'No. Pesanan',
-                                value: widget.orderNumber,
-                              ),
-                            ),
-                            Expanded(
-                              child: _InfoRow(
-                                icon: Icons.inventory_2_outlined,
-                                label: 'Total',
-                                value: _rupiah(widget.total),
-                                valueColor: const Color(0xFF2563EB),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Daftar item
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F6FA),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 6),
+                      ...widget.items.map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
                             children: [
-                              const Text(
-                                'Obat yang dipesan:',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF6B7280),
+                              Container(
+                                width: 4, height: 4,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.textMid,
+                                  shape: BoxShape.circle,
                                 ),
                               ),
-                              const SizedBox(height: 6),
-                              ...widget.items.map(
-                                (item) => Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: 4),
-                                  child: Text(
-                                    '• ${item['medicine_name']} x${item['quantity']}',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF374151),
-                                    ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '${item['medicine_name']} x${item['quantity']}',
+                                  style: const TextStyle(
+                                    fontSize: 13, color: AppColors.textMid,
                                   ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
+          ),
+        ],
+      ),
+    );
+  }
 
-            // Tombol ulasan atau status
-            if (_loading)
-              const Center(child: CircularProgressIndicator())
-            else if (_bisaUlas)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BeriUlasanScreen(
-                        orderNumber: widget.orderNumber,
-                        pharmacyId: widget.pharmacyId,
-                        pharmacyName: widget.pharmacyName,
-                        items: widget.items,
-                      ),
-                    ),
-                  ),
-                  icon: const Icon(Icons.star_border, size: 20),
-                  label: const Text(
-                    'Beri Ulasan',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
-                  ),
-                ),
-              )
-            else ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7ED),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFFFD6B0)),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(Icons.access_time,
-                        color: Color(0xFFC2410C), size: 28),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Menunggu konfirmasi apoteker',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: Color(0xFF7C2D12),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Tunjukkan QR di atas ke apoteker. Setelah dikonfirmasi, kamu bisa memberikan ulasan.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 12, color: Color(0xFF92400E)),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _cekStatus,
-                        icon: const Icon(Icons.refresh, size: 18),
-                        label: const Text('Cek Status',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold)),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFFC2410C),
-                          side: const BorderSide(
-                              color: Color(0xFFFDB974)),
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12)),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-
-            // Info banner
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
-              ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.info_outline,
-                      color: Color(0xFF2563EB), size: 18),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Datang ke apotek dan tunjukkan QR Code ini kepada apoteker. Apoteker akan scan QR untuk memverifikasi dan menyerahkan pesanan kamu.',
-                      style: TextStyle(
-                          fontSize: 12, color: Color(0xFF1E3A5F)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+  Widget _buildReviewButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8)),
           ],
         ),
+        child: ElevatedButton.icon(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BeriUlasanScreen(
+                orderNumber: widget.orderNumber,
+                pharmacyId: widget.pharmacyId,
+                pharmacyName: widget.pharmacyName,
+                items: widget.items,
+              ),
+            ),
+          ),
+          icon: const Icon(Icons.star_rounded, size: 20),
+          label: const Text(
+            'Beri Ulasan',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, letterSpacing: 0.3),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWaitingCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFFD6B0)),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.access_time_rounded, color: Color(0xFFC2410C), size: 32),
+          const SizedBox(height: 10),
+          const Text(
+            'Menunggu konfirmasi apoteker',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              color: Color(0xFF7C2D12),
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Tunjukkan QR di atas ke apoteker. Setelah dikonfirmasi, kamu bisa memberikan ulasan.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Color(0xFF92400E), height: 1.5),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: _cekStatus,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Cek Status',
+                  style: TextStyle(fontWeight: FontWeight.w800)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFC2410C),
+                side: const BorderSide(color: Color(0xFFFDB974)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoBanner() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFBFDBFE)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Datang ke apotek dan tunjukkan QR Code ini kepada apoteker. Apoteker akan scan QR untuk memverifikasi dan menyerahkan pesanan kamu.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF1E3A5F), height: 1.5),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -464,23 +486,21 @@ class _InfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: const Color(0xFF2563EB), size: 18),
-        const SizedBox(width: 8),
+        Icon(icon, color: AppColors.primary, size: 18),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: const TextStyle(
-                    fontSize: 11, color: Color(0xFF6B7280)),
-              ),
+              Text(label,
+                  style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 2),
               Text(
                 value,
                 style: TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: valueColor ?? const Color(0xFF111827),
+                  fontWeight: FontWeight.w800,
+                  color: valueColor ?? AppColors.textDark,
                 ),
               ),
             ],

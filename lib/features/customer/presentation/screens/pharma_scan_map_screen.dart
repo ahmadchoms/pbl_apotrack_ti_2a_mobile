@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/customer/data/models/pharmacy_model.dart';
 import 'package:mobile/features/customer/data/services/pharmacy_service.dart';
 import 'medicine_list_screen.dart';
@@ -18,7 +17,6 @@ class PharmaScanMapScreen extends ConsumerStatefulWidget {
 class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
   String _search = '';
   final Set<String> _activeFilters = {};
-  final MapController _mapController = MapController();
 
   Position? _userPosition;
   bool _locationLoading = true;
@@ -63,8 +61,7 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
       if (permission == LocationPermission.deniedForever) {
         setState(() {
           _locationLoading = false;
-          _locationError =
-              'Izin lokasi ditolak permanen. Aktifkan di pengaturan.';
+          _locationError = 'Izin lokasi ditolak permanen. Aktifkan di pengaturan.';
         });
         return;
       }
@@ -81,10 +78,6 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
         _userPosition = pos;
         _locationLoading = false;
       });
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _mapController.move(LatLng(pos.latitude, pos.longitude), 13);
-      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -96,9 +89,12 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
 
   double _hitungJarak(PharmacyModel p) {
     if (_userPosition == null) return double.infinity;
-    final userPoint = LatLng(_userPosition!.latitude, _userPosition!.longitude);
-    final pharmPoint = LatLng(p.latitude, p.longitude);
-    return const Distance().distance(userPoint, pharmPoint) / 1000;
+    return Geolocator.distanceBetween(
+          _userPosition!.latitude,
+          _userPosition!.longitude,
+          p.latitude,
+          p.longitude,
+        ) / 1000;
   }
 
   String _formatJarak(double km) {
@@ -151,27 +147,24 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
     final pharmaciesAsync = ref.watch(activePharmaciesProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: const Color(0xFFF9FAFB),
       body: SafeArea(
         child: Column(
           children: [
-            _buildAppBar(),
+            _buildHeader(),
             _buildSearchBar(),
             _buildFilterChips(),
             Expanded(
               child: pharmaciesAsync.when(
                 loading: () => const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 ),
                 error: (e, _) => _buildErrorState(e.toString()),
                 data: (pharmacies) {
                   final filtered = _filtered(pharmacies);
-                  return Stack(
-                    children: [
-                      _buildMap(filtered),
-                      _buildBottomSheet(filtered),
-                    ],
-                  );
+                  return filtered.isEmpty
+                      ? _buildEmptyState()
+                      : _buildPharmacyList(filtered);
                 },
               ),
             ),
@@ -181,51 +174,66 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildHeader() {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
       child: Row(
         children: [
-          const Text(
-            'ApoTrack',
-            style: TextStyle(
-              color: Color(0xFF2563EB),
-              fontWeight: FontWeight.w900,
-              fontSize: 22,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.local_pharmacy_rounded, color: AppColors.primary, size: 14),
+                      SizedBox(width: 6),
+                      Text(
+                        'ApoTrack',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Cari Apotek',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textDark,
+                    letterSpacing: -0.8,
+                    height: 1.2,
+                  ),
+                ),
+              ],
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: 12),
           if (_locationLoading)
             const SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Color(0xFF2563EB),
-              ),
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
             )
           else if (_locationError != null)
             GestureDetector(
               onTap: _getUserLocation,
-              child: const Icon(Icons.location_off,
-                  color: Color(0xFFEF4444), size: 22),
+              child: const Icon(Icons.location_off, color: AppColors.danger, size: 22),
             )
           else
-            const Icon(Icons.my_location,
-                color: Color(0xFF2563EB), size: 22),
-          const SizedBox(width: 12),
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: const Color(0xFFEFF6FF),
-            child: ClipOval(
-              child: Container(
-                color: const Color(0xFF2563EB).withOpacity(0.15),
-                child: const Icon(Icons.person,
-                    color: Color(0xFF2563EB), size: 24),
-              ),
-            ),
-          ),
+            const Icon(Icons.my_location, color: AppColors.primary, size: 22),
         ],
       ),
     );
@@ -233,50 +241,33 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
 
   Widget _buildSearchBar() {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 46,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F7FA),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: TextField(
-                onChanged: (v) => setState(() => _search = v),
-                decoration: const InputDecoration(
-                  hintText: 'Cari Apotek...',
-                  hintStyle:
-                      TextStyle(color: Color(0xFF9E9E9E), fontSize: 14),
-                  prefixIcon:
-                      Icon(Icons.search, color: Color(0xFF9E9E9E), size: 20),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 13),
-                ),
-              ),
-            ),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.divider, width: 1.5),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: TextField(
+          onChanged: (v) => setState(() => _search = v),
+          decoration: InputDecoration(
+            hintText: 'Cari Apotek...',
+            hintStyle: const TextStyle(color: AppColors.textSubtle, fontWeight: FontWeight.w400, fontSize: 14),
+            prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textLight, size: 20),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           ),
-          const SizedBox(width: 10),
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2563EB),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.tune, color: Colors.white, size: 20),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildFilterChips() {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 14),
       child: Row(
         children: _filters.map((f) {
           final isActive = _activeFilters.contains(f);
@@ -287,25 +278,20 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
                   isActive ? _activeFilters.remove(f) : _activeFilters.add(f)),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
-                  color: isActive ? const Color(0xFF2563EB) : Colors.white,
+                  color: isActive ? AppColors.primary : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isActive
-                        ? const Color(0xFF2563EB)
-                        : const Color(0xFFD1D5DB),
+                    color: isActive ? AppColors.primary : AppColors.divider,
                   ),
                 ),
                 child: Text(
                   f,
                   style: TextStyle(
-                    color:
-                        isActive ? Colors.white : const Color(0xFF374151),
+                    color: isActive ? Colors.white : AppColors.textMid,
                     fontSize: 12,
-                    fontWeight:
-                        isActive ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ),
@@ -316,291 +302,82 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
     );
   }
 
-  Widget _buildMap(List<PharmacyModel> pharmacies) {
-    if (_locationLoading) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: Color(0xFF2563EB)),
-            SizedBox(height: 12),
-            Text('Mendapatkan lokasi...',
-                style: TextStyle(color: Color(0xFF6B7280))),
-          ],
-        ),
-      );
-    }
-
-    if (_locationError != null) {
-      return _buildLocationError();
-    }
-
-    final markers = <Marker>[];
-
-    if (_userPosition != null) {
-      markers.add(
-        Marker(
-          point: LatLng(_userPosition!.latitude, _userPosition!.longitude),
-          width: 30,
-          height: 30,
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF2563EB),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.my_location, color: Colors.white, size: 16),
-          ),
-        ),
-      );
-    }
-
-    for (final p in pharmacies) {
-      markers.add(
-        Marker(
-          point: LatLng(p.latitude, p.longitude),
-          width: 44,
-          height: 44,
-          child: GestureDetector(
-            onTap: () => _goToPharmacy(p),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: p.isOpen ? const Color(0xFF2563EB) : const Color(0xFF9CA3AF),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.local_pharmacy,
-                      color: Colors.white, size: 18),
-                ),
-                Container(
-                  margin: const EdgeInsets.only(top: 2),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    p.name.length > 12
-                        ? '${p.name.substring(0, 12)}...'
-                        : p.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: _userPosition != null
-            ? LatLng(_userPosition!.latitude, _userPosition!.longitude)
-            : const LatLng(-6.2088, 106.8456),
-        initialZoom: 13,
-        minZoom: 10,
-        maxZoom: 17,
-      ),
-      children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.apotrack.mobile',
-        ),
-        MarkerLayer(markers: markers),
-      ],
+  Widget _buildPharmacyList(List<PharmacyModel> filtered) {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+      itemCount: filtered.length,
+      itemBuilder: (_, i) {
+        final p = filtered[i];
+        final jarak = _hitungJarak(p);
+        return _PharmacyCard(
+          pharmacy: p,
+          jarakText: _formatJarak(jarak),
+          onTap: () => _goToPharmacy(p),
+        );
+      },
     );
   }
 
-  Widget _buildBottomSheet(List<PharmacyModel> filtered) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.35,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD1D5DB),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Apotek Terdekat',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF111827),
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${filtered.length} ditemukan',
-                      style: const TextStyle(
-                        color: Color(0xFF2563EB),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1, color: Color(0xFFF3F4F6)),
-            Expanded(
-              child: filtered.isEmpty
-                  ? const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.search_off,
-                              size: 32, color: Color(0xFF9CA3AF)),
-                          SizedBox(height: 8),
-                          Text('Apotek tidak ditemukan',
-                              style: TextStyle(color: Color(0xFF6B7280))),
-                        ],
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) =>
-                          const Divider(height: 1, color: Color(0xFFF3F4F6)),
-                      itemBuilder: (_, i) {
-                        final p = filtered[i];
-                        final jarak = _hitungJarak(p);
-                        return _PharmacyCard(
-                          pharmacy: p,
-                          jarakText: _formatJarak(jarak),
-                          onTap: () => _goToPharmacy(p),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off_rounded, size: 56, color: AppColors.textSubtle),
+          SizedBox(height: 16),
+          Text('Apotek tidak ditemukan',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textLight)),
+          SizedBox(height: 4),
+          Text('Coba ubah kata kunci pencarian',
+              style: TextStyle(fontSize: 13, color: AppColors.textSubtle)),
+        ],
       ),
     );
   }
 
   Widget _buildErrorState(String msg) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.wifi_off_rounded,
-              size: 48, color: Color(0xFF9CA3AF)),
-          const SizedBox(height: 12),
-          Text(
-            'Gagal memuat data:\n$msg',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF6B7280)),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => ref.invalidate(activePharmaciesProvider),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.wifi_off_rounded, size: 56, color: AppColors.textSubtle),
+            const SizedBox(height: 16),
+            Text(
+              'Gagal memuat data',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textLight),
             ),
-            child:
-                const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLocationError() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.location_off, size: 48, color: Color(0xFF9CA3AF)),
-          const SizedBox(height: 12),
-          Text(
-            '$_locationError',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF6B7280)),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _getUserLocation,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+            const SizedBox(height: 4),
+            Text(
+              msg,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: AppColors.textSubtle),
             ),
-            child: const Text('Coba Lagi',
-                style: TextStyle(color: Colors.white)),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _locationError = null;
-                _locationLoading = false;
-              });
-            },
-            child: const Text('Lanjutkan tanpa lokasi',
-                style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 12)),
-          ),
-        ],
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 48,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6)),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: () => ref.invalidate(activePharmaciesProvider),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('Coba Lagi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -620,10 +397,9 @@ class _PharmacyCard extends StatelessWidget {
   Widget _buildImage(String? url) {
     if (url == null || url.isEmpty) {
       return Container(
-        color: const Color(0xFFEFF6FF),
+        color: AppColors.primaryLight,
         child: const Center(
-          child: Icon(Icons.local_pharmacy,
-              color: Color(0xFF2563EB), size: 36),
+          child: Icon(Icons.local_pharmacy_rounded, color: AppColors.primary, size: 36),
         ),
       );
     }
@@ -635,23 +411,17 @@ class _PharmacyCard extends StatelessWidget {
       loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
         return Container(
-          width: 72,
-          height: 72,
-          color: const Color(0xFFEFF6FF),
+          width: 72, height: 72,
+          color: AppColors.primaryLight,
           child: const Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Color(0xFF2563EB),
-            ),
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
           ),
         );
       },
       errorBuilder: (_, __, ___) => Container(
-        width: 72,
-        height: 72,
-        color: const Color(0xFFEFF6FF),
-        child: const Icon(Icons.local_pharmacy,
-            color: Color(0xFF2563EB), size: 36),
+        width: 72, height: 72,
+        color: AppColors.primaryLight,
+        child: const Icon(Icons.local_pharmacy_rounded, color: AppColors.primary, size: 36),
       ),
     );
   }
@@ -661,169 +431,157 @@ class _PharmacyCard extends StatelessWidget {
     final p = pharmacy;
     final isOpen = p.isOpen;
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: ColorFiltered(
-                    colorFilter: !isOpen
-                        ? const ColorFilter.matrix([
-                            0.2126, 0.7152, 0.0722, 0, 0,
-                            0.2126, 0.7152, 0.0722, 0, 0,
-                            0.2126, 0.7152, 0.0722, 0, 0,
-                            0, 0, 0, 1, 0,
-                          ])
-                        : ColorFilter.mode(
-                            Colors.transparent, BlendMode.multiply),
-                    child: SizedBox(
-                      width: 72,
-                      height: 72,
-                      child: _buildImage(p.logoUrl),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: ColorFiltered(
+                      colorFilter: !isOpen
+                          ? const ColorFilter.matrix([
+                              0.2126, 0.7152, 0.0722, 0, 0,
+                              0.2126, 0.7152, 0.0722, 0, 0,
+                              0.2126, 0.7152, 0.0722, 0, 0,
+                              0, 0, 0, 1, 0,
+                            ])
+                          : ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                      child: SizedBox(
+                        width: 72,
+                        height: 72,
+                        child: _buildImage(p.logoUrl),
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(12)),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 3),
-                      color: Colors.black.withOpacity(0.45),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                  Positioned(
+                    bottom: 0, left: 0, right: 0,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        color: Colors.black.withOpacity(0.45),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.star_rounded,
+                                color: isOpen ? Colors.amber : Colors.grey, size: 10),
+                            const SizedBox(width: 2),
+                            Text(
+                              p.rating.toStringAsFixed(1),
+                              style: TextStyle(
+                                color: isOpen ? Colors.white : Colors.grey,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Opacity(
+                  opacity: isOpen ? 1.0 : 0.5,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.star,
-                              color: isOpen ? Colors.amber : Colors.grey[400],
-                              size: 10),
-                          const SizedBox(width: 2),
-                          Text(
-                            p.rating.toStringAsFixed(1),
-                            style: TextStyle(
-                              color:
-                                  isOpen ? Colors.white : Colors.grey[400],
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: Text(
+                              p.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                                color: isOpen ? AppColors.textDark : AppColors.textLight,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isOpen ? AppColors.successLight : AppColors.divider,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isOpen ? 'BUKA' : 'TUTUP',
+                              style: TextStyle(
+                                color: isOpen ? AppColors.success : AppColors.textLight,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.star_rounded, color: isOpen ? Colors.amber : Colors.grey, size: 14),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${p.rating.toStringAsFixed(1)} (${p.totalReviews})',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isOpen ? AppColors.textLight : Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Icon(Icons.location_on_rounded,
+                              color: isOpen ? AppColors.primary : Colors.grey, size: 14),
+                          const SizedBox(width: 2),
+                          Text(
+                            jarakText,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: isOpen ? AppColors.primary : Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        p.address,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isOpen ? AppColors.textSubtle : Colors.grey.shade300,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Opacity(
-                opacity: isOpen ? 1.0 : 0.5,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            p.name,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                              color: isOpen
-                                  ? const Color(0xFF111827)
-                                  : const Color(0xFF9CA3AF),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isOpen
-                                ? const Color(0xFFD1FAE5)
-                                : const Color(0xFFF3F4F6),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            isOpen ? 'BUKA' : 'TUTUP',
-                            style: TextStyle(
-                              color: isOpen
-                                  ? const Color(0xFF065F46)
-                                  : const Color(0xFF9CA3AF),
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Icon(Icons.star,
-                            color: isOpen ? Colors.amber : Colors.grey[400],
-                            size: 12),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${p.rating.toStringAsFixed(1)} (${p.totalReviews})',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isOpen
-                                ? const Color(0xFF6B7280)
-                                : Colors.grey[400],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(Icons.location_on,
-                            color: isOpen
-                                ? const Color(0xFF2563EB)
-                                : Colors.grey[400],
-                            size: 12),
-                        const SizedBox(width: 2),
-                        Text(
-                          jarakText,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: isOpen
-                                ? const Color(0xFF2563EB)
-                                : Colors.grey[400],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      p.address,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isOpen
-                            ? const Color(0xFF9CA3AF)
-                            : Colors.grey[300],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.chevron_right,
-                color: isOpen ? const Color(0xFFD1D5DB) : Colors.grey[300],
-                size: 20),
-          ],
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right_rounded,
+                  color: isOpen ? AppColors.divider : Colors.grey.shade300, size: 20),
+            ],
+          ),
         ),
       ),
     );
