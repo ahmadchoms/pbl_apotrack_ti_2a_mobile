@@ -1,33 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile/features/staff/presentation/screens/staff_orders_screen.dart';
 import '../features/staff/data/models/medicine.dart';
 import '../features/staff/data/models/order.dart';
 import '../features/staff/data/models/audit_log.dart';
-
-// Auth & General
 import '../features/auth/presentation/providers/auth_provider.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
-
-// Customer
 import '../features/customer/presentation/screens/home_screen.dart';
 import '../features/customer/presentation/screens/customer_profile_screen.dart';
 import '../features/customer/presentation/screens/edit_profile_screen.dart';
 import '../features/customer/presentation/screens/change_password_screen.dart';
 import '../features/customer/presentation/screens/edit_address_screen.dart';
 import '../features/customer/data/models/customer_address.dart';
-// ── NEW customer screens ──
 import '../features/customer/presentation/screens/pharma_scan_map_screen.dart';
 import '../features/customer/presentation/screens/medicine_list_screen.dart';
 import '../features/customer/presentation/screens/qris_payment_screen.dart';
 import '../features/customer/presentation/screens/verifikasi_pengambilan_screen.dart';
 import '../features/customer/presentation/screens/beri_ulasan_screen.dart';
-
-// Staff
 import '../features/staff/presentation/screens/main_screen.dart';
 import '../features/staff/presentation/screens/order_detail_screen.dart';
 import '../features/staff/presentation/screens/medicine_detail_screen.dart';
@@ -39,8 +31,8 @@ import '../features/staff/presentation/screens/edit_profile_screen.dart';
 import '../features/staff/presentation/screens/change_password_screen.dart';
 import '../features/staff/presentation/screens/activity_history_screen.dart';
 import '../features/staff/presentation/screens/staff_inventory_screen.dart';
-// ── NEW staff screens ──
 import '../features/staff/presentation/screens/scanner_screen.dart';
+import '../features/staff/presentation/screens/staff_orders_screen.dart';
 
 class AppRouter {
   static const String splash = '/';
@@ -56,7 +48,6 @@ class AppRouter {
   static const String customerEditAddress = '/customer/edit-address';
   static const String customerOrderDetail = '/customer/order-detail';
   static const String customerTrackOrder = '/customer/track-order';
-  // ── NEW customer route constants ──
   static const String customerPharmacySearch = '/customer/pharmacy-search';
   static const String customerMedicineList = '/customer/medicine-list';
   static const String customerPayment = '/customer/payment';
@@ -74,7 +65,6 @@ class AppRouter {
   static const String staffEditProfile = '/staff/edit-profile';
   static const String staffChangePassword = '/staff/change-password';
   static const String staffActivityHistory = '/staff/activity-history';
-  // ── NEW staff route constants ──
   static const String staffScanner = '/staff/scanner';
 
   static final routerProvider = Provider<GoRouter>((ref) {
@@ -100,7 +90,7 @@ class AppRouter {
         final isAuthPage = isLoggingIn || isRegistering || isForgotPw;
 
         if (!isAuthenticated) {
-          if (isSplash || isAuthPage) return null;
+          if (isAuthPage) return null;
           return login;
         }
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,37 +7,94 @@ abstract class StorageKeys {
   static const String authToken = 'auth_token';
   static const String userRole = 'user_role';
   static const String userId = 'user_id';
+  static const String userData = 'user_data';
 }
 
-/// Riverpod Provider untuk instance FlutterSecureStorage.
-/// Menggunakan singleton agar tidak ada instance ganda.
-final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
-  return const FlutterSecureStorage(
+/// Platform-agnostic storage abstraction.
+abstract class StorageBackend {
+  Future<String?> read(String key);
+  Future<void> write(String key, String value);
+  Future<void> delete(String key);
+  Future<void> deleteAll();
+}
+
+/// Native implementation using FlutterSecureStorage.
+class NativeStorageBackend implements StorageBackend {
+  NativeStorageBackend(this._storage);
+  final FlutterSecureStorage _storage;
+
+  @override
+  Future<String?> read(String key) => _storage.read(key: key);
+
+  @override
+  Future<void> write(String key, String value) =>
+      _storage.write(key: key, value: value);
+
+  @override
+  Future<void> delete(String key) => _storage.delete(key: key);
+
+  @override
+  Future<void> deleteAll() => _storage.deleteAll();
+}
+
+/// Web implementation using in-memory Map.
+class WebStorageBackend implements StorageBackend {
+  final _store = <String, String>{};
+
+  @override
+  Future<String?> read(String key) async => _store[key];
+
+  @override
+  Future<void> write(String key, String value) async {
+    _store[key] = value;
+  }
+
+  @override
+  Future<void> delete(String key) async {
+    _store.remove(key);
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    _store.clear();
+  }
+}
+
+/// Riverpod Provider untuk StorageBackend (auto-switch based on platform).
+final storageBackendProvider = Provider<StorageBackend>((ref) {
+  if (kIsWeb) {
+    return WebStorageBackend();
+  }
+  final storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
+  return NativeStorageBackend(storage);
 });
 
-/// Helper class untuk mengabstraksi operasi FlutterSecureStorage
-/// agar kode lebih bersih dan mudah di-mock saat testing.
+/// Helper class untuk mengabstraksi operasi storage.
 class SecureStorageService {
-  SecureStorageService(this._storage);
-  final FlutterSecureStorage _storage;
+  SecureStorageService(this._backend);
+  final StorageBackend _backend;
 
-  Future<String?> getToken() => _storage.read(key: StorageKeys.authToken);
+  Future<String?> getToken() => _backend.read(StorageKeys.authToken);
   Future<void> saveToken(String token) =>
-      _storage.write(key: StorageKeys.authToken, value: token);
-  Future<void> deleteToken() => _storage.delete(key: StorageKeys.authToken);
+      _backend.write(StorageKeys.authToken, token);
+  Future<void> deleteToken() => _backend.delete(StorageKeys.authToken);
 
-  Future<String?> getUserRole() => _storage.read(key: StorageKeys.userRole);
+  Future<String?> getUserRole() => _backend.read(StorageKeys.userRole);
   Future<void> saveUserRole(String role) =>
-      _storage.write(key: StorageKeys.userRole, value: role);
+      _backend.write(StorageKeys.userRole, role);
 
-  Future<void> clearAll() => _storage.deleteAll();
+  Future<String?> getUserData() => _backend.read(StorageKeys.userData);
+  Future<void> saveUserData(String data) =>
+      _backend.write(StorageKeys.userData, data);
+
+  Future<void> clearAll() => _backend.deleteAll();
 }
 
 /// Provider untuk SecureStorageService.
 final secureStorageServiceProvider = Provider<SecureStorageService>((ref) {
-  final storage = ref.watch(secureStorageProvider);
-  return SecureStorageService(storage);
+  final backend = ref.watch(storageBackendProvider);
+  return SecureStorageService(backend);
 });

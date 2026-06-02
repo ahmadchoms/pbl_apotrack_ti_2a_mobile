@@ -6,6 +6,8 @@ import '../../../../routes/app_router.dart';
 import '../providers/staff_provider.dart';
 import '../widgets/medicine_inventory_card.dart';
 import '../../data/models/medicine.dart';
+import 'medicine_detail_screen.dart';
+import 'medicine_form_screen.dart';
 
 class StaffInventoryScreen extends ConsumerStatefulWidget {
   const StaffInventoryScreen({super.key});

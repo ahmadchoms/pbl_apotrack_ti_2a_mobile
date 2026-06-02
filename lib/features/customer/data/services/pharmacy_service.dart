@@ -6,13 +6,11 @@ class PharmacyService {
   PharmacyService({required CustomerApiService api}) : _api = api;
   final CustomerApiService _api;
 
-  /// Ambil semua apotek aktif
   Future<List<Map<String, dynamic>>> getPharmacies() async {
     final data = await _api.getPharmacies();
     return data.cast<Map<String, dynamic>>();
   }
 
-  /// Ambil semua apotek aktif sebagai PharmacyModel
   Future<List<PharmacyModel>> getActivePharmacies() async {
     final data = await _api.getPharmacies();
     return data
@@ -21,7 +19,6 @@ class PharmacyService {
         .toList();
   }
 
-  /// Ambil detail apotek by id — return raw map
   Future<Map<String, dynamic>?> getPharmacyById(String id) async {
     try {
       return await _api.getPharmacyDetail(id);
@@ -30,7 +27,6 @@ class PharmacyService {
     }
   }
 
-  /// Ambil detail apotek by id sebagai PharmacyModel
   Future<PharmacyModel?> getPharmacyModel(String id) async {
     try {
       final data = await _api.getPharmacyDetail(id);
@@ -40,7 +36,6 @@ class PharmacyService {
     }
   }
 
-  /// Cari apotek berdasarkan nama
   Future<List<PharmacyModel>> searchPharmacies(String query) async {
     final data = await _api.getPharmacies(search: query);
     return data

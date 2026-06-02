@@ -163,6 +163,32 @@ class CustomerProfileNotifier extends StateNotifier<CustomerProfileState> {
     }
   }
 
+  Future<void> setPrimaryAddress(String id) async {
+    try {
+      await _service.setPrimaryAddress(id);
+      state = state.copyWith(
+        addresses: state.addresses.map((a) => CustomerAddress(
+          id: a.id,
+          label: a.label,
+          addressDetail: a.addressDetail,
+          completeAddress: a.completeAddress,
+          latitude: a.latitude,
+          longitude: a.longitude,
+          isPrimary: a.id == id,
+        )).toList(),
+      );
+      print('[Provider] Alamat ID $id berhasil dijadikan utama');
+    } catch (e, stackTrace) {
+      print('[Provider] setPrimaryAddress error: $e');
+      print('Stack: $stackTrace');
+      state = state.copyWith(
+        error: 'Gagal mengatur alamat utama: ${e.toString()}',
+      );
+      rethrow;
+    }
+  }
+
+
   Future<void> deleteAddress(String id) async {
     try {
       await _service.deleteAddress(id);

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/staff_provider.dart';
+import '../providers/staff_notification_provider.dart';
 import '../widgets/order_list_card.dart';
 import '../../data/models/order.dart';
 
@@ -119,7 +120,7 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
               ],
             ),
           ),
-          _buildHeaderAction(Icons.notifications_none_rounded, () {}),
+          _buildNotifBadgeIcon(),
         ],
       ),
     );
@@ -134,6 +135,49 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
       child: IconButton(
         onPressed: onTap,
         icon: Icon(icon, color: Colors.white, size: 22),
+      ),
+    );
+  }
+
+  Widget _buildNotifBadgeIcon() {
+    final unreadCountAsync = ref.watch(staffUnreadNotifProvider);
+    final unreadCount = unreadCountAsync.whenOrNull(data: (c) => c) ?? 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          IconButton(
+            onPressed: () => context.push('/staff/notifications'),
+            icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
+          ),
+          if (unreadCount > 0)
+            Positioned(
+              right: 2,
+              top: 2,
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: AppColors.danger,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                child: Text(
+                  unreadCount > 99 ? '99+' : '$unreadCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

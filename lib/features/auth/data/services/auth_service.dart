@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/secure_storage_service.dart';
 import '../models/user_model.dart';
@@ -21,10 +23,11 @@ class AuthService {
       password: password,
     );
 
-    // Simpan token dan role ke storage lokal
+    // Simpan token, role, dan data user ke storage lokal
     await _storage.saveToken(result['token']);
     final user = UserModel.fromJson(result['user']);
     await _storage.saveUserRole(user.role);
+    await _storage.saveUserData(jsonEncode(result['user']));
 
     return user;
   }
@@ -46,11 +49,22 @@ class AuthService {
     if (token == null) return null;
 
     try {
-      // Ambil data user terbaru dari API /me
-      return await _repository.fetchMe();
+      final user = await _repository.fetchMe();
+      await _storage.saveUserData(jsonEncode(user.toJson()));
+      return user;
     } catch (e) {
-      // Jika token expired atau invalid, hapus sesi
-      await _storage.clearAll();
+      // Hapus sesi hanya jika token expired/invalid (401), bukan error jaringan
+      if (e is DioException) {
+        if (e.response?.statusCode == 401) {
+          await _storage.clearAll();
+          return null;
+        }
+        // Untuk error jaringan/timeout, coba pakai data user yang di-cache
+        final cached = await _storage.getUserData();
+        if (cached != null) {
+          return UserModel.fromJson(jsonDecode(cached));
+        }
+      }
       return null;
     }
   }

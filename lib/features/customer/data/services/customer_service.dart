@@ -133,6 +133,20 @@ class CustomerService {
     }
   }
 
+  Future<void> setPrimaryAddress(String id) async {
+    print('[Service] setPrimaryAddress id=$id');
+    try {
+      await _repository.setPrimaryAddress(id);
+      print('[Service] setPrimaryAddress success');
+    } on DioException catch (e) {
+      final errorBody = e.response?.data;
+      print('[Service] setPrimaryAddress error ${e.response?.statusCode}: $errorBody');
+      final message = _extractLaravelError(errorBody) ?? 'Gagal mengatur alamat utama';
+      throw Exception(message);
+    }
+  }
+
+
   Future<void> deleteAddress(String id) async {
     print('[Service] deleteAddress id=$id');
     try {

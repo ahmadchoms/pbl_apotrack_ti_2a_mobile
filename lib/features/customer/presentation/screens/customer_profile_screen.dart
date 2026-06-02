@@ -11,7 +11,6 @@ import '../widgets/profile/menu_section.dart';
 import '../widgets/profile/confirm_dialog.dart';
 import '../widgets/profile/delete_account_password_dialog.dart';
 import '../widgets/profile/scan_qr_invitation_card.dart';
-
 class AccountHubScreen extends ConsumerStatefulWidget {
   const AccountHubScreen({super.key});
 

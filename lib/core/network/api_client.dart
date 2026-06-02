@@ -29,8 +29,9 @@ Dio _buildDio(SecureStorageService storageService, String baseUrl) {
   final dio = Dio(
     BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 60),
-      receiveTimeout: const Duration(seconds: 60),
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
       headers: {
         'Accept': 'application/json',
       },
@@ -90,8 +91,7 @@ class _AuthInterceptor extends Interceptor {
         final responseData = err.response?.data;
         if (statusCode == 401) {
           message = 'Sesi tidak valid atau telah berakhir. Silakan masuk kembali.';
-          // Auto-clear invalid token so router redirects to login
-          _storageService.clearAll();
+          // Jangan clearAll di sini — biarkan service layer yang handle
         } else if (statusCode == 422) {
           // Laravel validation error — ambil pesan pertama dari errors map
           final errors = responseData?['errors'];

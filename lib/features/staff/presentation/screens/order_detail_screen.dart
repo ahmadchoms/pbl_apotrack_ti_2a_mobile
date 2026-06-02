@@ -554,7 +554,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       else if (status == 'PROCESSING')
                         _updateStatus('READY_FOR_PICKUP');
                       else if (status == 'READY_FOR_PICKUP') {
-                        if (_order.serviceType == 'PICKUP')
+                        if (_order.serviceType == 'PICK_UP')
                           _updateStatus('COMPLETED');
                       }
                     },
