@@ -1,0 +1,729 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/status_badge.dart';
+import '../../data/services/staff_service.dart';
+import '../widgets/order_status_timeline.dart';
+import '../widgets/delivery_info_card.dart';
+import '../widgets/order_items_card.dart';
+import '../../data/models/order.dart';
+
+class OrderDetailScreen extends ConsumerStatefulWidget {
+  final Order order;
+  const OrderDetailScreen({super.key, required this.order});
+
+  @override
+  ConsumerState<OrderDetailScreen> createState() => _OrderDetailScreenState();
+}
+
+class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
+  bool _isUpdating = false;
+  late Order _order;
+
+  @override
+  void initState() {
+    super.initState();
+    _order = widget.order;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshOrderDetail());
+  }
+
+  Future<void> _refreshOrderDetail() async {
+    try {
+      final service = ref.read(staffServiceProvider);
+      final updatedOrder = await service.getOrderDetail(_order.id);
+      if (mounted) setState(() => _order = updatedOrder);
+    } catch (e) {
+      debugPrint('Gagal refresh detail: $e');
+    }
+  }
+
+  Future<void> _updateStatus(String newStatus) async {
+    setState(() => _isUpdating = true);
+    try {
+      await ref
+          .read(staffServiceProvider)
+          .updateOrderStatus(_order.id, newStatus);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Status diperbarui: $newStatus'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        _refreshOrderDetail();
+      }
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal update: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDelivery = _order.serviceType == 'DELIVERY';
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          // Header Statis (Fixed)
+          _buildModernHeader(context),
+
+          // Area Konten yang dapat di-scroll
+          Expanded(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      const _SectionTitle(
+                        title: 'Informasi Utama',
+                        icon: Icons.analytics_outlined,
+                      ),
+                      _buildOrderInfoCard(_order),
+                      const SizedBox(height: 24),
+
+                      const _SectionTitle(
+                        title: 'Progres Operasional',
+                        icon: Icons.timeline_rounded,
+                      ),
+                      OrderStatusTimeline(currentStatus: _order.orderStatus),
+                      const SizedBox(height: 24),
+
+                      if (isDelivery) ...[
+                        const _SectionTitle(
+                          title: 'Logistik & Lokasi',
+                          icon: Icons.local_shipping_outlined,
+                        ),
+                        DeliveryInfoCard(order: _order),
+                        const SizedBox(height: 24),
+                      ] else if (_order.verificationCode != null) ...[
+                        _VerificationCodeCard(order: _order),
+                        const SizedBox(height: 24),
+                      ],
+
+                      const _SectionTitle(
+                        title: 'Rincian Pesanan',
+                        icon: Icons.receipt_long_outlined,
+                      ),
+                      OrderItemsCard(
+                        order: _order,
+                        formatRupiah: _formatRupiah,
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildPaymentSummaryCard(_order),
+                      const SizedBox(height: 16),
+
+                      if (_order.hasPrescription ||
+                          (_order.notes ?? '').isNotEmpty)
+                        _MetadataCard(order: _order),
+                    ]),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: _buildStickyActionPanel(context),
+    );
+  }
+
+  // Header menggunakan Container agar tetap diam di atas (Fixed)
+  Widget _buildModernHeader(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
+      child: Row(
+        children: [
+          _buildHeaderAction(
+            Icons.arrow_back_ios_new_rounded,
+            () => context.pop(),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'OPERASIONAL TOKO',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Detail Pesanan',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.95),
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildHeaderAction(Icons.notifications_none_rounded, () {}),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderAction(IconData icon, VoidCallback onTap) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        onPressed: onTap,
+        icon: Icon(icon, color: Colors.white, size: 20),
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
+
+  Widget _buildOrderInfoCard(Order order) {
+    final cfg = _statusMap[order.orderStatus] ?? _statusMap['PENDING']!;
+    final serviceConfig = {
+      'DELIVERY': {'label': 'Antar ke Rumah'},
+
+      'PICK_UP': {'label': 'Ambil di Apotek'},
+
+      'WALK_IN': {'label': 'Pembelian Langsung'},
+    };
+    final config =
+        serviceConfig[order.serviceType] ?? serviceConfig['WALK_IN']!;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildSimpleInfo(
+                'NO. PESANAN',
+                '#${order.orderNumber}',
+                isHighlight: true,
+              ),
+              StatusBadge(
+                label: cfg.label,
+                color: cfg.color,
+                backgroundColor: cfg.bg,
+                icon: cfg.icon,
+              ),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(height: 1),
+          ),
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildSimpleInfo(
+                    'TIPE LAYANAN',
+                    config['label']!,
+                    icon: order.serviceType == 'DELIVERY'
+                        ? Icons.local_shipping
+                        : Icons.store,
+                  ),
+                ),
+                const VerticalDivider(width: 32),
+                Expanded(
+                  child: _buildSimpleInfo(
+                    'WAKTU ORDER',
+                    order.createdAt,
+                    icon: Icons.access_time,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildCustomerTile(order),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSimpleInfo(
+    String label,
+    String value, {
+    bool isHighlight = false,
+    IconData? icon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textLight,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: isHighlight ? AppColors.primary : AppColors.textDark,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCustomerTile(Order order) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: AppColors.primary,
+            radius: 18,
+            child: Text(
+              order.customer['username']?[0]?.toUpperCase() ?? 'U',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  order.customer['username'] ?? 'Pembeli Umum',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  order.customer['phone'] ?? '-',
+                  style: const TextStyle(
+                    color: AppColors.textLight,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.phone_outlined,
+              size: 18,
+              color: AppColors.primary,
+            ),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentSummaryCard(Order order) {
+    final isPaid = order.paymentStatus.toUpperCase() == 'PAID';
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isPaid ? AppColors.successLight : AppColors.dangerLight,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isPaid ? Icons.check_circle_rounded : Icons.pending_rounded,
+              color: isPaid ? AppColors.success : AppColors.danger,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isPaid ? 'Pembayaran Lunas' : 'Belum Dibayar',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                  ),
+                ),
+                Text(
+                  isPaid ? 'Metode: Online Payment' : 'Menunggu Transfer',
+                  style: const TextStyle(
+                    color: AppColors.textLight,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _formatPriceBadge(order.grandTotal),
+        ],
+      ),
+    );
+  }
+
+  Widget _formatPriceBadge(num price) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        _formatRupiah(price),
+        style: const TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w900,
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStickyActionPanel(BuildContext context) {
+    final status = _order.orderStatus;
+    if (['SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED'].contains(status))
+      return const SizedBox.shrink();
+
+    String label = '';
+    Color color = AppColors.primary;
+
+    if (status == 'PENDING')
+      label = 'Terima & Proses';
+    else if (status == 'PROCESSING')
+      label = 'Siap Diambil/Kirim';
+    else if (status == 'READY_FOR_PICKUP') {
+      label = _order.serviceType == 'DELIVERY'
+          ? 'Panggil Kurir'
+          : 'Selesaikan Pesanan';
+      if (_order.serviceType == 'DELIVERY') color = AppColors.accentIndigo;
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 4,
+            child: AppButton(
+              label: _isUpdating ? 'Memproses...' : label,
+              backgroundColor: color,
+              onPressed: _isUpdating
+                  ? null
+                  : () {
+                      if (status == 'PENDING')
+                        _updateStatus('PROCESSING');
+                      else if (status == 'PROCESSING')
+                        _updateStatus('READY_FOR_PICKUP');
+                      else if (status == 'READY_FOR_PICKUP') {
+                        if (_order.serviceType == 'PICKUP')
+                          _updateStatus('COMPLETED');
+                      }
+                    },
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.dangerLight,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.close_rounded, color: AppColors.danger),
+              onPressed: _isUpdating ? null : () => _updateStatus('CANCELLED'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  const _SectionTitle({required this.title, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, left: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.primary.withOpacity(0.7)),
+          const SizedBox(width: 8),
+          Text(
+            title.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textMid,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetadataCard extends StatelessWidget {
+  final Order order;
+  const _MetadataCard({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (order.hasPrescription) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.warningLight,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.warning.withOpacity(0.2)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.verified_user_rounded,
+                    color: AppColors.warning,
+                    size: 20,
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Pesanan ini memerlukan verifikasi resep dokter.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF92400E),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if ((order.notes ?? '').isNotEmpty) ...[
+            const Text(
+              'CATATAN PELANGGAN',
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textLight,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              order.notes!,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textMid,
+                height: 1.5,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _VerificationCodeCard extends StatelessWidget {
+  final Order order;
+  const _VerificationCodeCard({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.successLight,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.success.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'KODE PENGAMBILAN (PICKUP)',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              color: AppColors.success,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            order.verificationCode ?? '-',
+            style: const TextStyle(
+              fontSize: 36,
+              fontWeight: FontWeight.w900,
+              color: AppColors.success,
+              letterSpacing: 8,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Berikan kode ini saat mengambil pesanan',
+            style: TextStyle(fontSize: 11, color: AppColors.textLight),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── HELPERS ──────────────────────────────────────────────────
+
+class _StatusCfg {
+  final String label;
+  final Color color;
+  final Color bg;
+  final IconData icon;
+  const _StatusCfg(this.label, this.color, this.bg, this.icon);
+}
+
+final _statusMap = {
+  'PENDING': _StatusCfg(
+    'Baru',
+    AppColors.warning,
+    AppColors.warningLight,
+    Icons.hourglass_top_rounded,
+  ),
+  'PROCESSING': _StatusCfg(
+    'Diproses',
+    AppColors.primary,
+    AppColors.primaryLight,
+    Icons.autorenew_rounded,
+  ),
+  'READY_FOR_PICKUP': _StatusCfg(
+    'Siap Ambil',
+    AppColors.success,
+    AppColors.successLight,
+    Icons.check_circle_rounded,
+  ),
+  'SHIPPED': _StatusCfg(
+    'Dikirim',
+    AppColors.accentIndigo,
+    AppColors.primaryLight,
+    Icons.local_shipping_rounded,
+  ),
+  'COMPLETED': _StatusCfg(
+    'Selesai',
+    AppColors.textMid,
+    AppColors.background,
+    Icons.done_all_rounded,
+  ),
+  'CANCELLED': _StatusCfg(
+    'Batal',
+    AppColors.danger,
+    AppColors.dangerLight,
+    Icons.cancel_rounded,
+  ),
+};
+
+String _formatRupiah(num value) {
+  final str = value.toStringAsFixed(0);
+  final buf = StringBuffer();
+  for (int i = 0; i < str.length; i++) {
+    if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
+    buf.write(str[i]);
+  }
+  return 'Rp ${buf.toString()}';
+}
