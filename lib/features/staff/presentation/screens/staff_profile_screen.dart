@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../routes/app_router.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/staff_provider.dart';
+import '../../../customer/presentation/providers/customer_order_provider.dart';
 import '../../../customer/presentation/widgets/profile/address_section.dart';
 import '../../../customer/presentation/widgets/profile/menu_section.dart';
 import '../../../customer/presentation/widgets/profile/confirm_dialog.dart';
@@ -28,6 +29,9 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
   Future<void> _handleLogout() async {
     try {
       await ref.read(profileProvider.notifier).logout();
+      // Invalidate semua provider agar data customer lama tidak tersisa
+      ref.invalidate(customerOrderProvider);
+      ref.invalidate(profileProvider);
       ref.invalidate(authNotifierProvider);
     } catch (e) {
       debugPrint('⚠️ Logout error: $e');
@@ -60,7 +64,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   children: [
-                    // ── Error banner ──────────────────────────────
                     if (state.error != null)
                       Container(
                         width: double.infinity,
@@ -79,7 +82,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                         ),
                       ),
 
-                    // ── Profile Header ────────────────────────────
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.only(
@@ -104,7 +106,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                       ),
                       child: Column(
                         children: [
-                          // Avatar
                           Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
@@ -117,14 +118,12 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                             child: CircleAvatar(
                               radius: 50,
                               backgroundColor: AppColors.surfaceLight,
-                              backgroundImage:
-                                  (profile?.avatarUrl != null &&
+                              backgroundImage: (profile?.avatarUrl != null &&
                                       profile!.avatarUrl!.isNotEmpty)
                                   ? NetworkImage(profile.avatarUrl!)
-                                        as ImageProvider
+                                      as ImageProvider
                                   : null,
-                              child:
-                                  (profile?.avatarUrl == null ||
+                              child: (profile?.avatarUrl == null ||
                                       profile!.avatarUrl!.isEmpty)
                                   ? Text(
                                       profile?.username
@@ -145,7 +144,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Nama
                           Text(
                             profile?.username ?? '—',
                             style: const TextStyle(
@@ -156,7 +154,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                           ),
                           const SizedBox(height: 4),
 
-                          // Email
                           Text(
                             profile?.email ?? '—',
                             style: const TextStyle(
@@ -167,7 +164,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                           ),
                           const SizedBox(height: 8),
 
-                          // Role badge
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,
@@ -188,7 +184,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                             ),
                           ),
 
-                          // Nama apotek — hanya Staff
                           if (!isCustomer && profile?.pharmacyName != null) ...[
                             const SizedBox(height: 12),
                             Text(
@@ -206,7 +201,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
 
                     const SizedBox(height: 24),
 
-                    // ── Alamat — HANYA Customer ───────────────────
                     if (isCustomer)
                       AddressSection(
                         addresses: state.addresses,
@@ -218,7 +212,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
 
                     if (isCustomer) const SizedBox(height: 8),
 
-                    // ── Pengaturan Akun ───────────────────────────
                     MenuSection(
                       title: 'PENGATURAN AKUN',
                       items: [
@@ -229,9 +222,7 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                             final route = isCustomer
                                 ? AppRouter.customerEditProfile
                                 : AppRouter.staffEditProfile;
-                            context
-                                .push(route)
-                                .then(
+                            context.push(route).then(
                                   (_) => ref
                                       .read(profileProvider.notifier)
                                       .fetchProfile(),
@@ -251,7 +242,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                       ],
                     ),
 
-                    // ── Riwayat Aktivitas — HANYA Staff ──────────
                     if (!isCustomer)
                       MenuSection(
                         title: 'RIWAYAT AKTIVITAS',
@@ -265,7 +255,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                         ],
                       ),
 
-                    // ── Join Staff — HANYA Customer ───────────────
                     if (isCustomer)
                       MenuSection(
                         title: 'JOIN SEBAGAI STAFF APOTEK',
@@ -274,7 +263,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                         ],
                       ),
 
-                    // ── Lainnya ───────────────────────────────────
                     MenuSection(
                       title: 'LAINNYA',
                       items: [
@@ -284,7 +272,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                           onTap: () {},
                         ),
 
-                        // Hapus Akun — HANYA Customer
                         if (isCustomer)
                           MenuItemTile(
                             icon: Icons.delete_outline_rounded,
@@ -320,8 +307,7 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                             iconColor: AppColors.warning,
                             iconBgColor: AppColors.warningLight,
                             title: 'Keluar Akun?',
-                            message:
-                                'Kamu akan keluar dari akunmu. '
+                            message: 'Kamu akan keluar dari akunmu. '
                                 'Kamu bisa login kembali kapan saja.',
                             confirmLabel: 'Ya, Keluar',
                             confirmColor: AppColors.warning,

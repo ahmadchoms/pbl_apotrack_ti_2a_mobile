@@ -14,16 +14,20 @@ import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 
 // Customer
-import '../features/customer/presentation/screens/home_screen.dart';
+import '../features/customer/presentation/screens/main_screen.dart';
+import '../features/customer/presentation/screens/order_detail_screen.dart';
+import '../features/customer/presentation/screens/track_order_screen.dart';
 import '../features/customer/data/models/customer_address.dart';
 
 // Staff
-import '../features/staff/presentation/screens/main_screen.dart';
+import '../features/staff/presentation/screens/main_screen.dart'
+    as staff_main;
 import '../features/staff/presentation/screens/staff_profile_screen.dart';
 import '../features/staff/presentation/screens/edit_profile_screen.dart';
 import '../features/staff/presentation/screens/change_password_screen.dart';
 import '../features/staff/presentation/screens/edit_address_screen.dart';
-import '../features/staff/presentation/screens/order_detail_screen.dart';
+import '../features/staff/presentation/screens/order_detail_screen.dart'
+    as staff_order_detail;
 import '../features/staff/presentation/screens/medicine_detail_screen.dart';
 import '../features/staff/presentation/screens/medicine_form_screen.dart';
 import '../features/staff/presentation/screens/notification_screen.dart';
@@ -100,19 +104,16 @@ class AppRouter {
             builder: (context, state) => const RegisterScreen()),
         GoRoute(path: forgotPassword,
             builder: (context, state) => const ForgotPasswordScreen()),
-        GoRoute(path: customerHome,
-            builder: (context, state) => const CustomerHomeScreen()),
-        GoRoute(path: staffHome,
-            builder: (context, state) => const MainScreen()),
 
-        // ── Profil — semua pakai screen staff (bersama) ──────
+        // ── Customer ──────────────────────────────────────────
+        GoRoute(path: customerHome,
+            builder: (context, state) => const CustomerMainScreen()),
         GoRoute(path: customerAccountHub,
             builder: (context, state) => const StaffProfileScreen()),
         GoRoute(path: customerEditProfile,
             builder: (context, state) => const EditProfileScreen()),
         GoRoute(path: customerChangePassword,
             builder: (context, state) => const ChangePasswordScreen()),
-
         GoRoute(
           path: customerEditAddress,
           builder: (context, state) {
@@ -122,8 +123,28 @@ class AppRouter {
             return EditAddressScreen(isAdd: isAdd, address: address);
           },
         ),
+        GoRoute(
+          path: customerOrderDetail,
+          builder: (context, state) {
+            final extra = state.extra;
+            if (extra is Order) return CustomerOrderDetailScreen(order: extra);
+            return CustomerOrderDetailScreen(
+                order: Order.fromJson(extra as Map<String, dynamic>));
+          },
+        ),
+        GoRoute(
+          path: customerTrackOrder,
+          builder: (context, state) {
+            final extra = state.extra;
+            if (extra is Order) return TrackOrderScreen(order: extra);
+            return TrackOrderScreen(
+                order: Order.fromJson(extra as Map<String, dynamic>));
+          },
+        ),
 
-        // ── Staff routes ─────────────────────────────────────
+        // ── Staff ─────────────────────────────────────────────
+        GoRoute(path: staffHome,
+            builder: (context, state) => const staff_main.MainScreen()),
         GoRoute(path: staffInventory,
             builder: (context, state) => const StaffInventoryScreen()),
         GoRoute(path: staffOrders,
@@ -132,8 +153,10 @@ class AppRouter {
           path: staffOrderDetail,
           builder: (context, state) {
             final extra = state.extra;
-            if (extra is Order) return OrderDetailScreen(order: extra);
-            return OrderDetailScreen(
+            if (extra is Order) {
+              return staff_order_detail.OrderDetailScreen(order: extra);
+            }
+            return staff_order_detail.OrderDetailScreen(
                 order: Order.fromJson(extra as Map<String, dynamic>));
           },
         ),
@@ -164,7 +187,9 @@ class AppRouter {
           path: staffAuditLogDetail,
           builder: (context, state) {
             final extra = state.extra;
-            if (extra is AuditLog) return AuditLogDetailScreen(activity: extra);
+            if (extra is AuditLog) {
+              return AuditLogDetailScreen(activity: extra);
+            }
             return AuditLogDetailScreen(
                 activity: AuditLog.fromJson(extra as Map<String, dynamic>));
           },
