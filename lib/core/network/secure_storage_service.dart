@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'web_storage_stub.dart' if (dart.library.html) 'web_storage_web.dart';
 
 /// Key constants untuk semua item yang disimpan di secure storage.
 abstract class StorageKeys {
@@ -63,7 +64,7 @@ class WebStorageBackend implements StorageBackend {
 /// Riverpod Provider untuk StorageBackend (auto-switch based on platform).
 final storageBackendProvider = Provider<StorageBackend>((ref) {
   if (kIsWeb) {
-    return WebStorageBackend();
+    return getWebStorage();
   }
   final storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),

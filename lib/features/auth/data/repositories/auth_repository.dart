@@ -4,8 +4,10 @@ import '../../../../core/network/api_client.dart';
 import '../models/user_model.dart';
 
 class AuthException implements Exception {
-  const AuthException(this.message);
+  const AuthException(this.message, {this.statusCode, this.originalError});
   final String message;
+  final int? statusCode;
+  final dynamic originalError;
   @override
   String toString() => message;
 }
@@ -87,7 +89,11 @@ class AuthRepository {
       final data = response.data['data'] as Map<String, dynamic>;
       return UserModel.fromJson(data);
     } on DioException catch (e) {
-      throw AuthException(e.message ?? 'Gagal mengambil profil.');
+      throw AuthException(
+        e.message ?? 'Gagal mengambil profil.',
+        statusCode: e.response?.statusCode,
+        originalError: e,
+      );
     }
   }
 
