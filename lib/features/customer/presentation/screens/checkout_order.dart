@@ -35,8 +35,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   int get _subtotal =>
       _cartItems.fold(0, (sum, item) => sum + item.price * item.quantity);
   int get _shippingCost => _deliveryMethod == 'kirim' ? 12000 : 0;
-  int get _serviceDiscount => 5000;
-  int get _total => _subtotal + _shippingCost - _serviceDiscount;
+  int get _total => _subtotal + _shippingCost;
 
   // ── Init ──────────────────────────────────────────────────────────
   @override
@@ -953,9 +952,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 _priceRow(
                     'Biaya Pengiriman',
                     _deliveryMethod == 'kirim' ? 12000 : 0),
-                const SizedBox(height: 10),
-                _priceRow('Diskon Layanan', -_serviceDiscount,
-                    isDiscount: true),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child:

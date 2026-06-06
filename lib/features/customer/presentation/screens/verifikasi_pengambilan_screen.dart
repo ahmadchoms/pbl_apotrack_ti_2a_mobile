@@ -4,7 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/services/order_service.dart';
+import '../../../staff/data/models/order.dart';
+import '../../data/services/customer_order_service.dart';
+import '../widgets/order_history/order_detail_status_card.dart';
+import '../widgets/order_history/order_detail_timeline_card.dart';
 import 'beri_ulasan_screen.dart';
 
 class VerifikasiPengambilanScreen extends ConsumerStatefulWidget {
@@ -34,15 +37,15 @@ class VerifikasiPengambilanScreen extends ConsumerStatefulWidget {
 
 class _VerifikasiPengambilanScreenState
     extends ConsumerState<VerifikasiPengambilanScreen> {
-  late final OrderService _orderService;
-  String _orderStatus = '';
+  late final CustomerOrderService _orderService;
+  Order? _order;
   String _verificationCode = '';
   Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
-    _orderService = ref.read(orderServiceProvider);
+    _orderService = ref.read(customerOrderServiceProvider);
     _verificationCode = widget.verificationCode;
     _cekStatus();
     _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) => _cekStatus());
@@ -55,21 +58,20 @@ class _VerifikasiPengambilanScreenState
   }
 
   Future<void> _cekStatus() async {
-    if (_orderStatus == 'COMPLETED') {
+    if (_order?.orderStatus == 'COMPLETED') {
       _pollTimer?.cancel();
       return;
     }
     try {
-      final order = await _orderService.getOrderById(widget.orderId);
+      final order = await _orderService.getOrderDetail(widget.orderId);
       if (!mounted) return;
-      final newStatus = order.orderStatus;
       setState(() {
-        _orderStatus = newStatus;
+        _order = order;
         if (_verificationCode.isEmpty) {
-          _verificationCode = order.verificationCode;
+          _verificationCode = order.verificationCode ?? '';
         }
       });
-      if (newStatus == 'COMPLETED') _pollTimer?.cancel();
+      if (order.orderStatus == 'COMPLETED') _pollTimer?.cancel();
     } catch (_) {
       if (!mounted) return;
     }
@@ -80,7 +82,7 @@ class _VerifikasiPengambilanScreenState
         (m) => '${m[1]}.',
       )}';
 
-  bool get _bisaUlas => _orderStatus == 'COMPLETED';
+  bool get _bisaUlas => _order?.orderStatus == 'COMPLETED';
 
   @override
   Widget build(BuildContext context) {
@@ -114,6 +116,13 @@ class _VerifikasiPengambilanScreenState
             const SizedBox(height: 20),
             _buildQrCard(),
             const SizedBox(height: 24),
+            if (_order != null) ...[
+              const SizedBox(height: 16),
+              OrderDetailStatusCard(orderStatus: _order!.orderStatus),
+              const SizedBox(height: 12),
+              OrderDetailTimelineCard(statusLogs: _order!.statusLogs),
+              const SizedBox(height: 16),
+            ],
             _buildReviewButton(enabled: _bisaUlas),
             if (!_bisaUlas) _buildWaitingCard(),
             const SizedBox(height: 16),
