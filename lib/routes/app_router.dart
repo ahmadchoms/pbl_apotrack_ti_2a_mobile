@@ -6,6 +6,7 @@ import '../features/staff/data/models/order.dart';
 import '../features/staff/data/models/audit_log.dart';
 
 // Auth
+import '../core/auth/auth_state_provider.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
@@ -82,7 +83,7 @@ class AppRouter {
   static final routerProvider = Provider<GoRouter>((ref) {
     final notifier = ref.read(routerNotifierProvider);
 
-    return GoRouter(
+    final router = GoRouter(
       initialLocation: splash,
       refreshListenable: notifier,
 
@@ -334,6 +335,15 @@ class AppRouter {
         ),
       ],
     );
+
+    ref.listen<bool>(authExpiredProvider, (_, expired) {
+      if (expired) {
+        ref.read(authExpiredProvider.notifier).state = false;
+        router.go(login);
+      }
+    });
+
+    return router;
   });
 }
 

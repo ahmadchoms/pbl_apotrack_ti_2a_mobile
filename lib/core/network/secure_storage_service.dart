@@ -38,28 +38,6 @@ class NativeStorageBackend implements StorageBackend {
   Future<void> deleteAll() => _storage.deleteAll();
 }
 
-/// Web implementation using in-memory Map.
-class WebStorageBackend implements StorageBackend {
-  final _store = <String, String>{};
-
-  @override
-  Future<String?> read(String key) async => _store[key];
-
-  @override
-  Future<void> write(String key, String value) async {
-    _store[key] = value;
-  }
-
-  @override
-  Future<void> delete(String key) async {
-    _store.remove(key);
-  }
-
-  @override
-  Future<void> deleteAll() async {
-    _store.clear();
-  }
-}
 
 /// Riverpod Provider untuk StorageBackend (auto-switch based on platform).
 final storageBackendProvider = Provider<StorageBackend>((ref) {
@@ -90,6 +68,10 @@ class SecureStorageService {
   Future<String?> getUserData() => _backend.read(StorageKeys.userData);
   Future<void> saveUserData(String data) =>
       _backend.write(StorageKeys.userData, data);
+
+  Future<String?> getUserId() => _backend.read(StorageKeys.userId);
+  Future<void> saveUserId(String id) =>
+      _backend.write(StorageKeys.userId, id);
 
   Future<void> clearAll() => _backend.deleteAll();
 }

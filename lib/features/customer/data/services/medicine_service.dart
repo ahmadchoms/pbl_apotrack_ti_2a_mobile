@@ -11,8 +11,7 @@ class MedicineService {
       String pharmacyId) async {
     final data = await _api.getMedicines(pharmacyId: pharmacyId);
     return data
-        .cast<Map<String, dynamic>>()
-        .map((e) => MedicineModel.fromJson(e))
+        .map((e) => MedicineModel.fromJson(e.toJson()))
         .toList();
   }
 
@@ -23,8 +22,7 @@ class MedicineService {
     final data = await _api.getMedicines(
         pharmacyId: pharmacyId, categoryId: categoryId);
     return data
-        .cast<Map<String, dynamic>>()
-        .map((e) => MedicineModel.fromJson(e))
+        .map((e) => MedicineModel.fromJson(e.toJson()))
         .toList();
   }
 
@@ -35,17 +33,12 @@ class MedicineService {
     final data =
         await _api.getMedicines(pharmacyId: pharmacyId, search: query);
     return data
-        .cast<Map<String, dynamic>>()
-        .map((e) => MedicineModel.fromJson(e))
+        .map((e) => MedicineModel.fromJson(e.toJson()))
         .toList();
   }
 
   Future<List<MedicineCategoryModel>> getCategories() async {
-    final data = await _api.getCategories();
-    return data
-        .cast<Map<String, dynamic>>()
-        .map((e) => MedicineCategoryModel.fromJson(e))
-        .toList();
+    return await _api.getCategories();
   }
 }
 
