@@ -1,10 +1,13 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/customer_api_service.dart';
+import '../../../../core/network/api_client.dart';
 import '../models/order_model.dart';
 
 class OrderService {
-  OrderService({required CustomerApiService api}) : _api = api;
-  final CustomerApiService _api;
+  final Dio _dio;
+
+  OrderService(this._dio);
 
   Future<OrderModel> createOrder({
     required String pharmacyId,
@@ -15,7 +18,6 @@ class OrderService {
     required double shippingCost,
     String? addressId,
     String? notes,
-    double? distanceKm,
   }) async {
     final apiItems = items
         .map((item) => {
@@ -25,36 +27,34 @@ class OrderService {
             })
         .toList();
 
-    final result = await _api.createOrder(
-      pharmacyId: pharmacyId,
-      items: apiItems,
-      subtotalAmount: subtotal,
-      serviceType: serviceType,
-      paymentMethod: paymentMethod,
-      shippingCost: shippingCost,
-      notes: notes,
-    );
-
-    return OrderModel.fromJson(result);
+    final response = await _dio.post('/orders', data: {
+      'pharmacy_id': pharmacyId,
+      'items': apiItems,
+      'subtotal_amount': subtotal.toInt(),
+      'service_type': serviceType,
+      'payment_method': paymentMethod,
+      'shipping_cost': shippingCost.toInt(),
+      if (addressId != null) 'address_id': addressId,
+      if (notes != null && notes.isNotEmpty) 'notes': notes,
+    });
+    return OrderModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
   Future<OrderModel> getOrderById(String orderId) async {
-    final result = await _api.getOrderDetail(orderId);
-    return OrderModel.fromJson(result);
+    final response = await _dio.get('/orders/$orderId');
+    return OrderModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
   Future<List<OrderModel>> getMyOrders() async {
-    final data = await _api.getOrders();
-    return data
+    final response = await _dio.get('/orders');
+    final list = response.data['data'] as List<dynamic>;
+    return list
         .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
   Future<List<OrderModel>> getActiveOrders() async {
-    final data = await _api.getOrders();
-    final all = data
-        .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final all = await getMyOrders();
     return all
         .where((o) =>
             o.orderStatus == 'PENDING' ||
@@ -64,35 +64,38 @@ class OrderService {
         .toList();
   }
 
-  Future<void> cancelOrder({
-    required String orderId,
-    String? reason,
-  }) async {
-    throw UnimplementedError('Cancel via API not yet available');
-  }
-
-  /// Simulasi pembayaran via API
   Future<Map<String, dynamic>> simulatePayment(String orderId) async {
-    return await _api.simulatePayment(orderId);
+    final response = await _dio.post('/orders/$orderId/simulate-payment');
+    return response.data['data'] as Map<String, dynamic>;
   }
 
-  /// Kirim ulasan via API
+  Future<void> uploadPrescription(String orderId, File file) async {
+    final formData = FormData.fromMap({
+      'prescription_image': await MultipartFile.fromFile(
+        file.path,
+        filename: file.path.split(Platform.pathSeparator).last,
+      ),
+    });
+    await _dio.post('/orders/$orderId/prescription', data: formData);
+  }
+
   Future<Map<String, dynamic>> submitReview({
     required String medicineId,
     required int rating,
     String? comment,
   }) async {
-    return await _api.submitReview(
-      medicineId: medicineId,
-      rating: rating,
-      comment: comment,
-    );
+    final response = await _dio.post('/reviews', data: {
+      'medicine_id': medicineId,
+      'rating': rating,
+      if (comment != null) 'comment': comment,
+    });
+    return response.data['data'] as Map<String, dynamic>;
   }
 }
 
-// ── Riverpod Providers ────────────────────────────────────────────────
 final orderServiceProvider = Provider<OrderService>((ref) {
-  return OrderService(api: ref.watch(customerApiServiceProvider));
+  final dio = ref.watch(dioProvider);
+  return OrderService(dio);
 });
 
 final myOrdersProvider = FutureProvider<List<OrderModel>>((ref) {

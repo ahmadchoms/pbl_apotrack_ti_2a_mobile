@@ -5,7 +5,8 @@ import 'package:mobile/features/customer/data/models/medicine_model.dart';
 import 'package:mobile/features/customer/data/models/medicine_category_model.dart';
 import 'package:mobile/features/customer/data/services/medicine_service.dart';
 import 'package:mobile/shared/widgets/status_badge.dart';
-import 'qris_payment_screen.dart';
+import '../../data/models/cart.dart';
+import 'checkout_order.dart';
 
 class MedicineListScreen extends ConsumerStatefulWidget {
   final String pharmacyId;
@@ -85,16 +86,28 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
   }
 
   void _goToCheckout() {
+    final cartState = CartState();
+    cartState.items.clear();
+
+    final allMeds = ref.read(medicinesProvider(widget.pharmacyId)).valueOrNull ?? [];
+    for (final entry in _cart.entries) {
+      final med = allMeds.firstWhere((m) => m.id == entry.key);
+      cartState.items.add(CartItem(
+        id: med.id,
+        name: med.name,
+        price: med.price.toInt(),
+        unit: med.unitName ?? 'Pcs',
+        imageUrl: med.imageUrl ?? '',
+        pharmacyName: widget.pharmacyName,
+        pharmacyId: widget.pharmacyId,
+        quantity: entry.value,
+      ));
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => QrisPaymentScreen(
-          pharmacyId: widget.pharmacyId,
-          pharmacyName: widget.pharmacyName,
-          items: _cartItems,
-          subtotal: _cartTotal.toInt(),
-          shippingCost: 0,
-        ),
+        builder: (_) => CheckoutScreen(),
       ),
     );
   }

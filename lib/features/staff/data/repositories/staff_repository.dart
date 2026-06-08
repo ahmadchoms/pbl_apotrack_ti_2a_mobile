@@ -26,6 +26,7 @@ class StaffRepository {
   Future<Response> verifyOrderByCode(String verificationCode) =>
       _dio.post('/staff/orders/verify', data: {'verification_code': verificationCode});
 
+
   // --- INVENTARIS (MEDICINES) ---
   Future<Response> getMedicines(Map<String, dynamic>? queryParams) =>
       _dio.get('/staff/medicines', queryParameters: queryParams);
@@ -83,6 +84,14 @@ class StaffRepository {
   Future<Response> updateAddress(String id, Map<String, dynamic> data) async {
     try {
       return await _dio.patch('/user/addresses/$id', data: data);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<Response> setPrimaryAddress(String id) async {
+    try {
+      return await _dio.patch('/user/addresses/$id/set-primary');
     } on DioException {
       rethrow;
     }

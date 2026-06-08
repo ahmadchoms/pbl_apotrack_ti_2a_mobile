@@ -1,54 +1,79 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../features/customer/data/models/pharmacy_model.dart';
+import '../../features/customer/data/models/medicine_model.dart';
+import '../../features/customer/data/models/order_model.dart';
+import '../../features/customer/data/models/medicine_category_model.dart';
 import 'api_client.dart';
+import 'app_exception.dart';
 
 class CustomerApiService {
   CustomerApiService({required Dio dio}) : _dio = dio;
   final Dio _dio;
 
   // ── Pharmacies ────────────────────────────────────────────────
-  Future<List<dynamic>> getPharmacies({String? search}) async {
-    final response = await _dio.get(
-      '/pharmacies',
-      queryParameters: {
-        if (search != null && search.isNotEmpty) 'search': search,
-      },
-    );
-    return (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+  Future<List<Pharmacy>> getPharmacies({String? search}) async {
+    try {
+      final response = await _dio.get(
+        '/pharmacies',
+        queryParameters: {
+          if (search != null && search.isNotEmpty) 'search': search,
+        },
+      );
+      final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+      return rawList.map((e) => Pharmacy.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioException(e);
+    }
   }
 
-  Future<Map<String, dynamic>> getPharmacyDetail(String id) async {
-    final response = await _dio.get('/pharmacies/$id');
-    final raw = response.data['data'];
-    return (raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>;
+  Future<Pharmacy> getPharmacyDetail(String id) async {
+    try {
+      final response = await _dio.get('/pharmacies/$id');
+      final raw = response.data['data'];
+      return Pharmacy.fromJson((raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw AppException.fromDioException(e);
+    }
   }
 
   // ── Medicines ─────────────────────────────────────────────────
-  Future<List<dynamic>> getMedicines({
+  Future<List<Medicine>> getMedicines({
     required String pharmacyId,
     String? categoryId,
     String? search,
   }) async {
-    final response = await _dio.get(
-      '/medicines',
-      queryParameters: {
-        'pharmacy_id': pharmacyId,
-        if (categoryId != null && categoryId.isNotEmpty)
-          'category_id': categoryId,
-        if (search != null && search.isNotEmpty) 'search': search,
-      },
-    );
-    return (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+    try {
+      final response = await _dio.get(
+        '/medicines',
+        queryParameters: {
+          'pharmacy_id': pharmacyId,
+          if (categoryId != null && categoryId.isNotEmpty)
+            'category_id': categoryId,
+          if (search != null && search.isNotEmpty) 'search': search,
+        },
+      );
+      final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+      return rawList.map((e) => Medicine.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioException(e);
+    }
   }
 
   // ── Categories ────────────────────────────────────────────────
-  Future<List<dynamic>> getCategories() async {
-    final response = await _dio.get('/categories');
-    return (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+  Future<List<MedicineCategoryModel>> getCategories() async {
+    try {
+      final response = await _dio.get('/categories');
+      final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+      return rawList.map((e) => MedicineCategoryModel.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioException(e);
+    }
   }
 
   // ── Orders ────────────────────────────────────────────────────
-  Future<Map<String, dynamic>> createOrder({
+  Future<Order> createOrder({
     required String pharmacyId,
     required List<Map<String, dynamic>> items,
     required double subtotalAmount,
@@ -57,49 +82,95 @@ class CustomerApiService {
     double? shippingCost,
     String? notes,
   }) async {
-    final response = await _dio.post('/orders', data: {
-      'pharmacy_id': pharmacyId,
-      'items': items,
-      'subtotal_amount': subtotalAmount,
-      'service_type': serviceType,
-      'payment_method': paymentMethod,
-      if (shippingCost != null) 'shipping_cost': shippingCost,
-      if (notes != null && notes.isNotEmpty) 'notes': notes,
-    });
-    final raw = response.data['data'];
-    return (raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>;
+    try {
+      final response = await _dio.post('/orders', data: {
+        'pharmacy_id': pharmacyId,
+        'items': items,
+        'subtotal_amount': subtotalAmount,
+        'service_type': serviceType,
+        'payment_method': paymentMethod,
+        if (shippingCost != null) 'shipping_cost': shippingCost,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      });
+      final raw = response.data['data'];
+      return Order.fromJson((raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw AppException.fromDioException(e);
+    }
   }
 
-  Future<List<dynamic>> getOrders() async {
-    final response = await _dio.get('/orders');
-    return (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+  Future<List<Order>> getOrders() async {
+    try {
+      final response = await _dio.get('/orders');
+      final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+      return rawList.map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioException(e);
+    }
   }
 
-  Future<Map<String, dynamic>> getOrderDetail(String id) async {
-    final response = await _dio.get('/orders/$id');
-    final raw = response.data['data'];
-    return (raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>;
+  Future<Order> getOrderDetail(String id) async {
+    try {
+      final response = await _dio.get('/orders/$id');
+      final raw = response.data['data'];
+      return Order.fromJson((raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw AppException.fromDioException(e);
+    }
   }
 
-  Future<Map<String, dynamic>> simulatePayment(String orderId) async {
-    final response = await _dio.post('/orders/$orderId/simulate-payment');
-    final raw = response.data['data'];
-    return (raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>;
+  // TODO: Remove before production release or move to a dedicated TestingApiService.
+  Future<Order> simulatePayment(String orderId) async {
+    assert(kDebugMode, 'simulatePayment() hanya boleh dipanggil di debug/staging mode.');
+    try {
+      final response = await _dio.post('/orders/$orderId/simulate-payment');
+      final raw = response.data['data'];
+      return Order.fromJson((raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw AppException.fromDioException(e);
+    }
   }
 
   // ── Reviews ───────────────────────────────────────────────────
-  Future<Map<String, dynamic>> submitReview({
+  Future<ReviewResponse> submitReview({
     required String medicineId,
     required int rating,
     String? comment,
   }) async {
-    final response = await _dio.post('/reviews', data: {
-      'medicine_id': medicineId,
-      'rating': rating,
-      if (comment != null && comment.isNotEmpty) 'comment': comment,
-    });
-    final raw = response.data['data'];
-    return (raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>;
+    try {
+      final response = await _dio.post('/reviews', data: {
+        'medicine_id': medicineId,
+        'rating': rating,
+        if (comment != null && comment.isNotEmpty) 'comment': comment,
+      });
+      final raw = response.data['data'];
+      return ReviewResponse.fromJson((raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw AppException.fromDioException(e);
+    }
+  }
+}
+
+class ReviewResponse {
+  final String id;
+  final String medicineId;
+  final int rating;
+  final String? comment;
+
+  const ReviewResponse({
+    required this.id,
+    required this.medicineId,
+    required this.rating,
+    this.comment,
+  });
+
+  factory ReviewResponse.fromJson(Map<String, dynamic> json) {
+    return ReviewResponse(
+      id: json['id']?.toString() ?? '',
+      medicineId: json['medicine_id']?.toString() ?? '',
+      rating: (json['rating'] as num?)?.toInt() ?? 0,
+      comment: json['comment']?.toString(),
+    );
   }
 }
 

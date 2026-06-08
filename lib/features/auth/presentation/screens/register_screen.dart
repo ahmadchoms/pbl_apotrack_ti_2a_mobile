@@ -37,7 +37,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
   // --- ANIMATION ---
   late AnimationController _progressAnimCtrl;
-  late Animation<double> _progressAnim;
 
   final _totalSteps = 3;
 
@@ -47,9 +46,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     _progressAnimCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
-    );
-    _progressAnim = Tween<double>(begin: 0.0, end: 1 / _totalSteps).animate(
-      CurvedAnimation(parent: _progressAnimCtrl, curve: Curves.easeInOut),
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {

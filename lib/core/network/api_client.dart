@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../auth/auth_state_provider.dart';
+import 'app_exception.dart';
 import 'secure_storage_service.dart';
 
 /// Base URL server Laravel.
@@ -21,16 +23,17 @@ final dioProvider = Provider<Dio>((ref) {
     baseUrl = baseUrl.replaceFirst('127.0.0.1', '10.0.2.2');
   }
 
-  return _buildDio(storageService, baseUrl);
+  return _buildDio(storageService, ref, baseUrl);
 });
 
 /// Factory function yang membangun Dio dengan semua konfigurasi.
-Dio _buildDio(SecureStorageService storageService, String baseUrl) {
+Dio _buildDio(SecureStorageService storageService, Ref ref, String baseUrl) {
   final dio = Dio(
     BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 60),
-      receiveTimeout: const Duration(seconds: 60),
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
       headers: {
         'Accept': 'application/json',
       },
@@ -39,7 +42,7 @@ Dio _buildDio(SecureStorageService storageService, String baseUrl) {
 
   // Pasang interceptor autentikasi & logging
   dio.interceptors.addAll([
-    _AuthInterceptor(storageService),
+    _AuthInterceptor(storageService, ref),
     if (kDebugMode) _LoggingInterceptor(),
   ]);
 
@@ -51,8 +54,10 @@ Dio _buildDio(SecureStorageService storageService, String baseUrl) {
 // Otomatis menyisipkan Bearer token ke setiap request
 // ─────────────────────────────────────────────
 class _AuthInterceptor extends Interceptor {
-  _AuthInterceptor(this._storageService);
+  _AuthInterceptor(this._storageService, this._ref);
   final SecureStorageService _storageService;
+  final Ref _ref;
+  bool _isHandling401 = false;
 
   @override
   Future<void> onRequest(
@@ -68,9 +73,22 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (err.response?.statusCode == 401 && !_isHandling401) {
+      _isHandling401 = true;
+      _ref.read(authExpiredProvider.notifier).state = true;
+      _isHandling401 = false;
+    }
+
     // Transformasi error menjadi pesan yang lebih ramah
     final appError = _mapDioError(err);
-    return handler.next(appError);
+    final appException = AppException.fromDioException(appError);
+    final wrappedError = appError.copyWith(
+      message: appError.message,
+      error: appException,
+    );
+
+    // Layer di atas (seperti ApiService) sebaiknya menangkap AppException yang dibungkus dalam DioException
+    return handler.next(wrappedError);
   }
 
   DioException _mapDioError(DioException err) {
@@ -90,8 +108,7 @@ class _AuthInterceptor extends Interceptor {
         final responseData = err.response?.data;
         if (statusCode == 401) {
           message = 'Sesi tidak valid atau telah berakhir. Silakan masuk kembali.';
-          // Auto-clear invalid token so router redirects to login
-          _storageService.clearAll();
+          // Jangan clearAll di sini — biarkan service layer yang handle
         } else if (statusCode == 422) {
           // Laravel validation error — ambil pesan pertama dari errors map
           final errors = responseData?['errors'];
@@ -150,8 +167,3 @@ class _LoggingInterceptor extends Interceptor {
     handler.next(err);
   }
 }
-
-/// Legacy ApiClient singleton has been REMOVED.
-/// All code should use `dioProvider` which includes auth interceptor.
-/// If you were importing this file for ApiClient, use dioProvider instead:
-///   final dio = ref.watch(dioProvider);

@@ -387,6 +387,29 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     }
   }
 
+  Future<void> setPrimaryAddress(String id) async {
+    try {
+      await _service.setPrimaryAddress(id);
+      state = state.copyWith(
+        addresses: state.addresses.map((a) => CustomerAddress(
+          id: a.id,
+          label: a.label,
+          addressDetail: a.addressDetail,
+          completeAddress: a.completeAddress,
+          latitude: a.latitude,
+          longitude: a.longitude,
+          isPrimary: a.id == id,
+        )).toList(),
+      );
+    } catch (e, s) {
+      debugPrint('[ProfileNotifier] setPrimaryAddress error: $e\n$s');
+      state = state.copyWith(
+        error: 'Gagal mengatur alamat utama: ${e.toString()}',
+      );
+      rethrow;
+    }
+  }
+
   Future<void> deleteAddress(String id) async {
     try {
       await _service.deleteAddress(id);

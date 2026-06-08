@@ -38,6 +38,7 @@ class StaffService {
     return Order.fromJson(response.data['data']);
   }
 
+
   // --- INVENTARIS (MEDICINES) ---
 
   Future<List<Medicine>> getMedicines(
@@ -226,6 +227,16 @@ class StaffService {
     } on DioException catch (e) {
       throw Exception(
         _extractLaravelError(e.response?.data) ?? 'Gagal memperbarui alamat',
+      );
+    }
+  }
+
+  Future<void> setPrimaryAddress(String id) async {
+    try {
+      await _repository.setPrimaryAddress(id);
+    } on DioException catch (e) {
+      throw Exception(
+        _extractLaravelError(e.response?.data) ?? 'Gagal mengatur alamat utama',
       );
     }
   }

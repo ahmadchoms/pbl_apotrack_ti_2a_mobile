@@ -68,6 +68,14 @@ class UserModel {
   bool get isStaff => role == 'STAFF' || role == 'APOTEKER';
   bool get isCustomer => role == 'USER';
 
+  String get initials {
+    final parts = username.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return username.substring(0, username.length >= 2 ? 2 : 1).toUpperCase();
+  }
+
   UserModel copyWith({
     String? id,
     String? username,

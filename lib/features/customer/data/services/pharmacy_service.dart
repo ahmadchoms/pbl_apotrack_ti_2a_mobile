@@ -6,46 +6,40 @@ class PharmacyService {
   PharmacyService({required CustomerApiService api}) : _api = api;
   final CustomerApiService _api;
 
-  /// Ambil semua apotek aktif
   Future<List<Map<String, dynamic>>> getPharmacies() async {
     final data = await _api.getPharmacies();
-    return data.cast<Map<String, dynamic>>();
+    return data.map((e) => e.toJson()).toList();
   }
 
-  /// Ambil semua apotek aktif sebagai PharmacyModel
   Future<List<PharmacyModel>> getActivePharmacies() async {
     final data = await _api.getPharmacies();
     return data
-        .cast<Map<String, dynamic>>()
-        .map((e) => PharmacyModel.fromJson(e))
+        .map((e) => PharmacyModel.fromJson(e.toJson()))
         .toList();
   }
 
-  /// Ambil detail apotek by id — return raw map
   Future<Map<String, dynamic>?> getPharmacyById(String id) async {
     try {
-      return await _api.getPharmacyDetail(id);
+      final pharmacy = await _api.getPharmacyDetail(id);
+      return pharmacy.toJson();
     } catch (_) {
       return null;
     }
   }
 
-  /// Ambil detail apotek by id sebagai PharmacyModel
   Future<PharmacyModel?> getPharmacyModel(String id) async {
     try {
-      final data = await _api.getPharmacyDetail(id);
-      return PharmacyModel.fromJson(data);
+      final pharmacy = await _api.getPharmacyDetail(id);
+      return PharmacyModel.fromJson(pharmacy.toJson());
     } catch (_) {
       return null;
     }
   }
 
-  /// Cari apotek berdasarkan nama
   Future<List<PharmacyModel>> searchPharmacies(String query) async {
     final data = await _api.getPharmacies(search: query);
     return data
-        .cast<Map<String, dynamic>>()
-        .map((e) => PharmacyModel.fromJson(e))
+        .map((e) => PharmacyModel.fromJson(e.toJson()))
         .toList();
   }
 }

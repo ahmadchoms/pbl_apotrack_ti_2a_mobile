@@ -108,8 +108,14 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
 
       _orderNumber = order.orderNumber;
 
-      final paymentResult = await _orderService.simulatePayment(order.id);
-      _verificationCode = paymentResult['verification_code']?.toString() ?? order.verificationCode;
+      String verificationCode = order.verificationCode;
+      try {
+        final paymentResult = await _orderService.simulatePayment(order.id);
+        verificationCode = paymentResult['verification_code']?.toString() ?? order.verificationCode;
+      } catch (_) {
+        // simulatePayment gagal (server error), tetap lanjut pakai kode dari order
+      }
+      _verificationCode = verificationCode;
 
       if (!mounted) return;
 

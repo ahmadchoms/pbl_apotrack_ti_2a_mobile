@@ -151,3 +151,87 @@ class OrderModel {
     );
   }
 }
+
+class Order {
+  final String id;
+  final String userId;
+  final String pharmacyId;
+  final String? addressId;
+  final String orderNumber;
+  final String verificationCode;
+  final String serviceType;
+  final String paymentMethod;
+  final String orderStatus;
+  final String paymentStatus;
+  final double subtotalAmount;
+  final double shippingCost;
+  final double grandTotal;
+  final String? notes;
+  final String? cancellationReason;
+  final double? distanceKm;
+  final DateTime? paidAt;
+  final DateTime expiredAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final List<OrderItemModel> items;
+
+  const Order({
+    required this.id,
+    required this.userId,
+    required this.pharmacyId,
+    this.addressId,
+    required this.orderNumber,
+    required this.verificationCode,
+    required this.serviceType,
+    required this.paymentMethod,
+    required this.orderStatus,
+    required this.paymentStatus,
+    required this.subtotalAmount,
+    required this.shippingCost,
+    required this.grandTotal,
+    this.notes,
+    this.cancellationReason,
+    this.distanceKm,
+    this.paidAt,
+    required this.expiredAt,
+    required this.createdAt,
+    required this.updatedAt,
+    this.items = const [],
+  });
+
+  String get status => orderStatus;
+  double get totalAmount => grandTotal;
+
+  factory Order.fromJson(Map<String, dynamic> json) {
+    final itemsRaw = json['order_items'];
+    final List<OrderItemModel> items = itemsRaw != null
+        ? (itemsRaw as List<dynamic>)
+            .map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
+            .toList()
+        : [];
+
+    return Order(
+      id: json['id'] as String? ?? '',
+      userId: json['user_id'] as String? ?? '',
+      pharmacyId: json['pharmacy_id'] as String? ?? '',
+      addressId: json['address_id'] as String?,
+      orderNumber: json['order_number'] as String? ?? '',
+      verificationCode: json['verification_code'] as String? ?? '',
+      serviceType: json['service_type'] as String? ?? '',
+      paymentMethod: json['payment_method'] as String? ?? '',
+      orderStatus: json['order_status'] as String? ?? 'PENDING',
+      paymentStatus: json['payment_status'] as String? ?? 'UNPAID',
+      subtotalAmount: double.tryParse((json['subtotal_amount'] ?? 0).toString()) ?? 0.0,
+      shippingCost: double.tryParse((json['shipping_cost'] ?? 0).toString()) ?? 0.0,
+      grandTotal: double.tryParse((json['grand_total'] ?? 0).toString()) ?? 0.0,
+      notes: json['notes'] as String?,
+      cancellationReason: json['cancellation_reason'] as String?,
+      distanceKm: (json['distance_km'] as num?)?.toDouble(),
+      paidAt: json['paid_at'] != null ? DateTime.tryParse(json['paid_at'] as String) : null,
+      expiredAt: DateTime.tryParse(json['expired_at'] as String? ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? '') ?? DateTime.now(),
+      items: items,
+    );
+  }
+}
