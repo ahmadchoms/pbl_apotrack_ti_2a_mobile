@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/services/push_notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../routes/app_router.dart';
 import '../providers/auth_provider.dart';
@@ -51,28 +53,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             builder: (context, constraints) {
               return SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 52),
-                        _buildHeader(),
-                        const SizedBox(height: 48),
-                        _buildIdentifierField(),
-                        const SizedBox(height: 16),
-                        _buildPasswordField(),
-                        const SizedBox(height: 10),
-                        _buildForgotPassword(),
-                        const SizedBox(height: 28),
-                        _buildLoginButton(isLoading),
-                        const Spacer(),
-                        _buildFooter(),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 52),
+                    _buildHeader(),
+                    const SizedBox(height: 48),
+                    _buildIdentifierField(),
+                    const SizedBox(height: 16),
+                    _buildPasswordField(),
+                    const SizedBox(height: 10),
+                    _buildForgotPassword(),
+                    const SizedBox(height: 28),
+                    _buildLoginButton(isLoading),
+                    const SizedBox(height: 24),
+                    _buildFooter(),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               );
             },
@@ -331,12 +328,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (!mounted) return;
 
-      // Smart routing berdasarkan role dari server
-      if (user.isStaff) {
-        context.go(AppRouter.staffHome);
-      } else {
-        context.go(AppRouter.customerHome);
-      }
+      final dio = ref.read(dioProvider);
+      PushNotificationService.updateDeviceToken(dio, user.id);
+
+      context.go(AppRouter.customerHome);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

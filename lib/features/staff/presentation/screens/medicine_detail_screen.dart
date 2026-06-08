@@ -32,7 +32,7 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
           .getMedicine(_medicine.id);
       if (mounted) {
         setState(() => _medicine = updated);
-        ref.refresh(staffMedicinesProvider);
+        ref.invalidate(staffMedicinesProvider);
       }
     } catch (e) {
       debugPrint(e.toString());

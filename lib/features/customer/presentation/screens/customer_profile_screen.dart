@@ -11,6 +11,8 @@ import '../widgets/profile/menu_section.dart';
 import '../widgets/profile/confirm_dialog.dart';
 import '../widgets/profile/delete_account_password_dialog.dart';
 import '../widgets/profile/scan_qr_invitation_card.dart';
+import 'edit_profile_screen.dart';
+import 'change_password_screen.dart';
 
 class AccountHubScreen extends ConsumerStatefulWidget {
   const AccountHubScreen({super.key});
@@ -114,19 +116,26 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
                         MenuItemTile(
                           icon: Icons.person_outline_rounded,
                           title: 'Edit Profil',
-                          onTap: () => context
-                              .push(AppRouter.customerEditProfile)
-                              .then(
-                                (_) => ref
-                                    .read(customerProfileProvider.notifier)
-                                    .loadAll(),
-                              ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CustomerEditProfileScreen(),
+                            ),
+                          ).then(
+                            (_) => ref
+                                .read(customerProfileProvider.notifier)
+                                .loadAll(),
+                          ),
                         ),
                         MenuItemTile(
                           icon: Icons.lock_outline_rounded,
                           title: 'Ubah Password',
-                          onTap: () =>
-                              context.push(AppRouter.customerChangePassword),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CustomerChangePasswordScreen(),
+                            ),
+                          ),
                         ),
                       ],
                     ),

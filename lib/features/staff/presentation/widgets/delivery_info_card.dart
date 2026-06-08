@@ -58,7 +58,7 @@ class DeliveryInfoCard extends StatelessWidget {
     final tracking = order.tracking;
     final address = order.address;
 
-    final statusKey = tracking?.status?.toUpperCase() ?? 'WAITING';
+    final statusKey = tracking?.status.toUpperCase() ?? 'WAITING';
     final statusInfo =
         _statusMap[statusKey] ??
         {'label': statusKey, 'color': AppColors.textMid};

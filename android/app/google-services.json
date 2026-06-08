@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "184964236996",
+    "project_id": "apotrack-e1f7a",
+    "storage_bucket": "apotrack-e1f7a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:184964236996:android:32dd77aa33228c2e62ab91",
+        "android_client_info": {
+          "package_name": "com.apotrack"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1rN-YgLx4cp5uiIvVXDR-95Mv54RDmZo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

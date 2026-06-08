@@ -180,8 +180,6 @@ class QrScannerOverlayShape extends ShapeBorder {
 
   @override
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
-    final width = rect.width;
-    final height = rect.height;
     final center = rect.center;
 
     final cutOutRect = Rect.fromCenter(

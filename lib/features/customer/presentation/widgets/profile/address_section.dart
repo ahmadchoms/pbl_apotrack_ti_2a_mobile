@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../routes/app_router.dart';
 import '../../../data/models/customer_address.dart';
+import '../../../presentation/screens/edit_address_screen.dart';
 import '../../providers/customer_profile_provider.dart';
 
 class AddressSection extends ConsumerWidget {
@@ -76,15 +75,15 @@ class AddressSection extends ConsumerWidget {
                   title: 'Alamat Utama',
                   subtitle: primaryAddress?.displayAddress,
                   isFirst: true,
-                  onTap: () => context
-                      .push(
-                        AppRouter.customerEditAddress,
-                        extra: {
-                          'isAdd': primaryAddress == null,
-                          if (primaryAddress != null) 'address': primaryAddress,
-                        },
-                      )
-                      .then((_) => onRefresh?.call()),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CustomerEditAddressScreen(
+                        isAdd: primaryAddress == null,
+                        address: primaryAddress,
+                      ),
+                    ),
+                  ).then((_) => onRefresh?.call()),
                   onDelete: primaryAddress != null
                       ? () => _deleteAddress(context, ref, primaryAddress!.id)
                       : null,
@@ -98,12 +97,15 @@ class AddressSection extends ConsumerWidget {
                         iconColor: const Color(0xFF94A3B8),
                         title: addr.label,
                         subtitle: addr.displayAddress,
-                        onTap: () => context
-                            .push(
-                              AppRouter.customerEditAddress,
-                              extra: {'isAdd': false, 'address': addr},
-                            )
-                            .then((_) => onRefresh?.call()),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CustomerEditAddressScreen(
+                              isAdd: false,
+                              address: addr,
+                            ),
+                          ),
+                        ).then((_) => onRefresh?.call()),
                         onDelete: () => _deleteAddress(context, ref, addr.id),
                       ),
                     ],
@@ -116,12 +118,12 @@ class AddressSection extends ConsumerWidget {
                   title: 'Tambah Alamat',
                   titleColor: const Color(0xFF1D70F5),
                   isLast: true,
-                  onTap: () => context
-                      .push(
-                        AppRouter.customerEditAddress,
-                        extra: {'isAdd': true},
-                      )
-                      .then((_) => onRefresh?.call()),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CustomerEditAddressScreen(isAdd: true),
+                    ),
+                  ).then((_) => onRefresh?.call()),
                 ),
               ],
             ),

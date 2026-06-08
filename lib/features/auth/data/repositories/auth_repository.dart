@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/network/secure_storage_service.dart';
 import '../models/user_model.dart';
 
 class AuthException implements Exception {
@@ -94,7 +93,7 @@ class AuthRepository {
 
   Future<Map<String, dynamic>> updateProfile(dynamic data) async {
     try {
-      final response = await _dio.post('/profile', data: data);
+      final response = await _dio.put('/profile', data: data);
       return response.data['data'] as Map<String, dynamic>;
     } on DioException catch (e) {
       throw AuthException(e.message ?? 'Gagal memperbarui profil.');
