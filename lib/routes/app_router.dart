@@ -18,6 +18,12 @@ import '../features/customer/presentation/screens/main_screen.dart';
 import '../features/customer/presentation/screens/order_detail_screen.dart';
 import '../features/customer/presentation/screens/track_order_screen.dart';
 import '../features/customer/data/models/customer_address.dart';
+// ── NEW customer screens ──
+import '../features/customer/presentation/screens/pharma_scan_map_screen.dart';
+import '../features/customer/presentation/screens/medicine_list_screen.dart';
+import '../features/customer/presentation/screens/qris_payment_screen.dart';
+import '../features/customer/presentation/screens/verifikasi_pengambilan_screen.dart';
+import '../features/customer/presentation/screens/beri_ulasan_screen.dart';
 
 // Staff
 import '../features/staff/presentation/screens/main_screen.dart'
@@ -35,6 +41,8 @@ import '../features/staff/presentation/screens/pos_screen.dart';
 import '../features/staff/presentation/screens/audit_log_detail_screen.dart';
 import '../features/staff/presentation/screens/activity_history_screen.dart';
 import '../features/staff/presentation/screens/staff_inventory_screen.dart';
+// ── NEW staff screens ──
+import '../features/staff/presentation/screens/scanner_screen.dart';
 
 class AppRouter {
   static const String splash         = '/';
@@ -47,21 +55,29 @@ class AppRouter {
   static const String customerAccountHub     = '/customer/account-hub';
   static const String customerEditProfile    = '/customer/edit-profile';
   static const String customerChangePassword = '/customer/change-password';
-  static const String customerEditAddress    = '/customer/edit-address';
-  static const String customerOrderDetail    = '/customer/order-detail';
-  static const String customerTrackOrder     = '/customer/track-order';
+  static const String customerEditAddress = '/customer/edit-address';
+  static const String customerOrderDetail = '/customer/order-detail';
+  static const String customerTrackOrder = '/customer/track-order';
+  // ── NEW customer route constants ──
+  static const String customerPharmacySearch = '/customer/pharmacy-search';
+  static const String customerMedicineList = '/customer/medicine-list';
+  static const String customerPayment = '/customer/payment';
+  static const String customerVerifikasi = '/customer/verifikasi';
+  static const String customerUlasan = '/customer/ulasan';
 
-  static const String staffInventory       = '/staff/inventory';
-  static const String staffOrderDetail     = '/staff/order-detail';
-  static const String staffOrders          = '/staff/orders';
-  static const String staffMedicineDetail  = '/staff/medicine-detail';
-  static const String staffMedicineForm    = '/staff/medicine-form';
-  static const String staffNotifications   = '/staff/notifications';
-  static const String staffPos             = '/staff/pos';
-  static const String staffAuditLogDetail  = '/staff/audit-log-detail';
-  static const String staffEditProfile     = '/staff/edit-profile';
-  static const String staffChangePassword  = '/staff/change-password';
+  static const String staffInventory = '/staff/inventory';
+  static const String staffOrderDetail = '/staff/order-detail';
+  static const String staffOrders = '/staff/orders';
+  static const String staffMedicineDetail = '/staff/medicine-detail';
+  static const String staffMedicineForm = '/staff/medicine-form';
+  static const String staffNotifications = '/staff/notifications';
+  static const String staffPos = '/staff/pos';
+  static const String staffAuditLogDetail = '/staff/audit-log-detail';
+  static const String staffEditProfile = '/staff/edit-profile';
+  static const String staffChangePassword = '/staff/change-password';
   static const String staffActivityHistory = '/staff/activity-history';
+  // ── NEW staff route constants ──
+  static const String staffScanner = '/staff/scanner';
 
   static final routerProvider = Provider<GoRouter>((ref) {
     final notifier = ref.read(routerNotifierProvider);
@@ -76,19 +92,23 @@ class AppRouter {
         final isLoading       = authState.isLoading;
         final matchedLoc      = state.matchedLocation;
 
-        final isLoggingIn   = matchedLoc == login;
+        if (isLoading) return null;
+
+        final matchedLoc = state.matchedLocation;
+        final isLoggingIn = matchedLoc == login;
         final isRegistering = matchedLoc == register;
         final isForgotPw    = matchedLoc == forgotPassword;
         final isSplash      = matchedLoc == splash;
         final isAuthPage    = isLoggingIn || isRegistering || isForgotPw;
 
+        final isAuthPage = isLoggingIn || isRegistering || isForgotPw;
+
         if (!isAuthenticated) {
-          if (isAuthPage) return null;
-          if (isSplash) return isLoading ? null : login;
+          if (isSplash || isAuthPage) return null;
           return login;
         }
 
-        if (isAuthenticated && (isSplash || isAuthPage)) {
+        if (isSplash || isAuthPage) {
           return authState.user?.role == 'STAFF' ? staffHome : customerHome;
         }
 
@@ -122,6 +142,112 @@ class AppRouter {
             final address = extra?['address'] as CustomerAddress?;
             return EditAddressScreen(isAdd: isAdd, address: address);
           },
+        ),
+        GoRoute(
+          path: splash,
+          builder: (context, state) => const SplashScreen(),
+        ),
+        GoRoute(path: login, builder: (context, state) => const LoginScreen()),
+        GoRoute(
+          path: register,
+          builder: (context, state) => const RegisterScreen(),
+        ),
+        GoRoute(
+          path: forgotPassword,
+          builder: (context, state) => const ForgotPasswordScreen(),
+        ),
+        GoRoute(
+          path: customerHome,
+          builder: (context, state) => const CustomerHomeScreen(),
+        ),
+
+        // ── Customer Account ──────────────────────────────────────
+        GoRoute(
+          path: customerAccountHub,
+          builder: (context, state) => const AccountHubScreen(),
+        ),
+        GoRoute(
+          path: customerEditProfile,
+          builder: (context, state) => const CustomerEditProfileScreen(),
+        ),
+        GoRoute(
+          path: customerChangePassword,
+          builder: (context, state) => const CustomerChangePasswordScreen(),
+        ),
+        GoRoute(
+          path: customerEditAddress,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            final isAdd = extra?['isAdd'] as bool? ?? false;
+            final address = extra?['address'] as CustomerAddress?;
+            return CustomerEditAddressScreen(isAdd: isAdd, address: address);
+          },
+        ),
+
+        // ── Customer — NEW routes ─────────────────────────────────
+        GoRoute(
+          path: customerPharmacySearch,
+          builder: (context, state) => const PharmaScanMapScreen(),
+        ),
+        GoRoute(
+          path: customerMedicineList,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return MedicineListScreen(
+              pharmacyId: extra['pharmacyId'] as String,
+              pharmacyName: extra['pharmacyName'] as String,
+              pharmacyRating:
+                  (extra['pharmacyRating'] as num?)?.toDouble() ?? 4.5,
+            );
+          },
+        ),
+        GoRoute(
+          path: customerPayment,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return QrisPaymentScreen(
+              pharmacyId: extra['pharmacyId'] as String,
+              pharmacyName: extra['pharmacyName'] as String,
+              items: List<Map<String, dynamic>>.from(extra['items'] as List),
+              subtotal: extra['subtotal'] as int,
+              shippingCost: extra['shippingCost'] as int? ?? 0,
+            );
+          },
+        ),
+        GoRoute(
+          path: customerVerifikasi,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return VerifikasiPengambilanScreen(
+              orderId: extra['orderId'] as String,
+              orderNumber: extra['orderNumber'] as String,
+              verificationCode: extra['verificationCode'] as String,
+              pharmacyName: extra['pharmacyName'] as String,
+              pharmacyId: extra['pharmacyId'] as String,
+              items: List<Map<String, dynamic>>.from(extra['items'] as List),
+              total: extra['total'] as int,
+            );
+          },
+        ),
+        GoRoute(
+          path: customerUlasan,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return BeriUlasanScreen(
+              orderNumber: extra['orderNumber'] as String,
+              pharmacyId: extra['pharmacyId'] as String,
+              pharmacyName: extra['pharmacyName'] as String,
+              items: extra['items'] != null
+                  ? List<Map<String, dynamic>>.from(extra['items'] as List)
+                  : [],
+            );
+          },
+        ),
+
+        // ── Staff ─────────────────────────────────────────────────
+        GoRoute(
+          path: staffHome,
+          builder: (context, state) => const MainScreen(),
         ),
         GoRoute(
           path: customerOrderDetail,
@@ -179,10 +305,14 @@ class AppRouter {
                 medicine: Medicine.fromJson(extra as Map<String, dynamic>));
           },
         ),
-        GoRoute(path: staffNotifications,
-            builder: (context, state) => const NotificationScreen()),
-        GoRoute(path: staffPos,
-            builder: (context, state) => const PosScreen()),
+        GoRoute(
+          path: staffNotifications,
+          builder: (context, state) => const NotificationScreen(),
+        ),
+        GoRoute(
+          path: staffPos,
+          builder: (context, state) => const PosScreen(),
+        ),
         GoRoute(
           path: staffAuditLogDetail,
           builder: (context, state) {
@@ -194,12 +324,24 @@ class AppRouter {
                 activity: AuditLog.fromJson(extra as Map<String, dynamic>));
           },
         ),
-        GoRoute(path: staffEditProfile,
-            builder: (context, state) => const EditProfileScreen()),
-        GoRoute(path: staffChangePassword,
-            builder: (context, state) => const ChangePasswordScreen()),
-        GoRoute(path: staffActivityHistory,
-            builder: (context, state) => const ActivityHistoryScreen()),
+        GoRoute(
+          path: staffEditProfile,
+          builder: (context, state) => const EditProfileScreen(),
+        ),
+        GoRoute(
+          path: staffChangePassword,
+          builder: (context, state) => const ChangePasswordScreen(),
+        ),
+        GoRoute(
+          path: staffActivityHistory,
+          builder: (context, state) => const ActivityHistoryScreen(),
+        ),
+
+        // ── Staff — NEW routes ────────────────────────────────────
+        GoRoute(
+          path: staffScanner,
+          builder: (context, state) => const ScannerScreen(),
+        ),
       ],
     );
   });
@@ -207,8 +349,11 @@ class AppRouter {
 
 final routerNotifierProvider = ChangeNotifierProvider((ref) {
   final notifier = RouterNotifier();
+
   ref.listen(authNotifierProvider, (previous, next) {
-    if (previous?.user != next.user) notifier.notify();
+    if (previous?.user != next.user || previous?.isLoading != next.isLoading) {
+      notifier.notify();
+    }
   });
   return notifier;
 });
