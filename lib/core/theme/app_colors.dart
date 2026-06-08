@@ -43,4 +43,10 @@ class AppColors {
   static const Color accentOrange = Color(0xFFF97316);
   static const Color accentPurple = Color(0xFF8B5CF6);
   static const Color accentPink = Color(0xFFEC4899);
-}
+  
+   // Status tracking colors
+  static const Color stepDone = Color(0xFF1E293B);
+  static const Color stepInactive = Color(0xFF94A3B8);
+  static const Color stepInactiveBg = Color(0xFFF1F5F9);
+  static const Color stepLine = Color(0xFFE2E8F0);
+  }

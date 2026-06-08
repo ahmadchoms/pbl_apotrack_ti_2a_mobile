@@ -27,6 +27,9 @@ class CustomerRepository {
 
   Future<Response> confirmReceived(String id) =>
       _dio.post('/orders/$id/confirm-received');
+      
+  Future<Response> deleteAccount(String password) =>
+    _dio.delete('/account', data: {'password': password});
 }
 
 final customerRepositoryProvider = Provider<CustomerRepository>((ref) {

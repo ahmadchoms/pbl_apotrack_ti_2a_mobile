@@ -6,20 +6,42 @@ class TrackOrderStepper extends StatelessWidget {
 
   const TrackOrderStepper({super.key, required this.trackingStatus});
 
-  static const _statusOrder = ['PICKED_UP', 'DROPPING_OFF', 'DELIVERED'];
+  static const _statusOrder = [
+    'confirmed',
+    'allocated',
+    'picking_up',
+    'picked',
+    'dropping_off',
+    'delivered',
+  ];
 
   static const _stepConfig = {
-    'PICKED_UP': {
-      'label': 'Pesanan Dijemput',
-      'sub': 'Kurir sedang mengambil pesanan dari apotek',
-      'icon': Icons.store_outlined,
+    'confirmed': {
+      'label': 'Pesanan Dikonfirmasi',
+      'sub': 'Sistem mencari kurir terdekat',
+      'icon': Icons.search_rounded,
     },
-    'DROPPING_OFF': {
+    'allocated': {
+      'label': 'Kurir Ditemukan',
+      'sub': 'Kurir akan segera menjemput pesanan',
+      'icon': Icons.person_pin_circle_rounded,
+    },
+    'picking_up': {
+      'label': 'Kurir Menuju Apotek',
+      'sub': 'Kurir dalam perjalanan ke apotek',
+      'icon': Icons.store_rounded,
+    },
+    'picked': {
+      'label': 'Paket Diambil',
+      'sub': 'Pesanan sudah diambil oleh kurir',
+      'icon': Icons.inventory_2_rounded,
+    },
+    'dropping_off': {
       'label': 'Sedang Dikirim',
       'sub': 'Kurir sedang menuju lokasi Anda',
       'icon': Icons.delivery_dining_rounded,
     },
-    'DELIVERED': {
+    'delivered': {
       'label': 'Sampai di Tujuan',
       'sub': 'Paket telah diserahkan kepada Anda',
       'icon': Icons.check_circle_outline_rounded,
@@ -30,37 +52,51 @@ class TrackOrderStepper extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentIndex = _statusOrder.indexOf(trackingStatus);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'STATUS PENGIRIMAN',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF94A3B8),
-            letterSpacing: 1.2,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        const SizedBox(height: 16),
-        ..._statusOrder.asMap().entries.map((entry) {
-          final i = entry.key;
-          final statusKey = entry.value;
-          final config = _stepConfig[statusKey]!;
-          final isDone = i < currentIndex;
-          final isActive = i == currentIndex;
-          final isLast = i == _statusOrder.length - 1;
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'STATUS PENGIRIMAN',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textMuted,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ..._statusOrder.asMap().entries.map((entry) {
+            final i = entry.key;
+            final statusKey = entry.value;
+            final config = _stepConfig[statusKey]!;
+            final isDone = currentIndex > i;
+            final isActive = i == currentIndex;
+            final isLast = i == _statusOrder.length - 1;
 
-          return _buildStep(
-            label: config['label'] as String,
-            sub: config['sub'] as String,
-            icon: config['icon'] as IconData,
-            isDone: isDone,
-            isActive: isActive,
-            isLast: isLast,
-          );
-        }),
-      ],
+            return _buildStep(
+              label: config['label'] as String,
+              sub: config['sub'] as String,
+              icon: config['icon'] as IconData,
+              isDone: isDone,
+              isActive: isActive,
+              isLast: isLast,
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -75,7 +111,6 @@ class TrackOrderStepper extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Indikator kiri ──────────────────────
         Column(
           children: [
             Container(
@@ -85,8 +120,8 @@ class TrackOrderStepper extends StatelessWidget {
                 color: isDone
                     ? AppColors.primary
                     : isActive
-                    ? AppColors.primaryLight
-                    : const Color(0xFFF1F5F9),
+                        ? AppColors.primaryLight
+                        : AppColors.stepInactiveBg,
                 shape: BoxShape.circle,
                 border: isActive
                     ? Border.all(color: AppColors.primary, width: 2)
@@ -95,10 +130,10 @@ class TrackOrderStepper extends StatelessWidget {
               child: Icon(
                 isDone ? Icons.check_rounded : icon,
                 color: isDone
-                    ? Colors.white
+                    ? AppColors.white
                     : isActive
-                    ? AppColors.primary
-                    : const Color(0xFFCBD5E1),
+                        ? AppColors.primary
+                        : AppColors.stepInactive,
                 size: isDone ? 18 : 16,
               ),
             ),
@@ -106,13 +141,11 @@ class TrackOrderStepper extends StatelessWidget {
               Container(
                 width: 2,
                 height: 36,
-                color: isDone ? AppColors.primary : const Color(0xFFE2E8F0),
+                color: isDone ? AppColors.primary : AppColors.stepLine,
               ),
           ],
         ),
         const SizedBox(width: 14),
-
-        // ── Label kanan ─────────────────────────
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 6),
@@ -129,8 +162,8 @@ class TrackOrderStepper extends StatelessWidget {
                     color: isActive
                         ? AppColors.primary
                         : isDone
-                        ? const Color(0xFF1E293B)
-                        : const Color(0xFF94A3B8),
+                            ? AppColors.stepDone
+                            : AppColors.stepInactive,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -139,8 +172,8 @@ class TrackOrderStepper extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     color: isActive || isDone
-                        ? const Color(0xFF64748B)
-                        : const Color(0xFFCBD5E1),
+                        ? AppColors.textSlate
+                        : AppColors.stepLine,
                   ),
                 ),
                 if (!isLast) const SizedBox(height: 8),

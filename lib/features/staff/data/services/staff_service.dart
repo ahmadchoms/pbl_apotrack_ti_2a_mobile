@@ -29,8 +29,8 @@ class StaffService {
   }
 
   Future<void> shipOrder(
-      String orderId, String courierCode, String courierService) async {
-    await _repository.shipOrder(orderId, courierCode, courierService);
+      String orderId, String courierCode, String courierType) async {
+    await _repository.shipOrder(orderId, courierCode, courierType);
   }
 
   // --- INVENTARIS (MEDICINES) ---
