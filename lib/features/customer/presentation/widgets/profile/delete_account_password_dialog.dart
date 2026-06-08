@@ -24,7 +24,7 @@ class DeleteAccountPasswordDialog extends ConsumerStatefulWidget {
 class _DeleteAccountPasswordDialogState
     extends ConsumerState<DeleteAccountPasswordDialog> {
   final _passwordController = TextEditingController();
-  bool _obscure   = true;
+  bool _obscure = true;
   bool _isLoading = false;
   String? _errorText;
 
@@ -45,10 +45,9 @@ class _DeleteAccountPasswordDialogState
       _errorText = null;
     });
 
-    // TODO: Ganti dengan DELETE /api/customer/account setelah
-    // endpoint tersedia di backend. Untuk sementara hanya logout.
     try {
-      await ref.read(customerProfileProvider.notifier).logout();
+        await (ref.read(customerProfileProvider.notifier) as dynamic)
+          .deleteAccount(password);
       if (mounted) {
         Navigator.pop(context);
         context.go(AppRouter.login);
@@ -57,7 +56,7 @@ class _DeleteAccountPasswordDialogState
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorText = e.toString();
+          _errorText = e.toString().replaceAll('Exception: ', '');
         });
       }
     }
@@ -139,6 +138,10 @@ class _DeleteAccountPasswordDialogState
                     width: 1.5,
                   ),
                 ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: AppColors.danger),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscure
@@ -156,7 +159,8 @@ class _DeleteAccountPasswordDialogState
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: _isLoading ? null : () => Navigator.pop(context),
+                    onPressed:
+                        _isLoading ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       side: const BorderSide(color: AppColors.divider),
