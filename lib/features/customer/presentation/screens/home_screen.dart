@@ -5,7 +5,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../routes/app_router.dart';
 import '../../data/models/cart.dart';
+import '../../data/models/customer_address.dart';
 import '../../data/services/medicine_service.dart';
+import '../providers/customer_profile_provider.dart';
 import 'cart_screen.dart';
 import 'notification.dart';
 
@@ -26,6 +28,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   void initState() {
     super.initState();
     _loadData();
+    ref.read(customerProfileProvider.notifier).loadAll();
   }
 
   Future<void> _loadData() async {
@@ -111,6 +114,12 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
 
   // ── Header ───────────────────────────────────────────────────────
   Widget _buildHeader() {
+    final addresses = ref.watch(customerProfileProvider).addresses;
+    final primaryAddress = addresses.cast<CustomerAddress?>().firstWhere(
+      (a) => a?.isPrimary == true,
+      orElse: () => null,
+    );
+
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -121,33 +130,39 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
           child: Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Lokasi Anda',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Row(
-                    children: [
-                      Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
-                      SizedBox(width: 4),
-                      Text('Seturan, Yogyakarta',
-                        style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Lokasi Anda',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
-                      Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
-                    ],
-                  ),
-                ],
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            primaryAddress?.displayAddress ?? 'Atur alamat',
+                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
               _buildHeaderIcon(Icons.notifications_none_rounded, onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen()));
               }),
@@ -186,6 +201,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   }
 
   Widget _buildGreetingSection() {
+    final profile = ref.watch(customerProfileProvider).profile;
+    debugPrint('_buildGreetingSection — profile: ${profile?.username} / ${profile?.email} / id=${profile?.id}');
+    final displayName = profile?.username ?? 'Cipuy';
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -201,8 +219,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Halo, Cipuy!',
-              style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+            Text('Halo, $displayName!',
+              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             const Text('Cari Obat Apa?',

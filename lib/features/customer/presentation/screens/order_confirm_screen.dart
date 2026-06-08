@@ -1,20 +1,25 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/cart.dart';
 import '../../data/services/order_service.dart';
 import 'address/address_model.dart';
+import 'qris_payment_screen.dart';
+import 'verification_screen.dart';
 
 class OrderConfirmationScreen extends ConsumerStatefulWidget {
   final List<CartItem> cartItems;
-  final String deliveryMethod;  // 'kirim' | 'ambil'
-  final String paymentMethod;   // 'cash' | 'qris'
+  final String deliveryMethod;
+  final String paymentMethod;
   final int total;
   final int shippingCost;
   final AddressModel? deliveryAddress;
   final String pharmacyId;
-  final File? prescriptionFile;
+  final Uint8List? prescriptionBytes;
+  final String? prescriptionFileName;
+  final String? courierCode;
+  final String? courierService;
 
   const OrderConfirmationScreen({
     super.key,
@@ -25,7 +30,10 @@ class OrderConfirmationScreen extends ConsumerStatefulWidget {
     required this.shippingCost,
     this.deliveryAddress,
     required this.pharmacyId,
-    this.prescriptionFile,
+    this.prescriptionBytes,
+    this.prescriptionFileName,
+    this.courierCode,
+    this.courierService,
   });
 
   @override
@@ -70,11 +78,22 @@ class _OrderConfirmationScreenState
     setState(() => _isSubmitting = true);
     try {
       final service = ref.read(orderServiceProvider);
+
       final items = widget.cartItems
-          .map((item) => {
+          .map((item) => ({
                 'id': item.id,
                 'quantity': item.quantity,
                 'price': item.price,
+              }))
+          .toList();
+
+      final displayItems = widget.cartItems
+          .map((item) => {
+                'medicine_id': item.id,
+                'medicine_name': item.name,
+                'quantity': item.quantity,
+                'price': item.price,
+                'subtotal': item.price * item.quantity,
               })
           .toList();
 
@@ -87,39 +106,75 @@ class _OrderConfirmationScreenState
         addressId: widget.deliveryAddress?.id,
         notes: null,
         shippingCost: widget.shippingCost,
+        courierCode: widget.courierCode,
+        courierService: widget.courierService,
       );
 
       if (!mounted) return;
 
       final orderId = order['id'] as String;
+      final serviceType = widget.deliveryMethod == 'kirim' ? 'DELIVERY' : 'PICK_UP';
+      final pharmacyName = widget.cartItems.isNotEmpty ? widget.cartItems.first.pharmacyName : '';
 
-      if (widget.prescriptionFile != null) {
+      if (widget.prescriptionBytes != null) {
         try {
-          await service.uploadPrescription(orderId, widget.prescriptionFile!);
+          await service.uploadPrescription(
+            orderId,
+            widget.prescriptionBytes!,
+            widget.prescriptionFileName ?? 'prescription',
+          );
         } catch (e) {
-          debugPrint('Gagal upload resep: $e');
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal upload resep: ${e.toString()}'),
+              backgroundColor: AppColors.danger,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          );
         }
       }
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Pesanan berhasil dibuat!'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      if (widget.paymentMethod == 'qris') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => QrisPaymentScreen(
+              orderId: orderId,
+              pharmacyName: pharmacyName,
+              items: displayItems,
+              subtotal: widget.total - widget.shippingCost,
+              shippingCost: widget.shippingCost,
+              serviceType: serviceType,
+            ),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => VerificationScreen(
+              orderId: orderId,
+              orderNumber: order['order_number']?.toString() ?? '',
+              verificationCode: order['verification_code']?.toString() ?? '',
+              pharmacyName: pharmacyName,
+              serviceType: serviceType,
+              items: displayItems,
+              total: widget.total,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal membuat pesanan: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12)),
@@ -189,8 +244,8 @@ class _OrderConfirmationScreenState
             const SizedBox(width: 10),
             Text(
               widget.deliveryMethod == 'kirim'
-                  ? '⏱  Estimasi pengiriman: 30–45 menit'
-                  : '⏱  Estimasi siap ambil: 15–20 menit',
+                  ? 'Estimasi pengiriman: 30-45 menit'
+                  : 'Estimasi siap ambil: 15-20 menit',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -497,33 +552,6 @@ class _OrderConfirmationScreenState
                     color: Colors.grey.shade100,
                     indent: 16,
                     endIndent: 16),
-
-                // Prescription status
-                _summaryBlock(
-                  icon: Icons.assignment_turned_in_rounded,
-                  label: 'STATUS RESEP',
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Sudah Terverifikasi',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF10B981),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),

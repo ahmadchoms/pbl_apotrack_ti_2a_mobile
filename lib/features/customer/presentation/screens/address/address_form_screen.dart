@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../providers/customer_profile_provider.dart';
 import 'address_model.dart';
 import 'address_provider.dart';
 
 /// Screen Tambah / Edit Alamat
 /// Dipanggil dari AddressPickerSheet maupun FavoriteAddressScreen
-class AddressFormScreen extends StatefulWidget {
+class AddressFormScreen extends ConsumerStatefulWidget {
   final AddressModel? existing; // null = tambah baru, non-null = edit
   final AddressProvider provider;
   final void Function(AddressModel address, bool isEdit)? onSaved;
@@ -19,10 +21,10 @@ class AddressFormScreen extends StatefulWidget {
   });
 
   @override
-  State<AddressFormScreen> createState() => _AddressFormScreenState();
+  ConsumerState<AddressFormScreen> createState() => _AddressFormScreenState();
 }
 
-class _AddressFormScreenState extends State<AddressFormScreen> {
+class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _addressCtrl;
   late final TextEditingController _landmarkCtrl;
@@ -85,7 +87,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     setState(() => _locating = false);
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_nameCtrl.text.trim().isEmpty || _addressCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nama alamat dan alamat wajib diisi')),
@@ -93,23 +95,53 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       return;
     }
 
-    final address = AddressModel(
-      id: widget.existing?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      name: _nameCtrl.text.trim(),
-      fullAddress: _addressCtrl.text.trim(),
-      landmark: _landmarkCtrl.text.trim().isEmpty ? null : _landmarkCtrl.text.trim(),
-      type: _type,
-      latitude: _latitude ?? -6.208800,
-      longitude: _longitude ?? 106.845600,
-    );
-
-    if (_isEdit) {
-      widget.provider.updateFavorite(address);
-    } else {
-      widget.provider.addFavorite(address);
+    try {
+      if (_isEdit) {
+        await ref.read(customerProfileProvider.notifier).updateAddress(
+              id: widget.existing!.id,
+              label: _nameCtrl.text.trim(),
+              addressDetail: _addressCtrl.text.trim(),
+              latitude: _latitude ?? -6.208800,
+              longitude: _longitude ?? 106.845600,
+              isPrimary: widget.existing!.isPrimary,
+            );
+        final address = widget.existing!.copyWith(
+          name: _nameCtrl.text.trim(),
+          fullAddress: _addressCtrl.text.trim(),
+          landmark: _landmarkCtrl.text.trim().isEmpty ? null : _landmarkCtrl.text.trim(),
+          latitude: _latitude ?? -6.208800,
+          longitude: _longitude ?? 106.845600,
+        );
+        widget.provider.updateFavorite(address);
+        widget.onSaved?.call(address, true);
+      } else {
+        final newAddr = await ref.read(customerProfileProvider.notifier).addAddress(
+              label: _nameCtrl.text.trim(),
+              addressDetail: _addressCtrl.text.trim(),
+              latitude: _latitude ?? -6.208800,
+              longitude: _longitude ?? 106.845600,
+            );
+        final address = AddressModel(
+          id: newAddr.id, // ← real ID dari server, bukan timestamp
+          name: newAddr.label,
+          fullAddress: newAddr.completeAddress ?? newAddr.addressDetail,
+          landmark: _landmarkCtrl.text.trim().isEmpty ? null : _landmarkCtrl.text.trim(),
+          type: _type,
+          latitude: newAddr.latitude,
+          longitude: newAddr.longitude,
+        );
+        widget.provider.addFavorite(address);
+        widget.provider.selectAddress(address);
+        widget.onSaved?.call(address, false);
+      }
+    } catch (e) {
+      debugPrint('Save address error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menyimpan: ${e.toString()}')),
+      );
+      return;
     }
 
-    widget.onSaved?.call(address, _isEdit);
     Navigator.pop(context, true);
   }
 
@@ -447,7 +479,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         width: double.infinity,
         height: 52,
         child: ElevatedButton(
-          onPressed: _save,
+          onPressed: () => _save(),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,

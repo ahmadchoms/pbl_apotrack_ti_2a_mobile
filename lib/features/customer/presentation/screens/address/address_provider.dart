@@ -14,6 +14,13 @@ class AddressProvider extends ChangeNotifier {
   void loadFromApi(List<AddressModel> addresses) {
     _favorites = List.from(addresses);
     _recents = [];
+
+    // Auto-select alamat primary, fallback ke pertama kalo gak ada
+    _selectedAddress = addresses.cast<AddressModel?>().firstWhere(
+      (a) => a!.isPrimary,
+      orElse: () => addresses.isNotEmpty ? addresses.first : null,
+    );
+
     notifyListeners();
   }
 

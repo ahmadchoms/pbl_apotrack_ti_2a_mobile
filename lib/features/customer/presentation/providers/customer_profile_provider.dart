@@ -85,7 +85,7 @@ class CustomerProfileNotifier extends StateNotifier<CustomerProfileState> {
     );
   }
 
-  Future<void> addAddress({
+  Future<CustomerAddress> addAddress({
     required String label,
     required String addressDetail,
     required double latitude,
@@ -118,9 +118,10 @@ class CustomerProfileNotifier extends StateNotifier<CustomerProfileState> {
 
     updated.add(newAddr);
     state = state.copyWith(addresses: updated);
+    return newAddr;
   }
 
-  Future<void> updateAddress({
+  Future<CustomerAddress> updateAddress({
     required String id,
     required String label,
     required String addressDetail,
@@ -155,6 +156,7 @@ class CustomerProfileNotifier extends StateNotifier<CustomerProfileState> {
           return a;
         }).toList(),
       );
+      return updated;
     } catch (e, stackTrace) {
       print('[Provider] updateAddress error: $e');
       print('Stack: $stackTrace');

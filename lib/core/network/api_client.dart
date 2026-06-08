@@ -8,13 +8,13 @@ import 'secure_storage_service.dart';
 /// Override at build time: flutter run --dart-define=API_BASE_URL=https://api.example.com
 const String _kBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://172.16.161.115:8000/api',
+  defaultValue: 'http://192.168.19.38:8000/api',
 );
 
 /// Riverpod Provider untuk instance Dio yang sudah terkonfigurasi penuh.
 final dioProvider = Provider<Dio>((ref) {
   final storageService = ref.watch(secureStorageServiceProvider);
-  
+
   // Penanganan otomatis untuk Android Emulator
   String baseUrl = _kBaseUrl;
   if (!kIsWeb && Platform.isAndroid && baseUrl.contains('127.0.0.1')) {
@@ -31,9 +31,7 @@ Dio _buildDio(SecureStorageService storageService, String baseUrl) {
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers: {'Accept': 'application/json'},
     ),
   );
 
@@ -89,7 +87,8 @@ class _AuthInterceptor extends Interceptor {
         final statusCode = err.response?.statusCode;
         final responseData = err.response?.data;
         if (statusCode == 401) {
-          message = 'Sesi tidak valid atau telah berakhir. Silakan masuk kembali.';
+          message =
+              'Sesi tidak valid atau telah berakhir. Silakan masuk kembali.';
           // Auto-clear invalid token so router redirects to login
           _storageService.clearAll();
         } else if (statusCode == 422) {
@@ -98,17 +97,21 @@ class _AuthInterceptor extends Interceptor {
           if (errors is Map && errors.isNotEmpty) {
             message = (errors.values.first as List).first.toString();
           } else {
-            message = responseData?['message'] ?? 'Data yang dikirim tidak valid.';
+            message =
+                responseData?['message'] ?? 'Data yang dikirim tidak valid.';
           }
         } else if (statusCode == 403) {
           message = 'Anda tidak memiliki izin untuk melakukan aksi ini.';
         } else if (statusCode == 404) {
           message = 'Data atau endpoint tidak ditemukan.';
         } else if (statusCode != null && statusCode >= 500) {
-          message = 'Terjadi kesalahan pada server. Coba lagi nanti.';
+          message =
+              responseData?['message'] as String? ??
+              'Terjadi kesalahan pada server. Coba lagi nanti.';
         } else {
           message =
-              responseData?['message'] ?? 'Terjadi kesalahan yang tidak diketahui.';
+              responseData?['message'] ??
+              'Terjadi kesalahan yang tidak diketahui.';
         }
         break;
       default:

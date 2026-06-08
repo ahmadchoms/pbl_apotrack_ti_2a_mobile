@@ -46,6 +46,30 @@ class DeliveryTracking {
   }
 }
 
+class PrescriptionData {
+  final String id;
+  final String? imageUrl;
+  final String status;
+
+  PrescriptionData({
+    required this.id,
+    this.imageUrl,
+    required this.status,
+  });
+
+  factory PrescriptionData.fromJson(Map<String, dynamic> json) {
+    return PrescriptionData(
+      id: json['id']?.toString() ?? '',
+      imageUrl: json['image_url']?.toString(),
+      status: json['status']?.toString() ?? 'UPLOADING',
+    );
+  }
+
+  bool get isPending => status == 'PENDING';
+  bool get isVerified => status == 'VERIFIED';
+  bool get isRejected => status == 'REJECTED';
+}
+
 class Order {
   final String id;
   final String orderNumber;
@@ -62,6 +86,7 @@ class Order {
   final DeliveryTracking? tracking;
   final Map<String, dynamic>? address;
   final String? verificationCode;
+  final PrescriptionData? prescription;
 
   Order({
     required this.id,
@@ -79,11 +104,13 @@ class Order {
     this.tracking,
     this.address,
     this.verificationCode,
+    this.prescription,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
     final userData = json['user'] ?? json['buyer'] ?? {};
     final trackingData = json['delivery_tracking'] ?? json['tracking'];
+    final prescriptionData = json['prescription'];
     
     return Order(
       id: json['id']?.toString() ?? '',
@@ -94,7 +121,7 @@ class Order {
       grandTotal: num.tryParse(json['grand_total']?.toString() ?? '0') ?? 0,
       shippingCost: num.tryParse(json['shipping_cost']?.toString() ?? '0') ?? 0,
       notes: json['notes'],
-      hasPrescription: json['has_prescription'] == true || json['has_prescription'] == 1 || json['has_prescription']?.toString() == 'true',
+      hasPrescription: prescriptionData is Map<String, dynamic> || json['has_prescription'] == true || json['has_prescription'] == 1 || json['has_prescription']?.toString() == 'true',
       createdAt: json['created_at']?.toString() ?? '-',
       customer: userData is Map<String, dynamic> ? userData : {'username': 'Pembeli Umum'},
       items: (json['items'] as List? ?? [])
@@ -103,6 +130,7 @@ class Order {
       tracking: trackingData != null ? DeliveryTracking.fromJson(trackingData) : null,
       address: json['address'],
       verificationCode: json['verification_code']?.toString(),
+      prescription: prescriptionData is Map<String, dynamic> ? PrescriptionData.fromJson(prescriptionData) : null,
     );
   }
 }
