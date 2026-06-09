@@ -21,6 +21,8 @@ class OrderDetailScreen extends ConsumerStatefulWidget {
 class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   bool _isUpdating = false;
   bool _refreshError = false;
+  bool _isSimulating = false;
+  String _selectedSimulateStatus = 'confirmed';
   late Order _order;
 
   @override
@@ -206,6 +208,35 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     }
   }
 
+  Future<void> _simulateTracking() async {
+    setState(() => _isSimulating = true);
+    try {
+      await ref
+          .read(staffServiceProvider)
+          .simulateTracking(_order.id, _selectedSimulateStatus);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Status tracking: $_selectedSimulateStatus'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        _refreshOrderDetail();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal simulasi: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSimulating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDelivery = _order.serviceType == 'DELIVERY';
@@ -243,6 +274,18 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                           icon: Icons.local_shipping_outlined,
                         ),
                         DeliveryInfoCard(order: _order),
+                        if (_order.tracking != null &&
+                            _order.tracking!.status != 'PENDING_BITESHIP') ...[
+                          const SizedBox(height: 16),
+                          _SimulateTrackingCard(
+                            orderStatus: _order.orderStatus,
+                            selectedStatus: _selectedSimulateStatus,
+                            isSimulating: _isSimulating,
+                            onStatusChanged: (v) => setState(
+                                () => _selectedSimulateStatus = v!),
+                            onSimulate: _simulateTracking,
+                          ),
+                        ],
                         const SizedBox(height: 24),
                       ] else if (_order.verificationCode != null) ...[
                         _VerificationCodeCard(order: _order),
@@ -665,9 +708,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       } else if (status == 'READY_FOR_PICKUP') {
                         if (_order.serviceType == 'DELIVERY') {
                           _shipOrder();
-                        } else {
-                      else if (status == 'READY_FOR_PICKUP') {
-                        if (_order.serviceType == 'PICK_UP')
+                        } else if (_order.serviceType == 'PICK_UP') {
                           _updateStatus('COMPLETED');
                         }
                       } else if (status == 'CANCEL_REQUESTED') {
@@ -795,6 +836,117 @@ class _MetadataCard extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+// ── SIMULATE TRACKING CARD ────────────────────────────────────
+
+class _SimulateTrackingCard extends StatelessWidget {
+  final String orderStatus;
+  final String selectedStatus;
+  final bool isSimulating;
+  final void Function(String?) onStatusChanged;
+  final VoidCallback onSimulate;
+
+  const _SimulateTrackingCard({
+    required this.orderStatus,
+    required this.selectedStatus,
+    required this.isSimulating,
+    required this.onStatusChanged,
+    required this.onSimulate,
+  });
+
+  static const List<Map<String, String>> _statuses = [
+    {'value': 'confirmed', 'label': 'Confirmed - Cari Kurir'},
+    {'value': 'allocated', 'label': 'Allocated - Kurir Ditemukan'},
+    {'value': 'pickingUp', 'label': 'Picking Up - Menuju Apotek'},
+    {'value': 'picked', 'label': 'Picked - Paket Diambil'},
+    {'value': 'inTransit', 'label': 'In Transit - Dalam Perjalanan'},
+    {'value': 'droppingOff', 'label': 'Dropping Off - Sedang Diantar'},
+    {'value': 'delivered', 'label': 'Delivered - Sampai Tujuan'},
+    {'value': 'onHold', 'label': 'On Hold - Ditahan'},
+    {'value': 'cancelled', 'label': 'Cancelled - Dibatalkan'},
+    {'value': 'rejected', 'label': 'Rejected - Ditolak Kurir'},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.science_rounded,
+                  size: 18, color: Colors.amber),
+              const SizedBox(width: 8),
+              const Text(
+                'SIMULASI TRACKING (SANDBOX)',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.amber,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: selectedStatus,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: 'Pilih Status Tracking',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: 12),
+            ),
+            items: _statuses
+                .map((s) => DropdownMenuItem(
+                      value: s['value'],
+                      child: Text(s['label']!,
+                          style: const TextStyle(fontSize: 13)),
+                    ))
+                .toList(),
+            onChanged: onStatusChanged,
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: isSimulating ? null : onSimulate,
+              icon: isSimulating
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.play_arrow_rounded, size: 18),
+              label: Text(
+                  isSimulating ? 'Memproses...' : 'Simulasikan Status'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -18,6 +18,8 @@ class OrderConfirmationScreen extends ConsumerStatefulWidget {
   final AddressModel? deliveryAddress;
   final String pharmacyId;
   final File? prescriptionFile;
+  final String? courierCode;
+  final String? courierService;
 
   const OrderConfirmationScreen({
     super.key,
@@ -29,6 +31,8 @@ class OrderConfirmationScreen extends ConsumerStatefulWidget {
     this.deliveryAddress,
     required this.pharmacyId,
     this.prescriptionFile,
+    this.courierCode,
+    this.courierService,
   });
 
   @override
@@ -101,6 +105,11 @@ class _OrderConfirmationScreenState
               items: items,
               subtotal: widget.total,
               shippingCost: widget.shippingCost,
+              deliveryMethod: widget.deliveryMethod,
+              addressId: widget.deliveryAddress?.id,
+              notes: null,
+              courierCode: widget.courierCode,
+              courierService: widget.courierService,
             ),
           ),
         );
@@ -130,6 +139,8 @@ class _OrderConfirmationScreenState
         addressId: widget.deliveryAddress?.id,
         notes: null,
         shippingCost: widget.shippingCost.toDouble(),
+        courierCode: widget.courierCode,
+        courierService: widget.courierService,
       );
 
       if (!mounted) return;

@@ -10,7 +10,7 @@ void showAddressPickerSheet(
   BuildContext context,
   AddressProvider provider, {
   required VoidCallback onSelected,
-  void Function(AddressModel address, bool isEdit)? onAddressSaved,
+  Future<void> Function(AddressModel address, bool isEdit)? onAddressSaved,
   void Function(AddressModel address)? onSetPrimary,
   void Function(String id)? onAddressDeleted,
 }) {
@@ -32,7 +32,7 @@ void showAddressPickerSheet(
 class AddressPickerSheet extends StatefulWidget {
   final AddressProvider provider;
   final VoidCallback onSelected;
-  final void Function(AddressModel address, bool isEdit)? onAddressSaved;
+  final Future<void> Function(AddressModel address, bool isEdit)? onAddressSaved;
   final void Function(AddressModel address)? onSetPrimary;
   final void Function(String id)? onAddressDeleted;
 
@@ -608,7 +608,7 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
 class FavoriteAddressScreen extends StatefulWidget {
   final AddressProvider provider;
   final void Function(AddressModel) onSelectAddress;
-  final void Function(AddressModel address, bool isEdit)? onAddressSaved;
+  final Future<void> Function(AddressModel address, bool isEdit)? onAddressSaved;
   final void Function(String id)? onAddressDeleted;
 
   const FavoriteAddressScreen({

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/cart.dart';
+import '../../data/services/order_service.dart';
 import '../providers/customer_profile_provider.dart';
 import 'order_confirm_screen.dart';
 import 'address/address_model.dart';
@@ -29,12 +30,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   late final AddressProvider _addressProvider;
   bool _addressesLoaded = false;
 
+  // Courier state
+  List<Map<String, dynamic>> _courierRates = [];
+  String? _selectedCourierCode;
+  String? _selectedCourierService;
+  int _selectedCourierPrice = 0;
+  bool _isLoadingRates = false;
+  bool _ratesError = false;
+
   // Dummy item (in real app, comes from CartState)
   final List<CartItem> _cartItems = CartState().items;
 
   int get _subtotal =>
       _cartItems.fold(0, (sum, item) => sum + item.price * item.quantity);
-  int get _shippingCost => _deliveryMethod == 'kirim' ? 12000 : 0;
+  int get _shippingCost => _deliveryMethod == 'kirim' ? _selectedCourierPrice : 0;
   int get _total => _subtotal + _shippingCost;
 
   // ── Init ──────────────────────────────────────────────────────────
@@ -50,6 +59,61 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     if (profileState.addresses.isEmpty && !profileState.isLoading) {
       ref.read(customerProfileProvider.notifier).loadAll();
     }
+  }
+
+  // ── Courier Rates ────────────────────────────────────────────────
+  Future<void> _fetchRates() async {
+    final address = _addressProvider.selectedAddress;
+    if (address == null) return;
+
+    setState(() {
+      _isLoadingRates = true;
+      _ratesError = false;
+      _courierRates = [];
+      _selectedCourierCode = null;
+      _selectedCourierService = null;
+      _selectedCourierPrice = 0;
+    });
+
+    try {
+      final service = ref.read(orderServiceProvider);
+      final items = _cartItems.map((item) => {
+        'id': item.id,
+        'name': item.name,
+        'quantity': item.quantity,
+        'value': item.price,
+        'weight': 200,
+      }).toList();
+      final result = await service.getShippingRates(
+        pharmacyId: _cartItems.isNotEmpty ? _cartItems.first.pharmacyId : '',
+        addressId: address.id,
+        items: items,
+      );
+
+      final List<dynamic> pricing = result['pricing'] ?? [];
+      setState(() {
+        _courierRates = pricing.cast<Map<String, dynamic>>();
+        _isLoadingRates = false;
+      });
+
+      // Auto-pilih kurir pertama
+      if (_courierRates.isNotEmpty) {
+        _selectCourier(_courierRates.first);
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingRates = false;
+        _ratesError = true;
+      });
+    }
+  }
+
+  void _selectCourier(Map<String, dynamic> rate) {
+    setState(() {
+      _selectedCourierCode = rate['courier_code'] as String?;
+      _selectedCourierService = rate['courier_service'] as String?;
+      _selectedCourierPrice = (rate['price'] as num?)?.toInt() ?? 0;
+    });
   }
 
   // ── Pick Image ───────────────────────────────────────────────────
@@ -181,10 +245,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               _buildOrderSummary(),
               _buildDivider(),
               _buildDeliveryMethod(),
-              // ── Alamat muncul hanya saat pilih "kirim" ────────────
+              // ── Alamat & Kurir muncul hanya saat pilih "kirim" ────
               if (_deliveryMethod == 'kirim') ...[
                 _buildDivider(),
                 _buildAddressSection(),
+                _buildDivider(),
+                _buildCourierSection(),
               ],
               _buildDivider(),
               _buildNoteField(),
@@ -602,10 +668,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ref.read(customerProfileProvider.notifier).setPrimaryAddress(address.id);
         _addressProvider.updatePrimaryFlags(address.id);
       },
-      onAddressSaved: (address, isEdit) {
+      onAddressSaved: (address, isEdit) async {
         final notifier = ref.read(customerProfileProvider.notifier);
         if (isEdit) {
-          notifier.updateAddress(
+          await notifier.updateAddress(
             id: address.id,
             label: address.name,
             addressDetail: address.fullAddress,
@@ -614,18 +680,191 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             isPrimary: address.isPrimary,
           );
         } else {
-          notifier.addAddress(
+          final newAddr = await notifier.addAddress(
             label: address.name,
             addressDetail: address.fullAddress,
             latitude: address.latitude ?? -6.208800,
             longitude: address.longitude ?? 106.845600,
             isPrimary: address.isPrimary,
           );
+          _addressProvider.updateAddressId(address.id, newAddr.id);
         }
       },
       onAddressDeleted: (id) {
         ref.read(customerProfileProvider.notifier).deleteAddress(id);
       },
+    );
+  }
+
+  // ── Section: Pilih Kurir ─────────────────────────────────────────
+  Widget _buildCourierSection() {
+    // Fetch rates otomatis saat alamat berubah
+    if (_courierRates.isEmpty && !_isLoadingRates && !_ratesError) {
+      final address = _addressProvider.selectedAddress;
+      if (address != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _fetchRates());
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _sectionLabel('PILIH KURIR'),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'REQUIRED',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_isLoadingRates)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else if (_ratesError)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Gagal memuat tarif pengiriman. Pastikan alamat sudah benar.',
+                      style: TextStyle(fontSize: 12, color: Colors.orange.shade800, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (_courierRates.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, color: AppColors.textLight, size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Tidak ada kurir tersedia untuk alamat ini.',
+                      style: TextStyle(fontSize: 12, color: AppColors.textLight, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ...(_courierRates.asMap().entries.map((entry) {
+              final index = entry.key;
+              final rate = entry.value;
+              final code = rate['courier_code'] as String? ?? '';
+              final service = rate['courier_service'] as String? ?? '';
+              final price = (rate['price'] as num?)?.toInt() ?? 0;
+              final etd = rate['etd'] as String? ?? '-';
+              final company = rate['company'] as String? ?? code.toUpperCase();
+              final isSelected = _selectedCourierCode == code && _selectedCourierService == service;
+
+              return Padding(
+                padding: EdgeInsets.only(bottom: index < _courierRates.length - 1 ? 8 : 0),
+                child: GestureDetector(
+                  onTap: () => _selectCourier(rate),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primary.withOpacity(0.05) : Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primary : Colors.grey.shade200,
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Radio<String>(
+                          value: '$code|$service',
+                          groupValue: isSelected ? '$code|$service' : null,
+                          onChanged: (_) => _selectCourier(rate),
+                          activeColor: AppColors.primary,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                company,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: AppColors.textDark,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                service,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textLight,
+                                ),
+                              ),
+                              if (etd != '-')
+                                Text(
+                                  'Estimasi: $etd',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSubtle,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          'Rp ${_formatPrice(price)}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            color: isSelected ? AppColors.primary : AppColors.textDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            })),
+        ],
+      ),
     );
   }
 
@@ -950,8 +1189,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 _priceRow('Subtotal Produk', _subtotal),
                 const SizedBox(height: 10),
                 _priceRow(
-                    'Biaya Pengiriman',
-                    _deliveryMethod == 'kirim' ? 12000 : 0),
+                    _deliveryMethod == 'kirim'
+                        ? (_selectedCourierCode != null
+                            ? 'Biaya Pengiriman (${_selectedCourierCode!.toUpperCase()})'
+                            : 'Biaya Pengiriman')
+                        : 'Biaya Pengiriman',
+                    _deliveryMethod == 'kirim' ? _selectedCourierPrice : 0),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child:
@@ -1016,9 +1259,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   // ── Bottom Bar ───────────────────────────────────────────────────
   Widget _buildBottomBar() {
-    // Validasi: jika kirim, wajib ada alamat
+    // Validasi: jika kirim, wajib ada alamat + kurir
+    final bool hasAddress = _addressProvider.selectedAddress != null;
+    final bool hasCourier = _selectedCourierCode != null;
     final bool canProceed = _deliveryMethod == 'ambil' ||
-        _addressProvider.selectedAddress != null;
+        (hasAddress && hasCourier);
+
+    String? errorMsg;
+    if (_deliveryMethod == 'kirim') {
+      if (!hasAddress) errorMsg = 'Pilih alamat pengiriman terlebih dahulu';
+      else if (!hasCourier) errorMsg = 'Pilih kurir pengiriman terlebih dahulu';
+    }
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -1047,22 +1298,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         deliveryMethod: _deliveryMethod,
                         paymentMethod: _paymentMethod,
                         total: _total,
-                        shippingCost:
-                            _deliveryMethod == 'kirim' ? 12000 : 0,
+                        shippingCost: _shippingCost,
                         deliveryAddress:
                             _addressProvider.selectedAddress,
                         pharmacyId: _cartItems.isNotEmpty
                             ? _cartItems.first.pharmacyId
                             : '',
                         prescriptionFile: _prescriptionFile,
+                        courierCode: _selectedCourierCode,
+                        courierService: _selectedCourierService,
                       ),
                     ),
                   );
                 }
               : () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Pilih alamat pengiriman terlebih dahulu'),
+                    SnackBar(
+                      content: Text(errorMsg ?? 'Lengkapi data terlebih dahulu'),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );

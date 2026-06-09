@@ -210,6 +210,11 @@ class AppRouter {
               items: List<Map<String, dynamic>>.from(extra['items'] as List),
               subtotal: extra['subtotal'] as int,
               shippingCost: extra['shippingCost'] as int? ?? 0,
+              deliveryMethod: extra['deliveryMethod'] as String,
+              addressId: extra['addressId'] as String?,
+              notes: extra['notes'] as String?,
+              courierCode: extra['courierCode'] as String?,
+              courierService: extra['courierService'] as String?,
             );
           },
         ),

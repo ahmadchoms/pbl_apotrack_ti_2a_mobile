@@ -56,4 +56,15 @@ class AddressProvider extends ChangeNotifier {
     if (_selectedAddress?.id == id) _selectedAddress = null;
     notifyListeners();
   }
+
+  void updateAddressId(String oldId, String newId) {
+    final idx = _favorites.indexWhere((a) => a.id == oldId);
+    if (idx != -1) {
+      _favorites[idx] = _favorites[idx].copyWith(id: newId);
+    }
+    if (_selectedAddress?.id == oldId) {
+      _selectedAddress = _selectedAddress!.copyWith(id: newId);
+    }
+    notifyListeners();
+  }
 }

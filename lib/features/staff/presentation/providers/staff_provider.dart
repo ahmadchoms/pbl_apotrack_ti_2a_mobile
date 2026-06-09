@@ -332,7 +332,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     );
   }
 
-  Future<void> addAddress({
+  Future<CustomerAddress> addAddress({
     required String label,
     required String addressDetail,
     required double latitude,
@@ -352,6 +352,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
         : List<CustomerAddress>.from(state.addresses);
     updated.add(newAddr);
     state = state.copyWith(addresses: updated);
+    return newAddr;
   }
 
   Future<void> updateAddress({

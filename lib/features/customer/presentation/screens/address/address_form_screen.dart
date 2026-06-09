@@ -9,7 +9,7 @@ import 'address_provider.dart';
 class AddressFormScreen extends StatefulWidget {
   final AddressModel? existing; // null = tambah baru, non-null = edit
   final AddressProvider provider;
-  final void Function(AddressModel address, bool isEdit)? onSaved;
+  final Future<void> Function(AddressModel address, bool isEdit)? onSaved;
 
   const AddressFormScreen({
     super.key,
@@ -85,7 +85,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     setState(() => _locating = false);
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_nameCtrl.text.trim().isEmpty || _addressCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nama alamat dan alamat wajib diisi')),
@@ -109,7 +109,8 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       widget.provider.addFavorite(address);
     }
 
-    widget.onSaved?.call(address, _isEdit);
+    await widget.onSaved?.call(address, _isEdit);
+    if (!context.mounted) return;
     Navigator.pop(context, true);
   }
 
@@ -447,7 +448,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         width: double.infinity,
         height: 52,
         child: ElevatedButton(
-          onPressed: _save,
+          onPressed: () => _save(),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,

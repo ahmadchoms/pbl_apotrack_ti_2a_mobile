@@ -66,9 +66,9 @@ class CustomerRepository {
   }
 
   Future<Response> setPrimaryAddress(String id) async {
-    print('[Repository] setPrimaryAddress PATCH /user/addresses/$id/set-primary');
+    print('[Repository] setPrimaryAddress PATCH /user/addresses/$id');
     try {
-      final response = await _dio.patch('/user/addresses/$id/set-primary');
+      final response = await _dio.patch('/user/addresses/$id', data: {'is_primary': true});
       print('[Repository] setPrimaryAddress success: ${response.statusCode}');
       return response;
     } on DioException catch (e) {

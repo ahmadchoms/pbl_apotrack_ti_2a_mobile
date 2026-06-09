@@ -18,6 +18,8 @@ class OrderService {
     required double shippingCost,
     String? addressId,
     String? notes,
+    String? courierCode,
+    String? courierService,
   }) async {
     final apiItems = items
         .map((item) => {
@@ -36,8 +38,23 @@ class OrderService {
       'shipping_cost': shippingCost.toInt(),
       if (addressId != null) 'address_id': addressId,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
+      if (courierCode != null) 'courier_code': courierCode,
+      if (courierService != null) 'courier_service': courierService,
     });
     return OrderModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  Future<Map<String, dynamic>> getShippingRates({
+    required String pharmacyId,
+    required String addressId,
+    List<Map<String, dynamic>>? items,
+  }) async {
+    final response = await _dio.post('/shipping/rates', data: {
+      'pharmacy_id': pharmacyId,
+      'address_id': addressId,
+      if (items != null && items.isNotEmpty) 'items': items,
+    });
+    return response.data['data'] as Map<String, dynamic>;
   }
 
   Future<OrderModel> getOrderById(String orderId) async {

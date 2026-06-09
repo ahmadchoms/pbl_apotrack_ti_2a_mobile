@@ -12,6 +12,11 @@ class QrisPaymentScreen extends ConsumerStatefulWidget {
   final List<Map<String, dynamic>> items;
   final int subtotal;
   final int shippingCost;
+  final String deliveryMethod; // 'kirim' | 'ambil'
+  final String? addressId;
+  final String? notes;
+  final String? courierCode;
+  final String? courierService;
 
   const QrisPaymentScreen({
     super.key,
@@ -20,6 +25,11 @@ class QrisPaymentScreen extends ConsumerStatefulWidget {
     required this.items,
     required this.subtotal,
     required this.shippingCost,
+    required this.deliveryMethod,
+    this.addressId,
+    this.notes,
+    this.courierCode,
+    this.courierService,
   });
 
   @override
@@ -97,13 +107,19 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
               ))
           .toList();
 
+      final isDelivery = widget.deliveryMethod == 'kirim';
+
       final order = await _orderService.createOrder(
         pharmacyId: widget.pharmacyId,
-        serviceType: 'PICK_UP',
-        paymentMethod: 'TRANSFER',
+        serviceType: isDelivery ? 'DELIVERY' : 'PICK_UP',
+        paymentMethod: 'QRIS',
         items: cartItemModels,
         subtotal: widget.subtotal.toDouble(),
         shippingCost: widget.shippingCost.toDouble(),
+        addressId: widget.addressId,
+        notes: widget.notes,
+        courierCode: widget.courierCode,
+        courierService: widget.courierService,
       );
 
       _orderNumber = order.orderNumber;
@@ -119,20 +135,34 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
 
       if (!mounted) return;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => VerifikasiPengambilanScreen(
-            orderId: order.id,
-            orderNumber: _orderNumber,
-            verificationCode: _verificationCode,
-            pharmacyName: widget.pharmacyName,
-            pharmacyId: widget.pharmacyId,
-            items: widget.items,
-            total: widget.subtotal + widget.shippingCost,
+      if (isDelivery) {
+        // QRIS + Kurir: tanpa QR Code, balik ke home
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Pesanan berhasil dibuat! Pembayaran sebesar ${_rupiah(widget.subtotal + widget.shippingCost)} telah dikonfirmasi.'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-        ),
-      );
+        );
+      } else {
+        // QRIS + Diambil: tampilkan QR Code
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => VerifikasiPengambilanScreen(
+              orderId: order.id,
+              orderNumber: _orderNumber,
+              verificationCode: _verificationCode,
+              pharmacyName: widget.pharmacyName,
+              pharmacyId: widget.pharmacyId,
+              items: widget.items,
+              total: widget.subtotal + widget.shippingCost,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _paying = false);
@@ -206,10 +236,12 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
             const SizedBox(height: 28),
             _buildPayButton(),
             const SizedBox(height: 10),
-            const Text(
-              'Setelah konfirmasi, kamu akan mendapat QR Code\nuntuk pengambilan obat di apotek',
+            Text(
+              widget.deliveryMethod == 'kirim'
+                  ? 'Pembayaran berhasil. Pesanan akan segera diproses dan dikirim.'
+                  : 'Setelah konfirmasi, kamu akan mendapat QR Code\nuntuk pengambilan obat di apotek',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: AppColors.textSubtle, height: 1.5),
+              style: const TextStyle(fontSize: 12, color: AppColors.textSubtle, height: 1.5),
             ),
             const SizedBox(height: 24),
           ],
@@ -292,13 +324,15 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
-          SizedBox(width: 10),
+        children: [
+          const Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Kamu akan mendapat QR Code untuk pengambilan obat di apotek.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF1E3A5F), height: 1.4),
+              widget.deliveryMethod == 'kirim'
+                  ? 'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Pesanan akan segera dikirim ke alamat tujuan.'
+                  : 'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Kamu akan mendapat QR Code untuk pengambilan obat di apotek.',
+              style: const TextStyle(fontSize: 13, color: Color(0xFF1E3A5F), height: 1.4),
             ),
           ),
         ],
