@@ -103,8 +103,10 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
     return '${km.toStringAsFixed(1)} km';
   }
 
+  static const double _maxRadiusKm = 20.0;
+
   List<PharmacyModel> _filtered(List<PharmacyModel> pharmacies) {
-    final filtered = pharmacies.where((p) {
+    var filtered = pharmacies.where((p) {
       final matchSearch = _search.isEmpty ||
           p.name.toLowerCase().contains(_search.toLowerCase()) ||
           p.address.toLowerCase().contains(_search.toLowerCase());
@@ -119,6 +121,11 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
 
       return matchSearch && matchFilter;
     }).toList();
+
+    // Filter radius maksimal 20 km
+    if (_userPosition != null) {
+      filtered.removeWhere((p) => _hitungJarak(p) > _maxRadiusKm);
+    }
 
     if (_activeFilters.contains('Terdekat')) {
       filtered.sort((a, b) => _hitungJarak(a).compareTo(_hitungJarak(b)));
@@ -215,6 +222,15 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
                     color: AppColors.textDark,
                     letterSpacing: -0.8,
                     height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Dalam radius ${_maxRadiusKm.toInt()} km dari lokasimu',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSubtle,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],
@@ -319,7 +335,10 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
   }
 
   Widget _buildEmptyState() {
-    return const Center(
+    final radiusInfo = _userPosition != null
+        ? 'Tidak ada apotek dalam radius ${_maxRadiusKm.toInt()} km'
+        : 'Coba ubah kata kunci pencarian';
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -328,7 +347,7 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
           Text('Apotek tidak ditemukan',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textLight)),
           SizedBox(height: 4),
-          Text('Coba ubah kata kunci pencarian',
+          Text(radiusInfo,
               style: TextStyle(fontSize: 13, color: AppColors.textSubtle)),
         ],
       ),

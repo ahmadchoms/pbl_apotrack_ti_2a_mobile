@@ -23,7 +23,6 @@ import '../features/customer/data/models/customer_address.dart';
 import '../features/customer/presentation/screens/pharma_scan_map_screen.dart';
 import '../features/customer/presentation/screens/medicine_list_screen.dart';
 import '../features/customer/presentation/screens/qris_payment_screen.dart';
-import '../features/customer/presentation/screens/verifikasi_pengambilan_screen.dart';
 import '../features/customer/presentation/screens/beri_ulasan_screen.dart';
 
 // Staff
@@ -64,7 +63,6 @@ class AppRouter {
   static const String customerPharmacySearch = '/customer/pharmacy-search';
   static const String customerMedicineList = '/customer/medicine-list';
   static const String customerPayment = '/customer/payment';
-  static const String customerVerifikasi = '/customer/verifikasi';
   static const String customerUlasan = '/customer/ulasan';
 
   static const String staffInventory = '/staff/inventory';
@@ -215,21 +213,6 @@ class AppRouter {
               notes: extra['notes'] as String?,
               courierCode: extra['courierCode'] as String?,
               courierService: extra['courierService'] as String?,
-            );
-          },
-        ),
-        GoRoute(
-          path: customerVerifikasi,
-          builder: (context, state) {
-            final extra = state.extra as Map<String, dynamic>;
-            return VerifikasiPengambilanScreen(
-              orderId: extra['orderId'] as String,
-              orderNumber: extra['orderNumber'] as String,
-              verificationCode: extra['verificationCode'] as String,
-              pharmacyName: extra['pharmacyName'] as String,
-              pharmacyId: extra['pharmacyId'] as String,
-              items: List<Map<String, dynamic>>.from(extra['items'] as List),
-              total: extra['total'] as int,
             );
           },
         ),

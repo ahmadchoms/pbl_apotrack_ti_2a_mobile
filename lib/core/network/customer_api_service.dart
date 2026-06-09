@@ -13,12 +13,20 @@ class CustomerApiService {
   final Dio _dio;
 
   // ── Pharmacies ────────────────────────────────────────────────
-  Future<List<Pharmacy>> getPharmacies({String? search}) async {
+  Future<List<Pharmacy>> getPharmacies({
+    String? search,
+    double? latitude,
+    double? longitude,
+    double? radius,
+  }) async {
     try {
       final response = await _dio.get(
         '/pharmacies',
         queryParameters: {
           if (search != null && search.isNotEmpty) 'search': search,
+          if (latitude != null) 'latitude': latitude.toString(),
+          if (longitude != null) 'longitude': longitude.toString(),
+          if (radius != null) 'radius': radius.toString(),
         },
       );
       final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;

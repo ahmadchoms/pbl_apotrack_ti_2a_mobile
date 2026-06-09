@@ -28,9 +28,8 @@ class StaffService {
     await _repository.updateOrderStatus(orderId, status);
   }
 
-  Future<void> shipOrder(
-      String orderId, String courierCode, String courierService) async {
-    await _repository.shipOrder(orderId, courierCode, courierService);
+  Future<void> shipOrder(String orderId) async {
+    await _repository.shipOrder(orderId);
   }
 
   Future<void> simulateTracking(String orderId, String status) async {

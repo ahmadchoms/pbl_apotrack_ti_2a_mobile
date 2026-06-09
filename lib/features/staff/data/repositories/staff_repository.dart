@@ -16,12 +16,8 @@ class StaffRepository {
   Future<Response> updateOrderStatus(String id, String status) =>
       _dio.patch('/staff/orders/$id/status', data: {'status': status});
 
-  Future<Response> shipOrder(
-      String id, String courierCode, String courierService) =>
-    _dio.post('/staff/orders/$id/ship', data: {
-      'courier_code': courierCode,
-      'courier_service': courierService,
-    });
+  Future<Response> shipOrder(String id) =>
+    _dio.post('/staff/orders/$id/ship');
 
   Future<Response> simulateTracking(String id, String status) =>
       _dio.post('/staff/orders/$id/simulate-tracking/$status');

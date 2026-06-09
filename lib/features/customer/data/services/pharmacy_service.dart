@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/network/customer_api_service.dart';
 import '../models/pharmacy_model.dart';
 
@@ -6,13 +7,21 @@ class PharmacyService {
   PharmacyService({required CustomerApiService api}) : _api = api;
   final CustomerApiService _api;
 
-  Future<List<Map<String, dynamic>>> getPharmacies() async {
-    final data = await _api.getPharmacies();
+  Future<List<Map<String, dynamic>>> getPharmacies({Position? userPosition}) async {
+    final data = await _api.getPharmacies(
+      latitude: userPosition?.latitude,
+      longitude: userPosition?.longitude,
+      radius: 20.0,
+    );
     return data.map((e) => e.toJson()).toList();
   }
 
-  Future<List<PharmacyModel>> getActivePharmacies() async {
-    final data = await _api.getPharmacies();
+  Future<List<PharmacyModel>> getActivePharmacies({Position? userPosition}) async {
+    final data = await _api.getPharmacies(
+      latitude: userPosition?.latitude,
+      longitude: userPosition?.longitude,
+      radius: 20.0,
+    );
     return data
         .map((e) => PharmacyModel.fromJson(e.toJson()))
         .toList();

@@ -129,6 +129,7 @@ class Order {
   final Map<String, dynamic>? address;
   final Map<String, dynamic>? prescription;
   final String? verificationCode;
+  final bool canReview;
 
   Order({
     required this.id,
@@ -151,6 +152,7 @@ class Order {
     this.address,
     this.prescription,
     this.verificationCode,
+    this.canReview = true,
   });
 
   // Getter untuk backward compatibility dengan kode staff yang pakai order.customer
@@ -205,6 +207,7 @@ class Order {
           ? json['prescription'] as Map<String, dynamic>
           : null,
       verificationCode: json['verification_code']?.toString(),
+      canReview: json['can_review'] == true,
     );
   }
 

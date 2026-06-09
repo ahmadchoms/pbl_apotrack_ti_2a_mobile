@@ -94,97 +94,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   }
 
   Future<void> _shipOrder() async {
-    String selectedCourierCode = 'grab';
-    String selectedCourierType = 'instant';
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setStateDialog) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
-            'Pilih Kurir',
-            style: TextStyle(fontWeight: FontWeight.w800),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Pilih layanan kurir untuk pengiriman pesanan ini.'),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: selectedCourierCode,
-                decoration: InputDecoration(
-                  labelText: 'Kurir',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'grab', child: Text('GrabExpress')),
-                  DropdownMenuItem(value: 'gojek', child: Text('GoSend')),
-                  DropdownMenuItem(value: 'jne', child: Text('JNE')),
-                  DropdownMenuItem(value: 'jnt', child: Text('J&T Express')),
-                  DropdownMenuItem(
-                      value: 'sicepat', child: Text('SiCepat')),
-                ],
-                onChanged: (val) =>
-                    setStateDialog(() => selectedCourierCode = val!),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: selectedCourierType,
-                decoration: InputDecoration(
-                  labelText: 'Tipe Layanan',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                items: const [
-                  DropdownMenuItem(
-                      value: 'instant', child: Text('Instant')),
-                  DropdownMenuItem(
-                      value: 'same_day', child: Text('Same Day')),
-                  DropdownMenuItem(
-                      value: 'regular', child: Text('Regular')),
-                ],
-                onChanged: (val) =>
-                    setStateDialog(() => selectedCourierType = val!),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accentIndigo,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text(
-                'Panggil Kurir',
-                style: TextStyle(color: AppColors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (confirmed != true) return;
-
     setState(() => _isUpdating = true);
     try {
-      await ref.read(staffServiceProvider).shipOrder(
-            _order.id,
-            selectedCourierCode,
-            selectedCourierType,
-          );
+      await ref.read(staffServiceProvider).shipOrder(_order.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

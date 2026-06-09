@@ -37,6 +37,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   int _selectedCourierPrice = 0;
   bool _isLoadingRates = false;
   bool _ratesError = false;
+  double _distanceKm = 0;
 
   // Dummy item (in real app, comes from CartState)
   final List<CartItem> _cartItems = CartState().items;
@@ -93,6 +94,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final List<dynamic> pricing = result['pricing'] ?? [];
       setState(() {
         _courierRates = pricing.cast<Map<String, dynamic>>();
+        _distanceKm = (result['distance_km'] as num?)?.toDouble() ?? 0;
         _isLoadingRates = false;
       });
 
@@ -647,6 +649,33 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           color: Colors.orange,
                           fontWeight: FontWeight.w600,
                         ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // ── Jarak pengiriman ──────────────────────────────────
+            if (selected != null && _distanceKm > 0) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.straighten_rounded, size: 16, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Jarak: ${_distanceKm.toStringAsFixed(1)} km dari apotek',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],

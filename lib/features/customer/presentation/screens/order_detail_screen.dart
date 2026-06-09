@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../staff/data/models/order.dart';
-// import '../providers/customer_order_provider.dart';
 import '../widgets/order_history/order_detail_status_card.dart';
 import '../widgets/order_history/order_detail_items_card.dart';
 import '../widgets/order_history/order_detail_summary_card.dart';
 import '../widgets/order_history/order_detail_timeline_card.dart';
 import '../../data/models/customer_order_extra.dart';
+import '../../data/services/customer_order_service.dart';
+
 
 // OLD CODE (ConsumerWidget with orderDetailProvider) — commented out
 // class CustomerOrderDetailScreen extends ConsumerWidget {
@@ -93,10 +96,55 @@ import '../../data/models/customer_order_extra.dart';
 //
 //   Widget _buildErrorState(String error, {VoidCallback? onRetry}) {
 
-class CustomerOrderDetailScreen extends StatelessWidget {
+class CustomerOrderDetailScreen extends ConsumerStatefulWidget {
   final Order order;
 
   const CustomerOrderDetailScreen({super.key, required this.order});
+
+  @override
+  ConsumerState<CustomerOrderDetailScreen> createState() =>
+      _CustomerOrderDetailScreenState();
+}
+
+class _CustomerOrderDetailScreenState
+    extends ConsumerState<CustomerOrderDetailScreen> {
+  late Order _order;
+  late CustomerOrderService _orderService;
+
+  @override
+  void initState() {
+    super.initState();
+    _order = widget.order;
+    _orderService = ref.read(customerOrderServiceProvider);
+  }
+
+  Future<void> _refresh() async {
+    try {
+      final fresh = await _orderService.getOrderDetail(widget.order.id);
+      if (!mounted) return;
+      setState(() => _order = fresh);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pesanan diperbarui'),
+          duration: Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal memperbarui status'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,13 +167,19 @@ class CustomerOrderDetailScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.textDark),
+            onPressed: _refresh,
+          ),
+        ],
       ),
       body: _buildContent(context),
     );
   }
 
   Widget _buildContent(BuildContext context) {
-    final order = this.order;
+    final order = _order;
     final prescriptionData = order.prescription;
     final parsedPrescription = prescriptionData != null
         ? CustomerPrescription.fromJson(prescriptionData)
@@ -138,6 +192,10 @@ class CustomerOrderDetailScreen extends StatelessWidget {
         const SizedBox(height: 12),
         _buildPharmacyCard(order),
         const SizedBox(height: 12),
+        if (order.serviceType == 'PICK_UP' && order.verificationCode != null && order.verificationCode!.isNotEmpty) ...[
+          _buildQrCard(context, order),
+          const SizedBox(height: 12),
+        ],
         _buildTransactionTimeCard(order),
         const SizedBox(height: 12),
         _buildPaymentMethodCard(order),
@@ -252,6 +310,188 @@ class CustomerOrderDetailScreen extends StatelessWidget {
               fontSize: 13,
               color: AppColors.textSlate,
               height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQrCard(BuildContext context, Order detail) {
+    final verificationCode = detail.verificationCode ?? '';
+    final pharmacyName = detail.pharmacy['name']?.toString() ?? '—';
+    final total = detail.grandTotal;
+
+    String _rupiah(num amount) => 'Rp ${amount.toStringAsFixed(0).replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    )}';
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: const Center(
+              child: Text(
+                'KODE VERIFIKASI PENGAMBILAN OBAT',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textMid,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.primary, width: 3),
+                borderRadius: BorderRadius.circular(16),
+                color: Colors.white,
+              ),
+              child: QrImageView(
+                data: verificationCode.isEmpty ? ' ' : verificationCode,
+                version: QrVersions.auto,
+                size: 200,
+                backgroundColor: Colors.white,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: verificationCode));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Kode disalin!'),
+                  duration: Duration(seconds: 1),
+                  behavior: SnackBarBehavior.floating,
+                  margin: EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.divider),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    verificationCode.isEmpty ? 'Memuat...' : verificationCode,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: AppColors.textDark,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Icon(Icons.copy_rounded, size: 16, color: AppColors.textLight),
+                ],
+              ),
+            ),
+          ),
+          const Divider(height: 1, color: AppColors.divider),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                _InfoRow(
+                  icon: Icons.local_pharmacy_rounded,
+                  label: 'Nama Apotek',
+                  value: pharmacyName,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _InfoRow(
+                        icon: Icons.receipt_outlined,
+                        label: 'No. Pesanan',
+                        value: detail.orderNumber,
+                      ),
+                    ),
+                    Expanded(
+                      child: _InfoRow(
+                        icon: Icons.inventory_2_outlined,
+                        label: 'Total',
+                        value: _rupiah(total),
+                        valueColor: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Obat yang dipesan:',
+                        style: TextStyle(fontSize: 12, color: AppColors.textLight),
+                      ),
+                      const SizedBox(height: 6),
+                      ...detail.items.map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 4, height: 4,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.textMid,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '${item.medicineName} x${item.quantity}',
+                                  style: const TextStyle(
+                                    fontSize: 13, color: AppColors.textMid,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -567,4 +807,47 @@ class CustomerOrderDetailScreen extends StatelessWidget {
           ),
         ],
       );
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.primary, size: 18),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: valueColor ?? AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }

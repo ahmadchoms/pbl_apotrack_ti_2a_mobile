@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,7 +39,6 @@ class _VerifikasiPengambilanScreenState
   late final CustomerOrderService _orderService;
   Order? _order;
   String _verificationCode = '';
-  Timer? _pollTimer;
 
   @override
   void initState() {
@@ -48,20 +46,9 @@ class _VerifikasiPengambilanScreenState
     _orderService = ref.read(customerOrderServiceProvider);
     _verificationCode = widget.verificationCode;
     _cekStatus();
-    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) => _cekStatus());
-  }
-
-  @override
-  void dispose() {
-    _pollTimer?.cancel();
-    super.dispose();
   }
 
   Future<void> _cekStatus() async {
-    if (_order?.orderStatus == 'COMPLETED') {
-      _pollTimer?.cancel();
-      return;
-    }
     try {
       final order = await _orderService.getOrderDetail(widget.orderId);
       if (!mounted) return;
@@ -71,7 +58,6 @@ class _VerifikasiPengambilanScreenState
           _verificationCode = order.verificationCode ?? '';
         }
       });
-      if (order.orderStatus == 'COMPLETED') _pollTimer?.cancel();
     } catch (_) {
       if (!mounted) return;
     }
@@ -82,7 +68,7 @@ class _VerifikasiPengambilanScreenState
         (m) => '${m[1]}.',
       )}';
 
-  bool get _bisaUlas => _order?.orderStatus == 'COMPLETED';
+  bool get _bisaUlas => _order?.orderStatus == 'COMPLETED' && (_order?.canReview ?? true);
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +87,12 @@ class _VerifikasiPengambilanScreenState
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+            onPressed: _cekStatus,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -123,8 +115,7 @@ class _VerifikasiPengambilanScreenState
               OrderDetailTimelineCard(statusLogs: _order!.statusLogs),
               const SizedBox(height: 16),
             ],
-            _buildReviewButton(enabled: _bisaUlas),
-            if (!_bisaUlas) _buildWaitingCard(),
+            if (_order?.orderStatus == 'COMPLETED') _buildReviewButton(enabled: _bisaUlas),
             const SizedBox(height: 16),
             _buildInfoBanner(),
             const SizedBox(height: 20),
@@ -357,19 +348,34 @@ class _VerifikasiPengambilanScreenState
   }
 
   Widget _buildReviewButton({required bool enabled}) {
+    final bool sudahDiulas = _order?.canReview == false;
+    final String label;
+    final Color bgColor;
+    final Color fgColor;
+
+    if (sudahDiulas) {
+      label = 'Sudah Diulas';
+      bgColor = Colors.grey.shade200;
+      fgColor = Colors.grey.shade400;
+    } else {
+      label = 'Beri Ulasan';
+      bgColor = AppColors.primary;
+      fgColor = Colors.white;
+    }
+
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: enabled ? AppColors.primary : Colors.grey.shade300,
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: enabled
+          boxShadow: !sudahDiulas
               ? [BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8))]
               : [],
         ),
         child: ElevatedButton.icon(
-          onPressed: enabled
+          onPressed: !sudahDiulas
               ? () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -382,14 +388,14 @@ class _VerifikasiPengambilanScreenState
                     ),
                   )
               : null,
-          icon: Icon(Icons.star_rounded, size: 20, color: enabled ? Colors.white : Colors.grey.shade400),
+          icon: Icon(sudahDiulas ? Icons.check_circle_rounded : Icons.star_rounded, size: 20, color: fgColor),
           label: Text(
-            enabled ? 'Beri Ulasan' : 'Tunggu verifikasi apoteker...',
+            label,
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 16,
               letterSpacing: 0.3,
-              color: enabled ? Colors.white : Colors.grey.shade400,
+              color: fgColor,
             ),
           ),
           style: ElevatedButton.styleFrom(
@@ -399,55 +405,6 @@ class _VerifikasiPengambilanScreenState
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildWaitingCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFFD6B0)),
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.access_time_rounded, color: Color(0xFFC2410C), size: 32),
-          const SizedBox(height: 10),
-          const Text(
-            'Menunggu konfirmasi apoteker',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-              color: Color(0xFF7C2D12),
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Tunjukkan QR di atas ke apoteker. Setelah dikonfirmasi, kamu bisa memberikan ulasan.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Color(0xFF92400E), height: 1.5),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: OutlinedButton.icon(
-              onPressed: _cekStatus,
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Cek Status',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFC2410C),
-                side: const BorderSide(color: Color(0xFFFDB974)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

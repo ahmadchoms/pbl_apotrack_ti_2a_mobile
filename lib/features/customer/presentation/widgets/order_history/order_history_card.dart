@@ -111,7 +111,7 @@ class OrderHistoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cfg = _config;
     final bool hasActions = cfg.primaryLabel != null;
-    final bool hasTwoActions = cfg.secondaryLabel != null;
+    final bool hasTwoActions = cfg.secondaryLabel != null && onSecondaryActionTap != null;
 
     final pharmacyName = order.pharmacy['name']?.toString() ?? '—';
 
