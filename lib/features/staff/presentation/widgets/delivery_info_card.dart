@@ -107,6 +107,7 @@ class DeliveryInfoCard extends StatelessWidget {
                       const SizedBox(height: 3),
                       Text(
                         address?['address_detail']?.toString() ??
+                            address?['complete_address']?.toString() ??
                             tracking?.destination?['address']?.toString() ??
                             '-',
                         style: const TextStyle(
