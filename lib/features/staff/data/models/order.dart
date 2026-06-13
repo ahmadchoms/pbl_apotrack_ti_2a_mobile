@@ -1,47 +1,87 @@
 class DeliveryTracking {
-  final String? biteshipId;
-  final String? courierName;
-  final String? courierCode;
-  final String? courierService;
+  final String id;
+  final String? biteshipOrderId;
+  final String? biteshipTrackingId;
   final String? trackingNumber;
-  final String? trackingUrl;
+  final String? trackingLink;
   final num deliveryFee;
   final String status;
+  final Map<String, dynamic>? courier;
+  final Map<String, dynamic>? origin;
+  final Map<String, dynamic>? destination;
+  final List<Map<String, dynamic>> history;
 
   DeliveryTracking({
-    this.biteshipId,
-    this.courierName,
-    this.courierCode,
-    this.courierService,
+    required this.id,
+    this.biteshipOrderId,
+    this.biteshipTrackingId,
     this.trackingNumber,
-    this.trackingUrl,
+    this.trackingLink,
     this.deliveryFee = 0,
     required this.status,
+    this.courier,
+    this.origin,
+    this.destination,
+    this.history = const [],
   });
 
+  // Helper getters untuk akses mudah dari courier JSON
+  String? get driverName => courier?['driver_name']?.toString();
+  String? get driverPhone => courier?['driver_phone']?.toString();
+  String? get driverPhotoUrl => courier?['driver_photo_url']?.toString();
+  String? get driverPlateNumber => courier?['driver_plate_number']?.toString();
+  String? get courierCompany => courier?['company']?.toString();
+
+  // Helper getter untuk status terakhir dari history
+  String? get latestHistoryStatus =>
+      history.isNotEmpty ? history.last['status']?.toString() : null;
+
   factory DeliveryTracking.fromJson(Map<String, dynamic> json) {
+    List<Map<String, dynamic>> parseHistory(dynamic raw) {
+      if (raw == null) return [];
+      if (raw is List) {
+        return raw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+      return [];
+    }
+
     return DeliveryTracking(
-      biteshipId: json['biteship_id']?.toString(),
-      courierName: json['courier_name']?.toString(),
-      courierCode: json['courier_code']?.toString(),
-      courierService: json['courier_service']?.toString(),
+      id: json['id']?.toString() ?? '',
+      biteshipOrderId: json['biteship_order_id']?.toString(),
+      biteshipTrackingId: json['biteship_tracking_id']?.toString(),
       trackingNumber: json['tracking_number']?.toString(),
-      trackingUrl: json['tracking_url']?.toString(),
+      trackingLink: json['tracking_link']?.toString(),
       deliveryFee:
           num.tryParse(json['delivery_fee']?.toString() ?? '0') ?? 0,
-      status: json['status']?.toString() ?? 'WAITING_PICKUP',
+      status: json['status']?.toString() ?? 'confirmed',
+      courier: json['courier'] is Map
+          ? Map<String, dynamic>.from(json['courier'] as Map)
+          : null,
+      origin: json['origin'] is Map
+          ? Map<String, dynamic>.from(json['origin'] as Map)
+          : null,
+      destination: json['destination'] is Map
+          ? Map<String, dynamic>.from(json['destination'] as Map)
+          : null,
+      history: parseHistory(json['history']),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'biteship_id': biteshipId,
-        'courier_name': courierName,
-        'courier_code': courierCode,
-        'courier_service': courierService,
+        'id': id,
+        'biteship_order_id': biteshipOrderId,
+        'biteship_tracking_id': biteshipTrackingId,
         'tracking_number': trackingNumber,
-        'tracking_url': trackingUrl,
+        'tracking_link': trackingLink,
         'delivery_fee': deliveryFee,
         'status': status,
+        'courier': courier,
+        'origin': origin,
+        'destination': destination,
+        'history': history,
       };
 }
 

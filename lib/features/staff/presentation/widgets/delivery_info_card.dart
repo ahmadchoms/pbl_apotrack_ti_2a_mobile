@@ -11,39 +11,30 @@ class DeliveryInfoCard extends StatelessWidget {
 
   const DeliveryInfoCard({super.key, required this.order});
 
-  // Mapping Kurir UX Friendly
   static const Map<String, String> _courierMap = {
-    'jne': 'JNE Express',
-    'jnt': 'J&T Express',
-    'sicepat': 'SiCepat',
-    'gojek': 'GoSend',
-    'grab': 'GrabExpress',
+    'jne':      'JNE Express',
+    'jnt':      'J&T Express',
+    'sicepat':  'SiCepat',
+    'gojek':    'GoSend',
+    'grab':     'GrabExpress',
     'anteraja': 'AnterAja',
-    'tiki': 'TIKI',
-    'pos': 'POS Indonesia',
+    'tiki':     'TIKI',
+    'pos':      'POS Indonesia',
   };
 
-  // Mapping Status Biteship UX Friendly
   static const Map<String, Map<String, dynamic>> _statusMap = {
-    'WAITING': {'label': 'Menunggu Proses', 'color': AppColors.textMid},
-    'ALLOCATING_COURIER': {
-      'label': 'Mencari Kurir',
-      'color': AppColors.warning,
-    },
-    'PICKING_UP': {'label': 'Menuju Penjemputan', 'color': AppColors.primary},
-    'PICKED_UP': {'label': 'Paket Diambil', 'color': AppColors.primary},
-    'DROPPING_OFF': {
-      'label': 'Sedang Diantar',
-      'color': AppColors.accentIndigo,
-    },
-    'DELIVERED': {'label': 'Sampai Tujuan', 'color': AppColors.success},
-    'COMPLETED': {'label': 'Selesai', 'color': AppColors.success},
-    'CANCELLED': {'label': 'Dibatalkan', 'color': AppColors.danger},
-    'REJECTED': {'label': 'Ditolak', 'color': AppColors.danger},
-    'COURIER_NOT_FOUND': {
-      'label': 'Kurir Tidak Ditemukan',
-      'color': AppColors.danger,
-    },
+    'confirmed':         {'label': 'Mencari Kurir',          'color': AppColors.warning},
+    'allocated':         {'label': 'Kurir Ditemukan',         'color': AppColors.warning},
+    'picking_up':        {'label': 'Menuju Apotek',           'color': AppColors.primary},
+    'picked':            {'label': 'Paket Diambil',           'color': AppColors.primary},
+    'dropping_off':      {'label': 'Sedang Diantar',          'color': AppColors.accentIndigo},
+    'delivered':         {'label': 'Sampai Tujuan',           'color': AppColors.success},
+    'cancelled':         {'label': 'Dibatalkan',              'color': AppColors.danger},
+    'rejected':          {'label': 'Ditolak Kurir',           'color': AppColors.danger},
+    'on_hold':           {'label': 'Ditahan Sementara',       'color': AppColors.warning},
+    'courier_not_found': {'label': 'Kurir Tidak Ditemukan',   'color': AppColors.danger},
+    'return_in_transit': {'label': 'Proses Pengembalian',     'color': AppColors.warning},
+    'returned':          {'label': 'Paket Dikembalikan',      'color': AppColors.danger},
   };
 
   Future<void> _openTrackingUrl(String url) async {
@@ -58,16 +49,12 @@ class DeliveryInfoCard extends StatelessWidget {
     final tracking = order.tracking;
     final address = order.address;
 
-    final statusKey = tracking?.status.toUpperCase() ?? 'WAITING';
-    final statusInfo =
-        _statusMap[statusKey] ??
-        {'label': statusKey, 'color': AppColors.textMid};
+    final statusKey = tracking?.status ?? 'confirmed';
+    final statusInfo = _statusMap[statusKey] ??
+        {'label': statusKey.toUpperCase().replaceAll('_', ' '), 'color': AppColors.textMid};
 
-    final rawCourier =
-        tracking?.courierCode?.toLowerCase() ??
-        tracking?.courierName?.toLowerCase() ??
-        '';
-    final courierName = _courierMap[rawCourier] ?? tracking?.courierName ?? '-';
+    final companyRaw = tracking?.courierCompany?.toLowerCase() ?? '';
+    final courierDisplayName = _courierMap[companyRaw] ?? companyRaw.toUpperCase();
 
     return AppCard(
       child: Column(
@@ -83,6 +70,8 @@ class DeliveryInfoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+
+          // Alamat tujuan
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -99,11 +88,8 @@ class DeliveryInfoCard extends StatelessWidget {
                     color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: const Icon(
-                    Icons.location_on_rounded,
-                    size: 18,
-                    color: AppColors.primary,
-                  ),
+                  child: const Icon(Icons.location_on_rounded,
+                      size: 18, color: AppColors.primary),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -120,7 +106,9 @@ class DeliveryInfoCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        address?['address_detail'] ?? '-',
+                        address?['address_detail']?.toString() ??
+                            tracking?.destination?['address']?.toString() ??
+                            '-',
                         style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textDark,
@@ -135,15 +123,16 @@ class DeliveryInfoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Info Kurir & Status
+
+          // Kurir & Status
           Row(
             children: [
               Expanded(
                 child: _InfoTile(
                   icon: Icons.local_shipping_rounded,
                   label: 'Kurir',
-                  value: tracking != null
-                      ? '$courierName - ${tracking.courierService?.toUpperCase()}'
+                  value: tracking != null && courierDisplayName.isNotEmpty
+                      ? courierDisplayName
                       : '-',
                 ),
               ),
@@ -152,14 +141,42 @@ class DeliveryInfoCard extends StatelessWidget {
                 child: _InfoTile(
                   icon: Icons.info_outline_rounded,
                   label: 'Status Kurir',
-                  value: statusInfo['label'],
+                  value: statusInfo['label'] as String,
+                  highlightColor: statusInfo['color'] as Color,
                   highlight: true,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          // Nomor Resi
+
+          // Nama & plat kurir
+          if (tracking?.driverName != null) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _InfoTile(
+                    icon: Icons.person_rounded,
+                    label: 'Nama Kurir',
+                    value: tracking!.driverName!,
+                  ),
+                ),
+                if (tracking.driverPlateNumber != null) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _InfoTile(
+                      icon: Icons.directions_car_rounded,
+                      label: 'Plat Nomor',
+                      value: tracking.driverPlateNumber!,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // No. Resi
           _InfoTile(
             icon: Icons.qr_code_rounded,
             label: 'No. Resi / AWB',
@@ -186,14 +203,16 @@ class DeliveryInfoCard extends StatelessWidget {
                   )
                 : null,
           ),
-          if (tracking?.trackingUrl != null) ...[
+
+          // Tombol lacak
+          if (tracking?.trackingLink != null) ...[
             const SizedBox(height: 16),
             AppButton(
               label: 'Lacak Paket (Biteship)',
               icon: Icons.open_in_new_rounded,
               backgroundColor: AppColors.primaryLight,
               foregroundColor: AppColors.primary,
-              onPressed: () => _openTrackingUrl(tracking!.trackingUrl!),
+              onPressed: () => _openTrackingUrl(tracking!.trackingLink!),
             ),
           ],
         ],
@@ -207,6 +226,7 @@ class _InfoTile extends StatelessWidget {
   final String label;
   final String value;
   final bool highlight;
+  final Color highlightColor;
   final Widget? trailing;
 
   const _InfoTile({
@@ -214,25 +234,23 @@ class _InfoTile extends StatelessWidget {
     required this.label,
     required this.value,
     this.highlight = false,
+    this.highlightColor = AppColors.primary,
     this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(
-        12,
-      ), // Padding disamakan dengan Alamat Tujuan
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
         border: highlight
-            ? Border.all(color: AppColors.primary.withOpacity(0.15))
+            ? Border.all(color: highlightColor.withOpacity(0.2))
             : null,
       ),
       child: Row(
         children: [
-          // Kontainer Ikon disamakan dengan Alamat Tujuan (34x34)
           Container(
             width: 34,
             height: 34,
@@ -260,7 +278,7 @@ class _InfoTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: highlight ? AppColors.primary : AppColors.textDark,
+                    color: highlight ? highlightColor : AppColors.textDark,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

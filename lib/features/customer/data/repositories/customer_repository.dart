@@ -29,6 +29,9 @@ class CustomerRepository {
   Future<Response> confirmReceived(String id) =>
       _dio.post('/orders/$id/confirm-received');
 
+  Future<Response> joinStaffByInvitation(String invitationUrl) =>
+    _dio.post('/staff/join', data: {'invitation_url': invitationUrl});
+
   // ── Profile methods ──────────────────────────────────────────
   Future<Response> fetchMe() => _dio.get('/me');
 

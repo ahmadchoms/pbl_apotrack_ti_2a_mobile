@@ -78,13 +78,129 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         _refreshOrderDetail();
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal update: $e'),
             backgroundColor: AppColors.danger,
           ),
         );
+      }
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _shipOrder() async {
+    String selectedCourierCode = 'grab';
+    String selectedCourierType = 'instant';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setStateDialog) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            'Pilih Kurir',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Pilih layanan kurir untuk pengiriman pesanan ini.'),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedCourierCode,
+                decoration: InputDecoration(
+                  labelText: 'Kurir',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'grab', child: Text('GrabExpress')),
+                  DropdownMenuItem(value: 'gojek', child: Text('GoSend')),
+                  DropdownMenuItem(value: 'jne', child: Text('JNE')),
+                  DropdownMenuItem(value: 'jnt', child: Text('J&T Express')),
+                  DropdownMenuItem(
+                      value: 'sicepat', child: Text('SiCepat')),
+                ],
+                onChanged: (val) =>
+                    setStateDialog(() => selectedCourierCode = val!),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: selectedCourierType,
+                decoration: InputDecoration(
+                  labelText: 'Tipe Layanan',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'instant', child: Text('Instant')),
+                  DropdownMenuItem(
+                      value: 'same_day', child: Text('Same Day')),
+                  DropdownMenuItem(
+                      value: 'regular', child: Text('Regular')),
+                ],
+                onChanged: (val) =>
+                    setStateDialog(() => selectedCourierType = val!),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accentIndigo,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text(
+                'Panggil Kurir',
+                style: TextStyle(color: AppColors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isUpdating = true);
+    try {
+      await ref.read(staffServiceProvider).shipOrder(
+            _order.id,
+            selectedCourierCode,
+            selectedCourierType,
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kurir berhasil dipanggil!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        _refreshOrderDetail();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memanggil kurir: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isUpdating = false);
     }
@@ -98,10 +214,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // Header Statis (Fixed)
           _buildModernHeader(context),
-
-          // Area Konten yang dapat di-scroll
           Expanded(
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
@@ -118,14 +231,12 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       ),
                       _buildOrderInfoCard(_order),
                       const SizedBox(height: 24),
-
                       const _SectionTitle(
                         title: 'Progres Operasional',
                         icon: Icons.timeline_rounded,
                       ),
                       OrderStatusTimeline(currentStatus: _order.orderStatus),
                       const SizedBox(height: 24),
-
                       if (isDelivery) ...[
                         const _SectionTitle(
                           title: 'Logistik & Lokasi',
@@ -137,7 +248,6 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                         _VerificationCodeCard(order: _order),
                         const SizedBox(height: 24),
                       ],
-
                       const _SectionTitle(
                         title: 'Rincian Pesanan',
                         icon: Icons.receipt_long_outlined,
@@ -147,10 +257,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                         formatRupiah: _formatRupiah,
                       ),
                       const SizedBox(height: 16),
-
                       _buildPaymentSummaryCard(_order),
                       const SizedBox(height: 16),
-
                       if (_order.hasPrescription ||
                           (_order.notes ?? '').isNotEmpty)
                         _MetadataCard(order: _order),
@@ -166,10 +274,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     );
   }
 
-  // Header menggunakan Container agar tetap diam di atas (Fixed)
   Widget _buildModernHeader(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.primaryDark],
@@ -267,9 +374,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     final cfg = _statusMap[order.orderStatus] ?? _statusMap['PENDING']!;
     final serviceConfig = {
       'DELIVERY': {'label': 'Antar ke Rumah'},
-
       'PICK_UP': {'label': 'Ambil di Apotek'},
-
       'WALK_IN': {'label': 'Pembelian Langsung'},
     };
     final config =
@@ -509,31 +614,35 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
   Widget _buildStickyActionPanel(BuildContext context) {
     final status = _order.orderStatus;
-    if (['SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED'].contains(status))
+    if (['SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED'].contains(status)) {
       return const SizedBox.shrink();
+    }
 
     String label = '';
     Color color = AppColors.primary;
 
-    if (status == 'PENDING')
+    if (status == 'PENDING') {
       label = 'Terima & Proses';
-    else if (status == 'PROCESSING')
+    } else if (status == 'PROCESSING') {
       label = 'Siap Diambil/Kirim';
-    else if (status == 'READY_FOR_PICKUP') {
+    } else if (status == 'READY_FOR_PICKUP') {
       label = _order.serviceType == 'DELIVERY'
           ? 'Panggil Kurir'
           : 'Selesaikan Pesanan';
       if (_order.serviceType == 'DELIVERY') color = AppColors.accentIndigo;
+    } else if (status == 'CANCEL_REQUESTED') {
+      label = 'Setujui Pembatalan';
+      color = AppColors.danger;
     }
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: AppColors.black.withOpacity(0.08),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -549,33 +658,45 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               onPressed: _isUpdating
                   ? null
                   : () {
-                      if (status == 'PENDING')
+                      if (status == 'PENDING') {
                         _updateStatus('PROCESSING');
-                      else if (status == 'PROCESSING')
+                      } else if (status == 'PROCESSING') {
                         _updateStatus('READY_FOR_PICKUP');
+                      } else if (status == 'READY_FOR_PICKUP') {
+                        if (_order.serviceType == 'DELIVERY') {
+                          _shipOrder();
+                        } else {
                       else if (status == 'READY_FOR_PICKUP') {
                         if (_order.serviceType == 'PICK_UP')
                           _updateStatus('COMPLETED');
+                        }
+                      } else if (status == 'CANCEL_REQUESTED') {
+                        _updateStatus('CANCELLED');
                       }
                     },
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.dangerLight,
-              borderRadius: BorderRadius.circular(16),
+          if (status != 'CANCEL_REQUESTED')
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.dangerLight,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: IconButton(
+                icon:
+                    const Icon(Icons.close_rounded, color: AppColors.danger),
+                onPressed:
+                    _isUpdating ? null : () => _updateStatus('CANCELLED'),
+              ),
             ),
-            child: IconButton(
-              icon: const Icon(Icons.close_rounded, color: AppColors.danger),
-              onPressed: _isUpdating ? null : () => _updateStatus('CANCELLED'),
-            ),
-          ),
         ],
       ),
     );
   }
 }
+
+// ── SECTION TITLE ─────────────────────────────────────────────
 
 class _SectionTitle extends StatelessWidget {
   final String title;
@@ -605,6 +726,8 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+// ── METADATA CARD ─────────────────────────────────────────────
+
 class _MetadataCard extends StatelessWidget {
   final Order order;
   const _MetadataCard({required this.order});
@@ -626,7 +749,8 @@ class _MetadataCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.warningLight,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.warning.withOpacity(0.2)),
+                border:
+                    Border.all(color: AppColors.warning.withOpacity(0.2)),
               ),
               child: Row(
                 children: [
@@ -792,6 +916,8 @@ class _MetadataCard extends StatelessWidget {
   }
 }
 
+// ── VERIFICATION CODE CARD ────────────────────────────────────
+
 class _VerificationCodeCard extends StatelessWidget {
   final Order order;
   const _VerificationCodeCard({required this.order});
@@ -837,7 +963,7 @@ class _VerificationCodeCard extends StatelessWidget {
   }
 }
 
-// ── HELPERS ──────────────────────────────────────────────────
+// ── HELPERS ───────────────────────────────────────────────────
 
 class _StatusCfg {
   final String label;
@@ -872,6 +998,12 @@ final _statusMap = {
     AppColors.primaryLight,
     Icons.local_shipping_rounded,
   ),
+  'DELIVERED': _StatusCfg(
+    'Terkirim',
+    AppColors.success,
+    AppColors.successLight,
+    Icons.check_circle_rounded,
+  ),
   'COMPLETED': _StatusCfg(
     'Selesai',
     AppColors.textMid,
@@ -883,6 +1015,12 @@ final _statusMap = {
     AppColors.danger,
     AppColors.dangerLight,
     Icons.cancel_rounded,
+  ),
+  'CANCEL_REQUESTED': _StatusCfg(
+    'Minta Batal',
+    AppColors.danger,
+    AppColors.dangerLight,
+    Icons.cancel_outlined,
   ),
 };
 

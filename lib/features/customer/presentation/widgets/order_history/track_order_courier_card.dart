@@ -7,21 +7,14 @@ class TrackOrderCourierCard extends StatelessWidget {
 
   const TrackOrderCourierCard({super.key, required this.tracking});
 
-  String _trackingStatusLabel(String status) {
-    switch (status) {
-      case 'PICKED_UP':
-        return 'Kurir mengambil pesanan';
-      case 'DROPPING_OFF':
-        return 'Kurir dalam perjalanan';
-      case 'DELIVERED':
-        return 'Pesanan telah diterima';
-      default:
-        return status;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final driverName = tracking.driverName ?? '—';
+    final company = tracking.courierCompany?.toUpperCase() ?? '—';
+    final plate = tracking.driverPlateNumber ?? '—';
+    final phone = tracking.driverPhone;
+    final photoUrl = tracking.driverPhotoUrl;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -37,17 +30,18 @@ class TrackOrderCourierCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // ── Avatar ─────────────────────────────
+          // Avatar kurir
           Stack(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 28,
                 backgroundColor: AppColors.primaryLight,
-                child: Icon(
-                  Icons.person_rounded,
-                  color: AppColors.primary,
-                  size: 30,
-                ),
+                backgroundImage:
+                    photoUrl != null ? NetworkImage(photoUrl) : null,
+                child: photoUrl == null
+                    ? const Icon(Icons.person_rounded,
+                        color: AppColors.primary, size: 30)
+                    : null,
               ),
               Positioned(
                 bottom: 2,
@@ -58,8 +52,7 @@ class TrackOrderCourierCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.success,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                        color: AppColors.white, width: 2),
+                    border: Border.all(color: AppColors.white, width: 2),
                   ),
                 ),
               ),
@@ -67,13 +60,13 @@ class TrackOrderCourierCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
 
-          // ── Info kurir ──────────────────────────
+          // Info kurir
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  tracking.courierName ?? '—',
+                  driverName,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
@@ -82,7 +75,7 @@ class TrackOrderCourierCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  tracking.courierService ?? '—',
+                  company,
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.primary,
@@ -92,34 +85,31 @@ class TrackOrderCourierCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.local_shipping_outlined,
+                    const Icon(Icons.directions_car_rounded,
                         size: 13, color: AppColors.textMuted),
                     const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        _trackingStatusLabel(tracking.status),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSlate,
-                          fontWeight: FontWeight.w500,
-                        ),
+                    Text(
+                      plate,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSlate,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-                if (tracking.trackingNumber != null &&
-                    tracking.trackingNumber!.isNotEmpty) ...[
+                if (phone != null) ...[
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.tag_rounded,
+                      const Icon(Icons.phone_rounded,
                           size: 13, color: AppColors.textMuted),
                       const SizedBox(width: 4),
                       Text(
-                        tracking.trackingNumber!,
+                        phone,
                         style: const TextStyle(
                           fontSize: 12,
-                          color: AppColors.textMuted,
+                          color: AppColors.textSlate,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
