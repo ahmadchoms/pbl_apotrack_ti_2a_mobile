@@ -38,7 +38,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   // --- ANIMATION ---
   late AnimationController _progressAnimCtrl;
 
-
   final _totalSteps = 3;
 
   @override

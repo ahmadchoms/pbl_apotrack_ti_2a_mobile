@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'web_storage_stub.dart' if (dart.library.html) 'web_storage_web.dart';
 
 /// Key constants untuk semua item yang disimpan di secure storage.
 abstract class StorageKeys {
   static const String authToken = 'auth_token';
   static const String userRole = 'user_role';
   static const String userId = 'user_id';
+  static const String userData = 'user_data';
 }
 
 /// Platform-agnostic storage abstraction.
@@ -36,33 +38,11 @@ class NativeStorageBackend implements StorageBackend {
   Future<void> deleteAll() => _storage.deleteAll();
 }
 
-/// Web implementation using in-memory Map.
-class WebStorageBackend implements StorageBackend {
-  final _store = <String, String>{};
-
-  @override
-  Future<String?> read(String key) async => _store[key];
-
-  @override
-  Future<void> write(String key, String value) async {
-    _store[key] = value;
-  }
-
-  @override
-  Future<void> delete(String key) async {
-    _store.remove(key);
-  }
-
-  @override
-  Future<void> deleteAll() async {
-    _store.clear();
-  }
-}
 
 /// Riverpod Provider untuk StorageBackend (auto-switch based on platform).
 final storageBackendProvider = Provider<StorageBackend>((ref) {
   if (kIsWeb) {
-    return WebStorageBackend();
+    return getWebStorage();
   }
   final storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -84,6 +64,14 @@ class SecureStorageService {
   Future<String?> getUserRole() => _backend.read(StorageKeys.userRole);
   Future<void> saveUserRole(String role) =>
       _backend.write(StorageKeys.userRole, role);
+
+  Future<String?> getUserData() => _backend.read(StorageKeys.userData);
+  Future<void> saveUserData(String data) =>
+      _backend.write(StorageKeys.userData, data);
+
+  Future<String?> getUserId() => _backend.read(StorageKeys.userId);
+  Future<void> saveUserId(String id) =>
+      _backend.write(StorageKeys.userId, id);
 
   Future<void> clearAll() => _backend.deleteAll();
 }

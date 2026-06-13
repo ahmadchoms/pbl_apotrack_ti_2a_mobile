@@ -1,25 +1,23 @@
-import 'dart:typed_data';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/cart.dart';
+import '../../data/models/order_model.dart';
 import '../../data/services/order_service.dart';
 import 'address/address_model.dart';
 import 'qris_payment_screen.dart';
-import 'verification_screen.dart';
+import 'verifikasi_pengambilan_screen.dart';
 
 class OrderConfirmationScreen extends ConsumerStatefulWidget {
   final List<CartItem> cartItems;
-  final String deliveryMethod;
-  final String paymentMethod;
+  final String deliveryMethod;  // 'kirim' | 'ambil'
+  final String paymentMethod;   // 'cash' | 'qris'
   final int total;
   final int shippingCost;
   final AddressModel? deliveryAddress;
   final String pharmacyId;
-  final Uint8List? prescriptionBytes;
-  final String? prescriptionFileName;
-  final String? courierCode;
-  final String? courierService;
+  final File? prescriptionFile;
 
   const OrderConfirmationScreen({
     super.key,
@@ -30,10 +28,7 @@ class OrderConfirmationScreen extends ConsumerStatefulWidget {
     required this.shippingCost,
     this.deliveryAddress,
     required this.pharmacyId,
-    this.prescriptionBytes,
-    this.prescriptionFileName,
-    this.courierCode,
-    this.courierService,
+    this.prescriptionFile,
   });
 
   @override
@@ -77,95 +72,102 @@ class _OrderConfirmationScreenState
   Future<void> _confirmOrder() async {
     setState(() => _isSubmitting = true);
     try {
-      final service = ref.read(orderServiceProvider);
+      final isQris = widget.paymentMethod == 'qris';
+      final isDelivery = widget.deliveryMethod == 'kirim';
 
-      final items = widget.cartItems
-          .map((item) => ({
-                'id': item.id,
-                'quantity': item.quantity,
-                'price': item.price,
-              }))
-          .toList();
+      if (isQris) {
+        // QRIS: order dibuat + bayar di QrisPaymentScreen
+        if (!mounted) return;
+        final items = widget.cartItems
+            .map((item) => {
+                  'medicine_id': item.id,
+                  'medicine_name': item.name,
+                  'unit_name': item.unit,
+                  'requires_prescription': false,
+                  'quantity': item.quantity,
+                  'price': item.price,
+                  'subtotal': item.price * item.quantity,
+                })
+            .toList();
 
-      final displayItems = widget.cartItems
-          .map((item) => {
-                'medicine_id': item.id,
-                'medicine_name': item.name,
-                'quantity': item.quantity,
-                'price': item.price,
-                'subtotal': item.price * item.quantity,
-              })
-          .toList();
-
-      final order = await service.createOrder(
-        pharmacyId: widget.pharmacyId,
-        items: items,
-        subtotalAmount: widget.total,
-        serviceType: widget.deliveryMethod == 'kirim' ? 'DELIVERY' : 'PICK_UP',
-        paymentMethod: widget.paymentMethod == 'cash' ? 'CASH' : 'E-WALLET',
-        addressId: widget.deliveryAddress?.id,
-        notes: null,
-        shippingCost: widget.shippingCost,
-        courierCode: widget.courierCode,
-        courierService: widget.courierService,
-      );
-
-      if (!mounted) return;
-
-      CartState().clear();
-
-      final orderId = order['id'] as String;
-      final serviceType = widget.deliveryMethod == 'kirim' ? 'DELIVERY' : 'PICK_UP';
-      final pharmacyName = widget.cartItems.isNotEmpty ? widget.cartItems.first.pharmacyName : '';
-
-      if (widget.prescriptionBytes != null) {
-        try {
-          await service.uploadPrescription(
-            orderId,
-            widget.prescriptionBytes!,
-            widget.prescriptionFileName ?? 'prescription',
-          );
-        } catch (e) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Gagal upload resep: ${e.toString()}'),
-              backgroundColor: AppColors.danger,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-          );
-        }
-      }
-
-      if (!mounted) return;
-
-      if (widget.paymentMethod == 'qris') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => QrisPaymentScreen(
-              orderId: orderId,
-              pharmacyName: pharmacyName,
-              items: displayItems,
-              subtotal: widget.total - widget.shippingCost,
+              pharmacyId: widget.pharmacyId,
+              pharmacyName: widget.cartItems.isNotEmpty
+                  ? widget.cartItems.first.pharmacyName
+                  : 'Apotek',
+              items: items,
+              subtotal: widget.total,
               shippingCost: widget.shippingCost,
-              serviceType: serviceType,
             ),
           ),
         );
+        return;
+      }
+
+      // Cash: buat order langsung
+      final service = ref.read(orderServiceProvider);
+      final cartItemModels = widget.cartItems
+          .map((item) => CartItemModel(
+                medicineId: item.id,
+                medicineName: item.name,
+                unitName: item.unit,
+                requiresPrescription: false,
+                quantity: item.quantity,
+                price: item.price,
+                subtotal: item.price * item.quantity,
+              ))
+          .toList();
+
+      final order = await service.createOrder(
+        pharmacyId: widget.pharmacyId,
+        items: cartItemModels,
+        subtotal: widget.total.toDouble(),
+        serviceType: isDelivery ? 'DELIVERY' : 'PICK_UP',
+        paymentMethod: 'CASH',
+        addressId: widget.deliveryAddress?.id,
+        notes: null,
+        shippingCost: widget.shippingCost.toDouble(),
+      );
+
+      if (!mounted) return;
+
+      final itemsForNext = order.items.map((item) => {
+        'medicine_name': item.medicineName,
+        'medicine_id': item.medicineId,
+        'quantity': item.quantity,
+        'price': item.price.toInt(),
+        'subtotal': item.subtotal.toInt(),
+      }).toList();
+
+      if (isDelivery) {
+        // Cash + Delivery: go home with success
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Pesanan berhasil dibuat!'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+        Navigator.of(context).popUntil((route) => route.isFirst);
       } else {
+        // Cash + Pickup: show QR langsung
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => VerificationScreen(
-              orderId: orderId,
-              orderNumber: order['order_number']?.toString() ?? '',
-              verificationCode: order['verification_code']?.toString() ?? '',
-              pharmacyName: pharmacyName,
-              serviceType: serviceType,
-              items: displayItems,
+            builder: (_) => VerifikasiPengambilanScreen(
+              orderId: order.id,
+              orderNumber: order.orderNumber,
+              verificationCode: order.verificationCode,
+              pharmacyName: widget.cartItems.isNotEmpty
+                  ? widget.cartItems.first.pharmacyName
+                  : 'Apotek',
+              pharmacyId: widget.pharmacyId,
+              items: itemsForNext,
               total: widget.total,
             ),
           ),
@@ -176,7 +178,7 @@ class _OrderConfirmationScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal membuat pesanan: ${e.toString()}'),
-          backgroundColor: AppColors.danger,
+          backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12)),
@@ -200,7 +202,7 @@ class _OrderConfirmationScreenState
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Konfirmasi Pesanan',
+          'Order Confirmation',
           style: TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 18,
@@ -219,7 +221,6 @@ class _OrderConfirmationScreenState
           _buildEstimationBanner(),
           _buildPaymentMethodSection(),
           _buildNotice(),
-          _buildPrescriptionSection(),
           _buildOrderSummary(),
           _buildBanner(context),
           _buildTotalTagihan(),
@@ -247,8 +248,8 @@ class _OrderConfirmationScreenState
             const SizedBox(width: 10),
             Text(
               widget.deliveryMethod == 'kirim'
-                  ? 'Estimasi pengiriman: 30-45 menit'
-                  : 'Estimasi siap ambil: 15-20 menit',
+                  ? '⏱  Estimasi pengiriman: 30–45 menit'
+                  : '⏱  Estimasi siap ambil: 15–20 menit',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -368,94 +369,6 @@ class _OrderConfirmationScreenState
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // ── Prescription Section ─────────────────────────────────────────
-  Widget _buildPrescriptionSection() {
-    if (widget.prescriptionBytes == null) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionLabel('RESEP DOKTER'),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade100),
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: (widget.prescriptionFileName ?? '').endsWith('.pdf')
-                      ? Container(
-                          width: 52,
-                          height: 52,
-                          color: Colors.red.withOpacity(0.1),
-                          child: const Icon(
-                            Icons.picture_as_pdf_rounded,
-                            color: Colors.red,
-                            size: 28,
-                          ),
-                        )
-                      : Image.memory(
-                          widget.prescriptionBytes!,
-                          width: 52,
-                          height: 52,
-                          fit: BoxFit.cover,
-                        ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Resep Terlampir',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                          color: AppColors.textDark,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        widget.prescriptionFileName ?? 'file',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textLight,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text(
-                    'TERLAMPIR',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF10B981),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -643,6 +556,33 @@ class _OrderConfirmationScreenState
                     color: Colors.grey.shade100,
                     indent: 16,
                     endIndent: 16),
+
+                // Prescription status
+                _summaryBlock(
+                  icon: Icons.assignment_turned_in_rounded,
+                  label: 'STATUS RESEP',
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Sudah Terverifikasi',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF10B981),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

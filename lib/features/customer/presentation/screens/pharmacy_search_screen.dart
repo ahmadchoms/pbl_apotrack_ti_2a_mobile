@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/network/api_client.dart';
 import '../../data/services/pharmacy_service.dart';
 
 class PharmacySearchScreen extends ConsumerStatefulWidget {
@@ -14,43 +12,12 @@ class PharmacySearchScreen extends ConsumerStatefulWidget {
 
 class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
-  late final PharmacyService _pharmacyService;
   List<Map<String, dynamic>> _pharmacies = [];
   bool _isLoading = true;
-  Position? _currentPosition;
-  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _pharmacyService = PharmacyService(ref.read(dioProvider));
-    _initLocation();
-  }
-
-  Future<void> _initLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      _loadPharmacies();
-      return;
-    }
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        _loadPharmacies();
-        return;
-      }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      _loadPharmacies();
-      return;
-    }
-    try {
-      final pos = await Geolocator.getCurrentPosition();
-      if (mounted) {
-        setState(() => _currentPosition = pos);
-      }
-    } catch (_) {}
     _loadPharmacies();
   }
 
@@ -62,11 +29,7 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
 
   Future<void> _loadPharmacies() async {
     try {
-      final pharmacies = await _pharmacyService.getPharmacies(
-        latitude: _currentPosition?.latitude,
-        longitude: _currentPosition?.longitude,
-        search: _searchQuery.isNotEmpty ? _searchQuery : null,
-      );
+      final pharmacies = await ref.read(pharmacyServiceProvider).getPharmacies();
       if (mounted) setState(() { _pharmacies = pharmacies; _isLoading = false; });
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
@@ -82,10 +45,6 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: Column(
         children: [
@@ -109,10 +68,7 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
                 ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              onChanged: (value) {
-                _searchQuery = value;
-                _loadPharmacies();
-              },
+              onChanged: (_) => setState(() {}),
             ),
           ),
           const SizedBox(height: 16),
@@ -174,15 +130,6 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
                   '${pharmacy['rating'] ?? ''}',
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                 ),
-                const SizedBox(width: 12),
-                if (pharmacy['distance'] != null) ...[
-                  const Icon(Icons.location_on_rounded, size: 14, color: AppColors.textLight),
-                  const SizedBox(width: 2),
-                  Text(
-                    _formatDistance((pharmacy['distance'] as num).toDouble()),
-                    style: const TextStyle(fontSize: 11, color: AppColors.textLight),
-                  ),
-                ],
               ],
             ),
           ],
@@ -190,12 +137,5 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
         trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textLight),
       ),
     );
-  }
-
-  String _formatDistance(double km) {
-    if (km < 1) {
-      return '${(km * 1000).toStringAsFixed(0)} m';
-    }
-    return '${km.toStringAsFixed(1)} km';
   }
 }

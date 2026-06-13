@@ -7,8 +7,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/staff_provider.dart';
 import '../providers/staff_notification_provider.dart';
+import '../../data/services/staff_service.dart';
 import '../../data/models/medicine.dart';
 import '../../data/models/order.dart';
+import 'package:mobile/features/staff/presentation/screens/scanner_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -253,10 +255,51 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           _ActionCard(
             title: 'Scan QR',
-            subtitle: 'Check-in Pesanan',
+            subtitle: 'Verifikasi Pengambilan',
             icon: Icons.qr_code_scanner_rounded,
             color: AppColors.primary,
-            onTap: () => context.push('/staff/scanner'),
+            onTap: () async {
+              final code = await Navigator.push<String>(
+                context,
+                MaterialPageRoute(builder: (_) => const ScannerScreen()),
+              );
+              if (code == null || code.isEmpty) return;
+
+              if (!context.mounted) return;
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const Center(child: CircularProgressIndicator()),
+              );
+
+              try {
+                final order = await ref.read(staffServiceProvider).verifyOrderByCode(code);
+                if (!context.mounted) return;
+                Navigator.pop(context); // tutup loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Verifikasi berhasil!'),
+                    backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
+                    margin: EdgeInsets.all(16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  ),
+                );
+                context.push('/staff/order-detail', extra: order);
+              } catch (e) {
+                if (!context.mounted) return;
+                Navigator.pop(context); // tutup loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Verifikasi gagal: $e'),
+                    backgroundColor: AppColors.danger,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  ),
+                );
+              }
+            },
           ),
           const SizedBox(width: 16),
           _ActionCard(

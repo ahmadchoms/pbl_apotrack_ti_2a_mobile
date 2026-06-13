@@ -1,22 +1,59 @@
-import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/network/customer_api_service.dart';
+import '../models/pharmacy_model.dart';
 
 class PharmacyService {
-  final Dio _dio;
+  PharmacyService({required CustomerApiService api}) : _api = api;
+  final CustomerApiService _api;
 
-  PharmacyService(this._dio);
+  Future<List<Map<String, dynamic>>> getPharmacies() async {
+    final data = await _api.getPharmacies();
+    return data.map((e) => e.toJson()).toList();
+  }
 
-  Future<List<Map<String, dynamic>>> getPharmacies({double? latitude, double? longitude, String? search}) async {
-    final params = <String, dynamic>{};
-    if (latitude != null) params['latitude'] = latitude;
-    if (longitude != null) params['longitude'] = longitude;
-    if (search != null && search.isNotEmpty) params['search'] = search;
-    final response = await _dio.get('/pharmacies', queryParameters: params.isNotEmpty ? params : null);
-    final list = response.data['data'] as List<dynamic>;
-    return list.cast<Map<String, dynamic>>();
+  Future<List<PharmacyModel>> getActivePharmacies() async {
+    final data = await _api.getPharmacies();
+    return data
+        .map((e) => PharmacyModel.fromJson(e.toJson()))
+        .toList();
   }
 
   Future<Map<String, dynamic>?> getPharmacyById(String id) async {
-    final response = await _dio.get('/pharmacies/$id');
-    return response.data['data'] as Map<String, dynamic>?;
+    try {
+      final pharmacy = await _api.getPharmacyDetail(id);
+      return pharmacy.toJson();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<PharmacyModel?> getPharmacyModel(String id) async {
+    try {
+      final pharmacy = await _api.getPharmacyDetail(id);
+      return PharmacyModel.fromJson(pharmacy.toJson());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<List<PharmacyModel>> searchPharmacies(String query) async {
+    final data = await _api.getPharmacies(search: query);
+    return data
+        .map((e) => PharmacyModel.fromJson(e.toJson()))
+        .toList();
   }
 }
+
+// ── Riverpod Providers ────────────────────────────────────────────────
+final pharmacyServiceProvider = Provider<PharmacyService>((ref) {
+  return PharmacyService(api: ref.watch(customerApiServiceProvider));
+});
+
+final activePharmaciesProvider = FutureProvider<List<PharmacyModel>>((ref) {
+  return ref.watch(pharmacyServiceProvider).getActivePharmacies();
+});
+
+final pharmacyDetailProvider =
+    FutureProvider.family<PharmacyModel?, String>((ref, pharmacyId) {
+  return ref.watch(pharmacyServiceProvider).getPharmacyModel(pharmacyId);
+});

@@ -35,7 +35,7 @@ class AuthState {
 // ─────────────────────────────────────────────
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._authService) : super(const AuthState()) {
+  AuthNotifier(this._authService) : super(const AuthState(isLoading: true)) {
     Future.delayed(Duration.zero, () => restoreSession());
   }
 

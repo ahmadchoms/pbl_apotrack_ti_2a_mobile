@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/network/api_client.dart';
 import '../../data/models/order.dart';
+import '../../data/models/order_model.dart';
 import '../../data/services/order_service.dart';
 
 class OrderDetailScreen extends ConsumerStatefulWidget {
@@ -16,31 +16,32 @@ class OrderDetailScreen extends ConsumerStatefulWidget {
 
 class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   late final OrderService _orderService;
-  Map<String, dynamic>? _order;
+  OrderModel? _order;
   List<Map<String, dynamic>> _items = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _orderService = OrderService(ref.read(dioProvider));
+    _orderService = ref.read(orderServiceProvider);
     _loadOrder();
   }
 
   Future<void> _loadOrder() async {
     try {
-      final order = await _orderService.getOrderById(widget.orderId);
-      if (order != null) {
-        final itemsRaw = order['order_items'] as List<dynamic>? ?? [];
-        if (mounted) {
-          setState(() {
-            _order = order;
-            _items = itemsRaw.cast<Map<String, dynamic>>();
-            _isLoading = false;
-          });
-        }
-      } else if (mounted) {
-        setState(() => _isLoading = false);
+      _order = await _orderService.getOrderById(widget.orderId);
+      if (mounted) {
+        setState(() {
+          _items = _order!.items
+              .map((item) => {
+                    'medicine_name': item.medicineName,
+                    'quantity': item.quantity,
+                    'price': item.price,
+                    'subtotal': item.subtotal,
+                  })
+              .toList();
+          _isLoading = false;
+        });
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
@@ -69,7 +70,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     }
   }
 
-  bool get _isDelivery => _order?['service_type'] == 'DELIVERY';
+  bool get _isDelivery => _order?.serviceType == 'DELIVERY';
 
   @override
   Widget build(BuildContext context) {
@@ -90,8 +91,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     }
 
     final order = _order!;
-    final status = _parseStatus(order['order_status'] ?? 'PENDING');
-    final pharmacy = order['pharmacies'] as Map<String, dynamic>?;
+    final status = _parseStatus(order.orderStatus);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F8),
@@ -103,7 +103,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           children: [
             _buildStatusCard(status, order),
             const SizedBox(height: 16),
-            _buildInfoCard(order, pharmacy),
+            _buildInfoCard(order),
             const SizedBox(height: 16),
             _buildItemsCard(order),
             const SizedBox(height: 16),
@@ -127,14 +127,14 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         ),
       ),
       title: Text(
-        _order != null ? 'Pesanan ${_order!['order_number'] ?? ''}' : 'Detail Pesanan',
+        _order != null ? 'Pesanan ${_order!.orderNumber}' : 'Detail Pesanan',
         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textDark),
       ),
       centerTitle: true,
     );
   }
 
-  Widget _buildStatusCard(OrderStatus status, Map<String, dynamic> order) {
+  Widget _buildStatusCard(OrderStatus status, OrderModel order) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -158,7 +158,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            _formatDate(order['created_at']),
+            _formatDate(order.createdAt.toString()),
             style: const TextStyle(fontSize: 12, color: AppColors.textLight, fontWeight: FontWeight.w500),
           ),
         ],
@@ -166,7 +166,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     );
   }
 
-  Widget _buildInfoCard(Map<String, dynamic> order, Map<String, dynamic>? pharmacy) {
+  Widget _buildInfoCard(OrderModel order) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -186,13 +186,13 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          _infoRow(Icons.store_rounded, 'Apotek', pharmacy?['name'] ?? '-'),
+          _infoRow(Icons.store_rounded, 'Apotek', 'Apotek'),
           const SizedBox(height: 8),
-          _infoRow(Icons.receipt_long_rounded, 'No. Pesanan', order['order_number'] ?? '-'),
+          _infoRow(Icons.receipt_long_rounded, 'No. Pesanan', order.orderNumber),
           const SizedBox(height: 8),
           _infoRow(Icons.local_shipping_rounded, 'Layanan', _isDelivery ? 'Dikirim' : 'Ambil di Apotek'),
           const SizedBox(height: 8),
-          _infoRow(Icons.calendar_month_rounded, 'Tanggal', _formatDate(order['created_at'])),
+          _infoRow(Icons.calendar_month_rounded, 'Tanggal', _formatDate(order.createdAt.toString())),
         ],
       ),
     );
@@ -215,7 +215,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     );
   }
 
-  Widget _buildItemsCard(Map<String, dynamic> order) {
+  Widget _buildItemsCard(OrderModel order) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -249,7 +249,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${item['quantity']} x ${item['unit_name'] ?? ''}',
+                            '${item['quantity']} x ${item['unit'] ?? ''}',
                             style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontWeight: FontWeight.w500),
                           ),
                         ],
@@ -267,11 +267,11 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     );
   }
 
-  Widget _buildPaymentCard(Map<String, dynamic> order) {
-    final subtotal = (order['subtotal_amount'] as num?)?.toInt() ?? 0;
-    final shipping = (order['shipping_cost'] as num?)?.toInt() ?? 0;
-    final total = (order['grand_total'] as num?)?.toInt() ?? 0;
-    final paymentMethod = order['payment_method'] as String? ?? '-';
+  Widget _buildPaymentCard(OrderModel order) {
+    final subtotal = order.subtotalAmount.toInt();
+    final shipping = order.shippingCost.toInt();
+    final total = order.grandTotal.toInt();
+    final paymentMethod = order.paymentMethod;
 
     return Container(
       width: double.infinity,
@@ -339,8 +339,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   String _paymentLabel(String method) {
     switch (method) {
       case 'QRIS': return 'QRIS';
-      case 'BANK_TRANSFER': return 'Transfer Bank';
-      case 'VIRTUAL_ACCOUNT': return 'Rekening Virtual';
+      case 'BANK_TRANSFER': return 'Bank Transfer';
+      case 'VIRTUAL_ACCOUNT': return 'Virtual Account';
       case 'COD': return 'COD';
       default: return method;
     }

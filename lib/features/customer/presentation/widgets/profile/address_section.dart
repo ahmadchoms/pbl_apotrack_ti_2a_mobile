@@ -19,18 +19,115 @@ class AddressSection extends ConsumerWidget {
     this.onRefresh,
   });
 
-  Future<void> _deleteAddress(
+  Future<void> _confirmDelete(
     BuildContext context,
     WidgetRef ref,
     String id,
+    String label,
   ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: AppColors.dangerLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.delete_outline_rounded,
+                color: AppColors.danger,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Hapus Alamat?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Alamat "$label" akan dihapus permanen dan tidak bisa dikembalikan.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textMid,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: AppColors.divider),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: AppColors.textMid,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.danger,
+                    foregroundColor: AppColors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Hapus',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
     try {
       await ref.read(customerProfileProvider.notifier).deleteAddress(id);
       onRefresh?.call();
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.danger,
+          ),
         );
       }
     }
@@ -50,18 +147,18 @@ class AddressSection extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF94A3B8),
+                color: AppColors.textMuted,
                 letterSpacing: 1.5,
               ),
             ),
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: AppColors.black.withOpacity(0.04),
                   blurRadius: 15,
                   offset: const Offset(0, 4),
                 ),
@@ -71,21 +168,27 @@ class AddressSection extends ConsumerWidget {
               children: [
                 _AddressTile(
                   icon: Icons.location_on_outlined,
-                  iconColor: const Color(0xFF64748B),
+                  iconColor: AppColors.textSlate,
                   title: 'Alamat Utama',
                   subtitle: primaryAddress?.displayAddress,
                   isFirst: true,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CustomerEditAddressScreen(
-                        isAdd: primaryAddress == null,
-                        address: primaryAddress,
-                      ),
-                    ),
-                  ).then((_) => onRefresh?.call()),
+                  onTap: () => context
+                      .push(
+                        AppRouter.customerEditAddress,
+                        extra: {
+                          'isAdd': primaryAddress == null,
+                          if (primaryAddress != null)
+                            'address': primaryAddress,
+                        },
+                      )
+                      .then((_) => onRefresh?.call()),
                   onDelete: primaryAddress != null
-                      ? () => _deleteAddress(context, ref, primaryAddress!.id)
+                      ? () => _confirmDelete(
+                            context,
+                            ref,
+                            primaryAddress!.id,
+                            primaryAddress!.label,
+                          )
                       : null,
                 ),
                 ...otherAddresses.map(
@@ -94,19 +197,21 @@ class AddressSection extends ConsumerWidget {
                       const Divider(height: 1, indent: 20, endIndent: 20),
                       _AddressTile(
                         icon: Icons.location_on_outlined,
-                        iconColor: const Color(0xFF94A3B8),
+                        iconColor: AppColors.textMuted,
                         title: addr.label,
                         subtitle: addr.displayAddress,
-                        onTap: () => Navigator.push(
+                        onTap: () => context
+                            .push(
+                              AppRouter.customerEditAddress,
+                              extra: {'isAdd': false, 'address': addr},
+                            )
+                            .then((_) => onRefresh?.call()),
+                        onDelete: () => _confirmDelete(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => CustomerEditAddressScreen(
-                              isAdd: false,
-                              address: addr,
-                            ),
-                          ),
-                        ).then((_) => onRefresh?.call()),
-                        onDelete: () => _deleteAddress(context, ref, addr.id),
+                          ref,
+                          addr.id,
+                          addr.label,
+                        ),
                       ),
                     ],
                   ),
@@ -114,9 +219,9 @@ class AddressSection extends ConsumerWidget {
                 const Divider(height: 1, indent: 20, endIndent: 20),
                 _AddressTile(
                   icon: Icons.add_location_alt_outlined,
-                  iconColor: const Color(0xFF1D70F5),
+                  iconColor: AppColors.primary,
                   title: 'Tambah Alamat',
-                  titleColor: const Color(0xFF1D70F5),
+                  titleColor: AppColors.primary,
                   isLast: true,
                   onTap: () => Navigator.push(
                     context,
@@ -166,7 +271,7 @@ class _AddressTile extends StatelessWidget {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: titleColor ?? const Color(0xFF1E293B),
+          color: titleColor ?? AppColors.textPrimary,
         ),
       ),
       subtitle: subtitle != null
@@ -174,7 +279,7 @@ class _AddressTile extends StatelessWidget {
               subtitle!,
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: AppColors.textSlate,
                 height: 1.4,
               ),
             )
@@ -194,11 +299,15 @@ class _AddressTile extends StatelessWidget {
                 ),
               ),
             ),
-          const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1)),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.textSubtle,
+          ),
         ],
       ),
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: isFirst ? const Radius.circular(20) : Radius.zero,

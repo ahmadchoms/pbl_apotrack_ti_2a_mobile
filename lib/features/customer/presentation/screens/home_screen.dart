@@ -5,16 +5,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../routes/app_router.dart';
 import '../../data/models/cart.dart';
-import '../../data/models/customer_address.dart';
-import '../../data/services/medicine_service.dart';
-import '../../data/services/notification_service.dart';
-import '../../../../core/models/notification_model.dart';
-import '../providers/customer_profile_provider.dart';
 import 'cart_screen.dart';
-import 'customer_profile_screen.dart' show AccountHubScreen;
 import 'notification.dart';
 
-// ─── Home Screen ───────────────────────────────────────────────────
 class CustomerHomeScreen extends ConsumerStatefulWidget {
   const CustomerHomeScreen({super.key});
 
@@ -24,7 +17,6 @@ class CustomerHomeScreen extends ConsumerStatefulWidget {
 
 class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   int _cartCount = 0;
-  int _unreadNotifCount = 0;
   List<Map<String, dynamic>> _medicines = [];
   bool _isLoading = true;
 
@@ -32,29 +24,20 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   void initState() {
     super.initState();
     _loadData();
-    _loadUnreadCount();
-    ref.read(customerProfileProvider.notifier).loadAll();
-  }
-
-  Future<void> _loadUnreadCount() async {
-    try {
-      final dio = ref.read(dioProvider);
-      final service = NotificationService(dio);
-      final data = await service.getNotifications();
-      if (mounted) {
-        final models = data.map((e) => NotificationModel.fromJson(e)).toList();
-        setState(() => _unreadNotifCount = models.where((n) => !n.isRead).length);
-      }
-    } catch (_) {}
   }
 
   Future<void> _loadData() async {
     try {
       final dio = ref.read(dioProvider);
-      final medicines = await MedicineService(dio).getMedicines(limit: 4);
+      final response = await dio.get('/medicines', queryParameters: {
+        'per_page': 4,
+        'sort_by': 'name',
+        'sort_order': 'asc',
+      });
+      final list = response.data['data'] as List<dynamic>;
       if (mounted) {
         setState(() {
-          _medicines = medicines;
+          _medicines = list.cast<Map<String, dynamic>>();
           _isLoading = false;
         });
       }
@@ -129,14 +112,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     );
   }
 
-  // ── Header ───────────────────────────────────────────────────────
   Widget _buildHeader() {
-    final addresses = ref.watch(customerProfileProvider).addresses;
-    final primaryAddress = addresses.cast<CustomerAddress?>().firstWhere(
-      (a) => a?.isPrimary == true,
-      orElse: () => null,
-    );
-
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -147,70 +123,36 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: Row(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Lokasi Anda',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Lokasi Anda',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
-                    GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const AccountHubScreen()),
+                  ),
+                  const Row(
+                    children: [
+                      Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text('Seturan, Yogyakarta',
+                        style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              primaryAddress?.displayAddress ?? 'Atur alamat',
-                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                      Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
+                    ],
+                  ),
+                ],
               ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen())).then((_) => _loadUnreadCount());
-                },
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    _buildHeaderIcon(Icons.notifications_none_rounded),
-                    if (_unreadNotifCount > 0)
-                      Positioned(
-                        top: -4, right: -4,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
-                          constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                          child: Text(
-                            _unreadNotifCount > 99 ? '99+' : '$_unreadNotifCount',
-                            style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+              const Spacer(),
+              _buildHeaderIcon(Icons.notifications_none_rounded, onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen()));
+              }),
               const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
@@ -245,10 +187,21 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     );
   }
 
+  Widget _buildHeaderIcon(IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: Colors.white, size: 20),
+      ),
+    );
+  }
+
   Widget _buildGreetingSection() {
-    final profile = ref.watch(customerProfileProvider).profile;
-    debugPrint('_buildGreetingSection — profile: ${profile?.username} / ${profile?.email} / id=${profile?.id}');
-    final displayName = profile?.username ?? 'Cipuy';
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -264,8 +217,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Halo, $displayName!',
-              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+            const Text('Halo, Cipuy!',
+              style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             const Text('Cari Obat Apa?',
@@ -297,21 +250,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     );
   }
 
-  Widget _buildHeaderIcon(IconData icon, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: Colors.white, size: 20),
-      ),
-    );
-  }
-
-// ─── CARI APOTEK TERDEKAT ────────────────────────────────────────
   Widget _buildFindPharmacySection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
@@ -337,7 +275,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           ),
           child: Stack(
             children: [
-              // Background icon dekoratif
               Positioned(
                 right: -10,
                 bottom: -10,
@@ -349,7 +286,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
               ),
               Row(
                 children: [
-                  // Icon kiri
                   Container(
                     width: 52,
                     height: 52,
@@ -364,7 +300,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  // Teks
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,7 +325,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Panah kanan
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(

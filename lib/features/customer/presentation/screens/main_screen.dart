@@ -3,11 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_client.dart';
-import '../../data/services/notification_service.dart';
-import '../../../../core/models/notification_model.dart';
 import 'home_screen.dart';
 import 'notification.dart';
 import 'customer_profile_screen.dart';
+import 'order_history_screen.dart';
 import 'scanner_screen.dart';
 import 'scan_result.dart';
 
@@ -43,7 +42,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   final List<Widget> _screens = [
     const CustomerHomeScreen(),
     const NotificationScreen(showBack: false),
-    const Center(child: Text('Riwayat (Coming Soon)')),
+    const OrderHistoryScreen(),
     const AccountHubScreen(),
   ];
 
@@ -155,7 +154,8 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _navItem(0, Icons.home_rounded, Icons.home_outlined, 'Beranda'),
-                _navNotifItem(),
+                _navItem(1, Icons.notifications_rounded,
+                    Icons.notifications_none_rounded, 'Notifikasi'),
                 const SizedBox(width: 60),
                 _navItem(2, Icons.assignment_rounded, Icons.assignment_outlined, 'Riwayat'),
                 _navItem(3, Icons.person_rounded,
@@ -163,63 +163,6 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _navNotifItem() {
-    final isSelected = _currentIndex == 1;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() => _currentIndex = 1);
-        _loadUnreadCount();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  isSelected ? Icons.notifications_rounded : Icons.notifications_none_rounded,
-                  color: isSelected ? AppColors.primary : AppColors.textLight,
-                  size: 24,
-                ),
-                if (_unreadNotifCount > 0)
-                  Positioned(
-                    top: -4, right: -8,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
-                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                      child: Text(
-                        _unreadNotifCount > 99 ? '99+' : '$_unreadNotifCount',
-                        style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Notifikasi',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                color: isSelected ? AppColors.primary : AppColors.textLight,
-              ),
-            ),
-          ],
         ),
       ),
     );

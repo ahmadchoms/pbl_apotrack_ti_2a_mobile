@@ -20,6 +20,7 @@ class OrderDetailScreen extends ConsumerStatefulWidget {
 
 class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   bool _isUpdating = false;
+  bool _refreshError = false;
   late Order _order;
 
   @override
@@ -33,9 +34,31 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     try {
       final service = ref.read(staffServiceProvider);
       final updatedOrder = await service.getOrderDetail(_order.id);
-      if (mounted) setState(() => _order = updatedOrder);
+      if (mounted) {
+        setState(() {
+          _order = updatedOrder;
+          _refreshError = false;
+        });
+      }
     } catch (e) {
-      debugPrint('Gagal refresh detail: $e');
+      if (mounted) {
+        setState(() => _refreshError = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat detail: ${e.toString()}'),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Ulang',
+              textColor: Colors.white,
+              onPressed: _refreshOrderDetail,
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -87,6 +110,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
+                      if (_refreshError)
+                        _buildRefreshErrorBanner(),
                       const _SectionTitle(
                         title: 'Informasi Utama',
                         icon: Icons.analytics_outlined,
@@ -206,6 +231,34 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         onPressed: onTap,
         icon: Icon(icon, color: Colors.white, size: 20),
         visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
+
+  Widget _buildRefreshErrorBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.dangerLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.danger.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off_rounded, color: AppColors.danger, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Gagal memuat data dari server. Menampilkan data tersimpan.',
+              style: const TextStyle(fontSize: 12, color: AppColors.danger, fontWeight: FontWeight.w600),
+            ),
+          ),
+          TextButton(
+            onPressed: _refreshOrderDetail,
+            child: const Text('Ulangi', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
       ),
     );
   }
@@ -501,7 +554,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       else if (status == 'PROCESSING')
                         _updateStatus('READY_FOR_PICKUP');
                       else if (status == 'READY_FOR_PICKUP') {
-                        if (_order.serviceType == 'PICKUP')
+                        if (_order.serviceType == 'PICK_UP')
                           _updateStatus('COMPLETED');
                       }
                     },
