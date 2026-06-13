@@ -57,10 +57,14 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
         ),
         centerTitle: true,
         actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text('Tandai Dibaca', style: TextStyle(color: Color(0xFF1D70F5), fontWeight: FontWeight.w700, fontSize: 12)),
-          ),
+          if (_notifications.any((n) => !n.isRead))
+            TextButton(
+              onPressed: () async {
+                await _notificationService.markAllAsRead();
+                _loadNotifications();
+              },
+              child: const Text('Tandai Dibaca', style: TextStyle(color: Color(0xFF1D70F5), fontWeight: FontWeight.w700, fontSize: 12)),
+            ),
           const SizedBox(width: 8),
         ],
       ),
@@ -183,6 +187,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   void _handleNotificationTap(NotificationModel notif) {
     switch (notif.type) {
       case 'ORDER':
+      case 'ORDER_STATUS':
         context.push('/staff/orders');
         break;
       case 'STOCK':
@@ -197,6 +202,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   IconData _getIcon(String type) {
     switch (type) {
       case 'ORDER':
+      case 'ORDER_STATUS':
         return Icons.shopping_bag_outlined;
       case 'STOCK':
       case 'INVENTORY':
@@ -209,6 +215,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   Color _getIconColor(String type) {
     switch (type) {
       case 'ORDER':
+      case 'ORDER_STATUS':
         return const Color(0xFF1D70F5);
       case 'STOCK':
       case 'INVENTORY':

@@ -60,7 +60,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             left: 0,
             right: 0,
             child: const Text(
-              'Arahkan kamera ke QR Code Customer',
+              'Arahkan kamera ke Kode QR Pelanggan',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,

@@ -38,19 +38,19 @@ class _CustomerChangePasswordScreenState
   bool _validate() {
     bool valid = true;
     if (_oldPassController.text.trim().isEmpty) {
-      _oldPassError = 'Password lama tidak boleh kosong';
+      _oldPassError = 'Kata Sandi lama tidak boleh kosong';
       valid = false;
     } else {
       _oldPassError = null;
     }
     if (_newPassController.text.trim().length < 8) {
-      _newPassError = 'Password minimal 8 karakter';
+      _newPassError = 'Kata Sandi minimal 8 karakter';
       valid = false;
     } else {
       _newPassError = null;
     }
     if (_confirmPassController.text.trim() != _newPassController.text.trim()) {
-      _confirmPassError = 'Password tidak cocok';
+      _confirmPassError = 'Kata Sandi tidak cocok';
       valid = false;
     } else {
       _confirmPassError = null;
@@ -72,7 +72,7 @@ class _CustomerChangePasswordScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Password berhasil diperbarui'),
+            content: Text('Kata Sandi berhasil diperbarui'),
             backgroundColor: Color(0xFF10B981),
           ),
         );
@@ -107,7 +107,7 @@ class _CustomerChangePasswordScreenState
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          'Ubah Password',
+          'Ubah Kata Sandi',
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w900,
@@ -132,7 +132,7 @@ class _CustomerChangePasswordScreenState
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Pastikan password baru Anda minimal 8 karakter '
+                      'Pastikan kata sandi baru Anda minimal 8 karakter '
                       'dengan kombinasi huruf dan angka.',
                       style: TextStyle(
                         color: Color(0xFF0055a5),
@@ -147,7 +147,7 @@ class _CustomerChangePasswordScreenState
             ),
             const SizedBox(height: 32),
             PasswordField(
-              label: 'Password Lama',
+              label: 'Kata Sandi Lama',
               controller: _oldPassController,
               obscure: _obscureOld,
               onToggle: (v) => setState(() => _obscureOld = v),
@@ -160,7 +160,7 @@ class _CustomerChangePasswordScreenState
             ),
             const SizedBox(height: 16),
             PasswordField(
-              label: 'Password Baru',
+              label: 'Kata Sandi Baru',
               controller: _newPassController,
               obscure: _obscureNew,
               onToggle: (v) => setState(() => _obscureNew = v),
@@ -173,7 +173,7 @@ class _CustomerChangePasswordScreenState
             ),
             const SizedBox(height: 16),
             PasswordField(
-              label: 'Konfirmasi Password Baru',
+              label: 'Konfirmasi Kata Sandi Baru',
               controller: _confirmPassController,
               obscure: _obscureConfirm,
               onToggle: (v) => setState(() => _obscureConfirm = v),
@@ -207,7 +207,7 @@ class _CustomerChangePasswordScreenState
                         ),
                       )
                     : const Text(
-                        'Perbarui Password',
+                        'Perbarui Kata Sandi',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,

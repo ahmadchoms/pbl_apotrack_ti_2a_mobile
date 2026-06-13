@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/secure_storage_service.dart';
+import '../../data/models/cart.dart';
 import '../../data/models/customer_profile.dart';
 import '../../data/models/customer_address.dart';
 import '../../data/services/customer_service.dart';
@@ -218,6 +219,7 @@ class CustomerProfileNotifier extends StateNotifier<CustomerProfileState> {
       } catch (e) {
         print('[Provider] clearAll error: $e');
       }
+      CartState().items.clear();
       state = const CustomerProfileState();
     }
   }

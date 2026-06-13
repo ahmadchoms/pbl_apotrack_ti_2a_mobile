@@ -41,4 +41,8 @@ class CartState {
   }
 
   int get totalCount => items.fold(0, (sum, e) => sum + e.quantity);
+
+  void clear() {
+    items.clear();
+  }
 }

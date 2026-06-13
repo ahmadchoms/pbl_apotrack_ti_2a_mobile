@@ -162,7 +162,7 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 18),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         ),
       ),
       body: SingleChildScrollView(
@@ -272,7 +272,7 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('NO. ORDER', style: TextStyle(fontSize: 11, color: AppColors.textLight, letterSpacing: 1, fontWeight: FontWeight.w700)),
+                    const Text('NO. PESANAN', style: TextStyle(fontSize: 11, color: AppColors.textLight, letterSpacing: 1, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
                     Text(_orderNumber.isEmpty ? 'Menunggu...' : _orderNumber, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.textDark)),
                   ],

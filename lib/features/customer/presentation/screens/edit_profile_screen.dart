@@ -221,7 +221,7 @@ class _CustomerEditProfileScreenState
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          'Edit Profil',
+          'Ubah Profil',
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w900,

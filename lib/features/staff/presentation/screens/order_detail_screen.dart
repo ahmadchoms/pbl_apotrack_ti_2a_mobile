@@ -627,7 +627,7 @@ class _MetadataCard extends StatelessWidget {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(16),
                               child: Image.network(
-                                order.prescription!.imageUrl!,
+                                order.prescription!.imageUrl ?? '',
                                 fit: BoxFit.contain,
                                 loadingBuilder: (c, child, progress) {
                                   if (progress == null) return child;
@@ -678,12 +678,12 @@ class _MetadataCard extends StatelessWidget {
                   height: 200,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: AppColors.divider),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.network(
-                      order.prescription!.imageUrl!,
+                      order.prescription!.imageUrl ?? '',
                       fit: BoxFit.contain,
                       loadingBuilder: (context, child, progress) {
                         if (progress == null) return child;

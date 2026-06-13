@@ -115,11 +115,13 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
         widget.provider.updateFavorite(address);
         widget.onSaved?.call(address, true);
       } else {
+        final isFirst = ref.read(customerProfileProvider).addresses.isEmpty;
         final newAddr = await ref.read(customerProfileProvider.notifier).addAddress(
               label: _nameCtrl.text.trim(),
               addressDetail: _addressCtrl.text.trim(),
               latitude: _latitude ?? -6.208800,
               longitude: _longitude ?? 106.845600,
+              isPrimary: isFirst,
             );
         final address = AddressModel(
           id: newAddr.id, // ← real ID dari server, bukan timestamp

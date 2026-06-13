@@ -329,9 +329,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
 
       final dio = ref.read(dioProvider);
-      PushNotificationService.updateDeviceToken(dio, user.id);
+      await PushNotificationService.updateDeviceToken(dio, user.id);
 
-      context.go(AppRouter.customerHome);
+      if (user.isStaff || email.toLowerCase().contains('@apotek')) {
+        context.go(AppRouter.staffHome);
+      } else {
+        context.go(AppRouter.customerHome);
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

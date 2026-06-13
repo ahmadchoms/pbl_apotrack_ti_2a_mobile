@@ -112,6 +112,8 @@ class _OrderConfirmationScreenState
 
       if (!mounted) return;
 
+      CartState().clear();
+
       final orderId = order['id'] as String;
       final serviceType = widget.deliveryMethod == 'kirim' ? 'DELIVERY' : 'PICK_UP';
       final pharmacyName = widget.cartItems.isNotEmpty ? widget.cartItems.first.pharmacyName : '';
@@ -198,7 +200,7 @@ class _OrderConfirmationScreenState
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Order Confirmation',
+          'Konfirmasi Pesanan',
           style: TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 18,
@@ -217,6 +219,7 @@ class _OrderConfirmationScreenState
           _buildEstimationBanner(),
           _buildPaymentMethodSection(),
           _buildNotice(),
+          _buildPrescriptionSection(),
           _buildOrderSummary(),
           _buildBanner(context),
           _buildTotalTagihan(),
@@ -365,6 +368,94 @@ class _OrderConfirmationScreenState
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── Prescription Section ─────────────────────────────────────────
+  Widget _buildPrescriptionSection() {
+    if (widget.prescriptionBytes == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionLabel('RESEP DOKTER'),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.grey.shade100),
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: (widget.prescriptionFileName ?? '').endsWith('.pdf')
+                      ? Container(
+                          width: 52,
+                          height: 52,
+                          color: Colors.red.withOpacity(0.1),
+                          child: const Icon(
+                            Icons.picture_as_pdf_rounded,
+                            color: Colors.red,
+                            size: 28,
+                          ),
+                        )
+                      : Image.memory(
+                          widget.prescriptionBytes!,
+                          width: 52,
+                          height: 52,
+                          fit: BoxFit.cover,
+                        ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Resep Terlampir',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.prescriptionFileName ?? 'file',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textLight,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'TERLAMPIR',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF10B981),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

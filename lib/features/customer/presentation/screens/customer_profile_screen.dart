@@ -142,7 +142,7 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
 
                     // ── Join Staff ──────────────────
                     MenuSection(
-                      title: 'JOIN SEBAGAI STAFF APOTEK',
+                      title: 'GABUNG SEBAGAI STAFF APOTEK',
                       items: [
                         MenuItemCustom(child: const ScanQrInvitationCard()),
                       ],
@@ -182,7 +182,7 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
                         ),
                         MenuItemTile(
                           icon: Icons.logout_rounded,
-                          title: 'Keluar / Logout',
+                          title: 'Keluar',
                           isDestructive: true,
                           onTap: () => ConfirmDialog.show(
                             context,

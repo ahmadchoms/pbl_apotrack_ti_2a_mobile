@@ -16,4 +16,8 @@ class NotificationService {
   Future<void> markAsRead(String notificationId) async {
     await _dio.patch('/notifications/$notificationId/read');
   }
+
+  Future<void> markAllAsRead() async {
+    await _dio.patch('/notifications/read-all');
+  }
 }

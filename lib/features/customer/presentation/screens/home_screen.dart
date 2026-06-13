@@ -7,8 +7,11 @@ import '../../../../routes/app_router.dart';
 import '../../data/models/cart.dart';
 import '../../data/models/customer_address.dart';
 import '../../data/services/medicine_service.dart';
+import '../../data/services/notification_service.dart';
+import '../../../../core/models/notification_model.dart';
 import '../providers/customer_profile_provider.dart';
 import 'cart_screen.dart';
+import 'customer_profile_screen.dart' show AccountHubScreen;
 import 'notification.dart';
 
 // ─── Home Screen ───────────────────────────────────────────────────
@@ -21,6 +24,7 @@ class CustomerHomeScreen extends ConsumerStatefulWidget {
 
 class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   int _cartCount = 0;
+  int _unreadNotifCount = 0;
   List<Map<String, dynamic>> _medicines = [];
   bool _isLoading = true;
 
@@ -28,7 +32,20 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   void initState() {
     super.initState();
     _loadData();
+    _loadUnreadCount();
     ref.read(customerProfileProvider.notifier).loadAll();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final dio = ref.read(dioProvider);
+      final service = NotificationService(dio);
+      final data = await service.getNotifications();
+      if (mounted) {
+        final models = data.map((e) => NotificationModel.fromJson(e)).toList();
+        setState(() => _unreadNotifCount = models.where((n) => !n.isRead).length);
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadData() async {
@@ -145,27 +162,55 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            primaryAddress?.displayAddress ?? 'Atur alamat',
-                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AccountHubScreen()),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              primaryAddress?.displayAddress ?? 'Atur alamat',
+                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                        const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
-                      ],
+                          const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              _buildHeaderIcon(Icons.notifications_none_rounded, onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen()));
-              }),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen())).then((_) => _loadUnreadCount());
+                },
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    _buildHeaderIcon(Icons.notifications_none_rounded),
+                    if (_unreadNotifCount > 0)
+                      Positioned(
+                        top: -4, right: -4,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
+                          constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                          child: Text(
+                            _unreadNotifCount > 99 ? '99+' : '$_unreadNotifCount',
+                            style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
               const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {

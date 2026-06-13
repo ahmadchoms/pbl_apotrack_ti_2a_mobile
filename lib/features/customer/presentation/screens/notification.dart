@@ -55,7 +55,23 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        // ... (Kodenya tetap sama seperti punya kamu sebelumnya) ...
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: widget.showBack
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColors.textDark),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: const Text(
+          'Notifikasi',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppColors.textDark),
+        ),
+        centerTitle: false,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: Colors.grey.shade100),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -201,6 +217,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   Color _getIconBgColor(String type) {
     switch (type) {
       case 'ORDER':
+      case 'ORDER_STATUS':
         return AppColors.primary.withOpacity(0.1);
       case 'SYSTEM':
         return Colors.orange.withOpacity(0.1);
@@ -214,6 +231,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   IconData _getIcon(String type) {
     switch (type) {
       case 'ORDER':
+      case 'ORDER_STATUS':
         return Icons.shopping_bag_rounded;
       case 'SYSTEM':
         return Icons.info_rounded;
@@ -227,6 +245,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   Color _getIconColor(String type) {
     switch (type) {
       case 'ORDER':
+      case 'ORDER_STATUS':
         return AppColors.primary;
       case 'SYSTEM':
         return Colors.orange;

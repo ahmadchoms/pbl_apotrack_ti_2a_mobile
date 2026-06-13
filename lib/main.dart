@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/network/api_client.dart';
@@ -15,10 +16,48 @@ import 'features/staff/presentation/screens/staff_inventory_screen.dart';
 import 'dart:async';
 import 'package:intl/date_symbol_data_local.dart';
 
+final FlutterLocalNotificationsPlugin localNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+Future<void> _showLocalNotification(RemoteMessage message) async {
+  final title = message.notification?.title ?? 'Notifikasi Baru';
+  final body = message.notification?.body ?? '';
+  await localNotificationsPlugin.show(
+    DateTime.now().millisecondsSinceEpoch ~/ 1000,
+    title,
+    body,
+    const NotificationDetails(
+      android: AndroidNotificationDetails(
+        'apotrack_channel',
+        'ApoTrack Notifikasi',
+        channelDescription: 'Notifikasi pesanan dan informasi ApoTrack',
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    ),
+    payload: message.messageId,
+  );
+}
+
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   debugPrint('Background message: ${message.messageId}');
+  if (!kIsWeb) {
+    await localNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'apotrack_channel',
+        'ApoTrack Notifikasi',
+        description: 'Notifikasi pesanan dan informasi ApoTrack',
+        importance: Importance.high,
+      ),
+    );
+    await _showLocalNotification(message);
+  }
 }
 
 Future<void> main() async {
@@ -43,6 +82,26 @@ Future<void> main() async {
           sound: true,
         );
         debugPrint('User granted permission: ${settings.authorizationStatus}');
+
+        const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+        const iosSettings = DarwinInitializationSettings(
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
+        await localNotificationsPlugin.initialize(
+          const InitializationSettings(android: androidSettings, iOS: iosSettings),
+        );
+        await localNotificationsPlugin
+            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+            ?.createNotificationChannel(
+              const AndroidNotificationChannel(
+                'apotrack_channel',
+                'ApoTrack Notifikasi',
+                description: 'Notifikasi pesanan dan informasi ApoTrack',
+                importance: Importance.high,
+              ),
+            );
       }
 
       await initializeDateFormatting('id_ID', null);
@@ -88,14 +147,31 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
     });
   }
 
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(currentUserProvider, (prev, next) {
+      if (prev == null && next != null && !kIsWeb) {
+        _registerDeviceToken();
+      }
+    });
+
+    final router = ref.watch(AppRouter.routerProvider);
+
+    return MaterialApp.router(
+      title: 'ApoTrack',
+      debugShowCheckedModeBanner: false,
+      routerConfig: router,
+      theme: AppTheme.lightTheme,
+    );
+  }
+
   void _setupForegroundListener() {
     FirebaseMessaging.onMessage.listen((message) {
-      final title = message.notification?.title ?? 'Notifikasi Baru';
-      final body = message.notification?.body ?? '';
+      _showLocalNotification(message);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$title: $body'),
+            content: Text('${message.notification?.title ?? 'Notifikasi Baru'}: ${message.notification?.body ?? ''}'),
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 4),
             action: SnackBarAction(label: 'Lihat', onPressed: () {
@@ -112,13 +188,17 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
     FirebaseMessaging.onMessageOpenedApp.listen(_navigateToScreen);
   }
 
+  void _registerDeviceToken() {
+    final user = ref.read(currentUserProvider);
+    if (user != null) {
+      final dio = ref.read(dioProvider);
+      PushNotificationService.updateDeviceToken(dio, user.id);
+    }
+  }
+
   void _setupTokenRefresh() {
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-      final user = ref.read(currentUserProvider);
-      if (user != null) {
-        final dio = ref.read(dioProvider);
-        PushNotificationService.updateDeviceToken(dio, user.id);
-      }
+      _registerDeviceToken();
     });
   }
 
@@ -143,6 +223,7 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
     if (user.isCustomer) {
       switch (type) {
         case 'ORDER':
+        case 'ORDER_STATUS':
           if (referenceId != null && referenceId.isNotEmpty) {
             navigator.push(
               MaterialPageRoute(
@@ -157,6 +238,7 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
     } else if (user.isStaff) {
       switch (type) {
         case 'ORDER':
+        case 'ORDER_STATUS':
           navigator.push(
             MaterialPageRoute(builder: (_) => const StaffOrdersScreen()),
           );
@@ -173,15 +255,4 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final router = ref.watch(AppRouter.routerProvider);
-
-    return MaterialApp.router(
-      title: 'ApoTrack',
-      debugShowCheckedModeBanner: false,
-      routerConfig: router,
-      theme: AppTheme.lightTheme,
-    );
-  }
 }

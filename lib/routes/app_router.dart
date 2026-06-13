@@ -14,6 +14,7 @@ import '../features/customer/presentation/screens/pharmacy_search_screen.dart';
 import '../features/staff/presentation/screens/main_screen.dart' as staff;
 import '../features/staff/presentation/screens/staff_orders_screen.dart';
 import '../features/staff/presentation/screens/staff_inventory_screen.dart';
+import '../features/staff/presentation/screens/order_detail_screen.dart';
 import '../features/staff/presentation/screens/notification_screen.dart';
 
 class AppRouter {
@@ -27,6 +28,7 @@ class AppRouter {
   static const String staffOrders = '/staff/orders';
   static const String staffInventory = '/staff/inventory';
   static const String staffNotifications = '/staff/notifications';
+  static const String staffOrderDetail = '/staff/order-detail';
 
   static final routerProvider = Provider<GoRouter>((ref) {
     final notifier = ref.read(routerNotifierProvider);
@@ -78,6 +80,10 @@ class AppRouter {
         GoRoute(path: staffOrders, builder: (context, state) => const StaffOrdersScreen()),
         GoRoute(path: staffInventory, builder: (context, state) => const StaffInventoryScreen()),
         GoRoute(path: staffNotifications, builder: (context, state) => const NotificationScreen()),
+        GoRoute(
+          path: staffOrderDetail,
+          builder: (context, state) => OrderDetailScreen(order: state.extra as dynamic),
+        ),
       ],
     );
   });

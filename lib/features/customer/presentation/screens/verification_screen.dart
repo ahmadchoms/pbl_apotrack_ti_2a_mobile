@@ -38,7 +38,7 @@ class VerificationScreen extends StatelessWidget {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 18),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         ),
       ),
       body: SingleChildScrollView(
@@ -114,7 +114,7 @@ class VerificationScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _infoRow('No. Order', orderNumber),
+          _infoRow('No. Pesanan', orderNumber),
           const SizedBox(height: 10),
           _infoRow('Apotek', pharmacyName),
           const SizedBox(height: 10),
@@ -173,7 +173,7 @@ class VerificationScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Scan QR Code ini di apotek${pharmacyName.isNotEmpty ? ' $pharmacyName' : ''}',
+            'Pindai Kode QR ini di apotek${pharmacyName.isNotEmpty ? ' $pharmacyName' : ''}',
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 12, color: AppColors.textLight),
           ),

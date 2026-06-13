@@ -362,7 +362,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionLabel('ORDER SUMMARY'),
+          _sectionLabel('RINGKASAN PESANAN'),
           const SizedBox(height: 12),
           ..._cartItems.map(
             (item) => Padding(
@@ -566,9 +566,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     color: const Color(0xFFEF4444),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text(
-                    'REQUIRED',
-                    style: TextStyle(
+                    child: const Text(
+                      'WAJIB',
+                      style: TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
@@ -801,12 +801,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         }
       },
       onAddressSaved: (address, isEdit) {
-        // Provider udah dipanggil dari AddressFormScreen._save(),
-        // di sini cuma update local state & fetch ulang kurir
-        if (!isEdit) {
-          _addressProvider.addFavorite(address);
-          _addressProvider.selectAddress(address);
-        }
+        // Local state udah diupdate oleh AddressFormScreen._save()
+        // lewat provider yg sama, tinggal fetch ulang ongkir
         _fetchShippingRates();
       },
       onAddressDeleted: (id) {
@@ -1021,7 +1017,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text(
-                  'REQUIRED',
+                  'WAJIB',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 10,
