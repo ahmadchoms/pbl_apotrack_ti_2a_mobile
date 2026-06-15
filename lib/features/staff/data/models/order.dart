@@ -151,7 +151,6 @@ class Order {
   final List<OrderStatusLog> statusLogs;
   final DeliveryTracking? tracking;
   final Map<String, dynamic>? address;
-  final Map<String, dynamic>? prescription;
   final String? verificationCode;
   final PrescriptionData? prescription;
 
@@ -174,7 +173,6 @@ class Order {
     this.statusLogs = const [],
     this.tracking,
     this.address,
-    this.prescription,
     this.verificationCode,
     this.prescription,
   });
@@ -227,11 +225,11 @@ class Order {
       address: json['address'] is Map
           ? json['address'] as Map<String, dynamic>
           : null,
-      prescription: json['prescription'] is Map
-          ? json['prescription'] as Map<String, dynamic>
-          : null,
       verificationCode: json['verification_code']?.toString(),
-      prescription: prescriptionData is Map<String, dynamic> ? PrescriptionData.fromJson(prescriptionData) : null,
+      prescription: json['prescription'] is Map
+          ? PrescriptionData.fromJson(
+              json['prescription'] as Map<String, dynamic>)
+          : null,
     );
   }
 

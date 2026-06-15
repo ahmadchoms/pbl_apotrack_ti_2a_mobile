@@ -339,8 +339,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   String _paymentLabel(String method) {
     switch (method) {
       case 'QRIS': return 'QRIS';
-      case 'BANK_TRANSFER': return 'Bank Transfer';
-      case 'VIRTUAL_ACCOUNT': return 'Virtual Account';
+      case 'BANK_TRANSFER': return 'Transfer Bank';
+      case 'VIRTUAL_ACCOUNT': return 'Rekening Virtual';
       case 'COD': return 'COD';
       default: return method;
     }

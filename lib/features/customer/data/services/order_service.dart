@@ -18,6 +18,7 @@ class OrderService {
     required double shippingCost,
     String? addressId,
     String? notes,
+    String? courierCode,
   }) async {
     final apiItems = items
         .map((item) => {
@@ -36,6 +37,7 @@ class OrderService {
       'shipping_cost': shippingCost.toInt(),
       if (addressId != null) 'address_id': addressId,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
+      if (courierCode != null) 'courier_service': courierCode,
     });
     return OrderModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }

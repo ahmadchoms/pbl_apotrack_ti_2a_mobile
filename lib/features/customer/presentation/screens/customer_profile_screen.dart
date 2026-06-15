@@ -113,11 +113,8 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
                         MenuItemTile(
                           icon: Icons.person_outline_rounded,
                           title: 'Edit Profil',
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const CustomerEditProfileScreen(),
-                            ),
+                          onTap: () => context.push(
+                            AppRouter.customerEditProfile,
                           ).then(
                             (_) => ref
                                 .read(customerProfileProvider.notifier)
@@ -127,11 +124,8 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
                         MenuItemTile(
                           icon: Icons.lock_outline_rounded,
                           title: 'Ubah Password',
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const CustomerChangePasswordScreen(),
-                            ),
+                          onTap: () => context.push(
+                            AppRouter.customerChangePassword,
                           ),
                         ),
                       ],

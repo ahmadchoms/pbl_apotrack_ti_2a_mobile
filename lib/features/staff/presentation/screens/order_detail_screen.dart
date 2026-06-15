@@ -322,7 +322,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               ],
             ),
           ),
-          _buildHeaderAction(Icons.notifications_none_rounded, () {}),
+          _buildHeaderAction(Icons.notifications_none_rounded, () => context.push('/staff/notifications')),
         ],
       ),
     );
@@ -666,8 +666,6 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                         if (_order.serviceType == 'DELIVERY') {
                           _shipOrder();
                         } else {
-                      else if (status == 'READY_FOR_PICKUP') {
-                        if (_order.serviceType == 'PICK_UP')
                           _updateStatus('COMPLETED');
                         }
                       } else if (status == 'CANCEL_REQUESTED') {

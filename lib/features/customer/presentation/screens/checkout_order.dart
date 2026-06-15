@@ -21,6 +21,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   // ── State ────────────────────────────────────────────────────────
   String _deliveryMethod = 'kirim'; // 'kirim' | 'ambil'
   String _paymentMethod = 'cash';   // 'cash' | 'qris'
+  String _courierCode = 'jne';
   File? _prescriptionFile;
   final TextEditingController _noteController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
@@ -184,6 +185,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               // ── Alamat muncul hanya saat pilih "kirim" ────────────
               if (_deliveryMethod == 'kirim') ...[
                 _buildDivider(),
+                _buildCourierSelection(),
+                _buildDivider(),
                 _buildAddressSection(),
               ],
               _buildDivider(),
@@ -209,7 +212,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionLabel('ORDER SUMMARY'),
+          _sectionLabel('RINGKASAN PESANAN'),
           const SizedBox(height: 12),
           ..._cartItems.map(
             (item) => Padding(
@@ -372,6 +375,55 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
+  // ── Section: Pilihan Kurir ───────────────────────────────────────
+  Widget _buildCourierSelection() {
+    const couriers = [
+      {'code': 'jne', 'name': 'JNE Express'},
+      {'code': 'jnt', 'name': 'J&T Express'},
+      {'code': 'sicepat', 'name': 'SiCepat'},
+      {'code': 'grab', 'name': 'GrabExpress'},
+      {'code': 'gojek', 'name': 'GoSend'},
+      {'code': 'anteraja', 'name': 'AnterAja'},
+      {'code': 'tiki', 'name': 'TIKI'},
+      {'code': 'pos', 'name': 'POS Indonesia'},
+    ];
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionLabel('PILIH KURIR'),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _courierCode,
+                isExpanded: true,
+                items: couriers.map((c) {
+                  return DropdownMenuItem(
+                    value: c['code'],
+                    child: Text(c['name'] as String,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (v) {
+                  if (v != null) setState(() => _courierCode = v);
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Section: Alamat Pengiriman ───────────────────────────────────
   Widget _buildAddressSection() {
     final selected = _addressProvider.selectedAddress;
@@ -395,7 +447,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Text(
-                    'REQUIRED',
+                    'WAJIB',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -1018,7 +1070,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Widget _buildBottomBar() {
     // Validasi: jika kirim, wajib ada alamat
     final bool canProceed = _deliveryMethod == 'ambil' ||
-        _addressProvider.selectedAddress != null;
+        (_addressProvider.selectedAddress != null && _courierCode.isNotEmpty);
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -1046,6 +1098,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         cartItems: _cartItems,
                         deliveryMethod: _deliveryMethod,
                         paymentMethod: _paymentMethod,
+                        courierCode: _deliveryMethod == 'kirim' ? _courierCode : null,
                         total: _total,
                         shippingCost:
                             _deliveryMethod == 'kirim' ? 12000 : 0,

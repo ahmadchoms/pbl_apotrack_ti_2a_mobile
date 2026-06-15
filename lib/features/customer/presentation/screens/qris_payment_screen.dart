@@ -12,6 +12,9 @@ class QrisPaymentScreen extends ConsumerStatefulWidget {
   final List<Map<String, dynamic>> items;
   final int subtotal;
   final int shippingCost;
+  final String serviceType;
+  final String? courierCode;
+  final String? addressId;
 
   const QrisPaymentScreen({
     super.key,
@@ -20,6 +23,9 @@ class QrisPaymentScreen extends ConsumerStatefulWidget {
     required this.items,
     required this.subtotal,
     required this.shippingCost,
+    this.serviceType = 'PICK_UP',
+    this.courierCode,
+    this.addressId,
   });
 
   @override
@@ -99,11 +105,15 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
 
       final order = await _orderService.createOrder(
         pharmacyId: widget.pharmacyId,
-        serviceType: 'PICK_UP',
+        serviceType: widget.serviceType,
         paymentMethod: 'TRANSFER',
         items: cartItemModels,
         subtotal: widget.subtotal.toDouble(),
-        shippingCost: widget.shippingCost.toDouble(),
+        shippingCost: widget.serviceType == 'DELIVERY'
+            ? widget.shippingCost.toDouble()
+            : 0,
+        addressId: widget.addressId,
+        courierCode: widget.courierCode,
       );
 
       _orderNumber = order.orderNumber;
@@ -191,7 +201,7 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 18),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         ),
       ),
       body: SingleChildScrollView(
@@ -334,7 +344,7 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('NO. ORDER',
+                    const Text('NO. PESANAN',
                         style: TextStyle(fontSize: 11, color: AppColors.textLight, letterSpacing: 1, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
                     Text(

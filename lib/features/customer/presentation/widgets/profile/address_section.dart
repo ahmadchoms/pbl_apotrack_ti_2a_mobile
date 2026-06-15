@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../routes/app_router.dart';
 import '../../../data/models/customer_address.dart';
-import '../../../presentation/screens/edit_address_screen.dart';
 import '../../providers/customer_profile_provider.dart';
 
 class AddressSection extends ConsumerWidget {
@@ -223,11 +224,9 @@ class AddressSection extends ConsumerWidget {
                   title: 'Tambah Alamat',
                   titleColor: AppColors.primary,
                   isLast: true,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CustomerEditAddressScreen(isAdd: true),
-                    ),
+                  onTap: () => context.push(
+                    AppRouter.customerEditAddress,
+                    extra: {'isAdd': true},
                   ).then((_) => onRefresh?.call()),
                 ),
               ],

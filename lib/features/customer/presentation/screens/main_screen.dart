@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/models/notification_model.dart';
+import '../../../customer/data/services/notification_service.dart';
 import 'home_screen.dart';
 import 'notification.dart';
 import 'customer_profile_screen.dart';
@@ -154,8 +156,8 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _navItem(0, Icons.home_rounded, Icons.home_outlined, 'Beranda'),
-                _navItem(1, Icons.notifications_rounded,
-                    Icons.notifications_none_rounded, 'Notifikasi'),
+                _navItemWithBadge(1, Icons.notifications_rounded,
+                    Icons.notifications_none_rounded, 'Notifikasi', _unreadNotifCount),
                 const SizedBox(width: 60),
                 _navItem(2, Icons.assignment_rounded, Icons.assignment_outlined, 'Riwayat'),
                 _navItem(3, Icons.person_rounded,
@@ -192,6 +194,74 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
               isSelected ? activeIcon : inactiveIcon,
               color: isSelected ? AppColors.primary : AppColors.textLight,
               size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight:
+                    isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? AppColors.primary : AppColors.textLight,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _navItemWithBadge(int index, IconData activeIcon,
+      IconData inactiveIcon, String label, int badgeCount) {
+    final isSelected = _currentIndex == index;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _currentIndex = index);
+        if (index == 1) _loadUnreadCount();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  isSelected ? activeIcon : inactiveIcon,
+                  color: isSelected ? AppColors.primary : AppColors.textLight,
+                  size: 24,
+                ),
+                if (badgeCount > 0)
+                  Positioned(
+                    top: -6, right: -8,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEF4444),
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                          minWidth: 16, minHeight: 16),
+                      child: Text('$badgeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 4),
             Text(

@@ -231,7 +231,7 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                         ),
                         MenuItemTile(
                           icon: Icons.lock_outline_rounded,
-                          title: 'Ubah Password',
+                          title: 'Ubah Kata Sandi',
                           onTap: () {
                             final route = isCustomer
                                 ? AppRouter.customerChangePassword

@@ -5,6 +5,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/models/notification_model.dart';
 import '../../data/services/notification_service.dart';
 import 'order_datail.dart';
+import 'order_history_screen.dart';
 
 class NotificationScreen extends ConsumerStatefulWidget {
   final bool showBack;
@@ -55,7 +56,28 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        // ... (Kodenya tetap sama seperti punya kamu sebelumnya) ...
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: widget.showBack
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                    color: AppColors.textDark, size: 18),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: const Text(
+          'Notifikasi',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 17,
+            color: AppColors.textDark,
+          ),
+        ),
+        centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: Colors.grey.shade100),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -167,6 +189,10 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       });
     }
     if (notif.referenceId != null && notif.referenceId!.isNotEmpty) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const OrderHistoryScreen()),
+      );
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => OrderDetailScreen(orderId: notif.referenceId!)),

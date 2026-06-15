@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -328,8 +329,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (!mounted) return;
 
-      final dio = ref.read(dioProvider);
-      await PushNotificationService.updateDeviceToken(dio, user.id);
+      if (!kIsWeb) {
+        final dio = ref.read(dioProvider);
+        await PushNotificationService.updateDeviceToken(dio, user.id);
+      }
 
       if (user.isStaff || email.toLowerCase().contains('@apotek')) {
         context.go(AppRouter.staffHome);
