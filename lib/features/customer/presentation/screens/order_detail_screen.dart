@@ -180,9 +180,13 @@ class _CustomerOrderDetailScreenState
 
   Widget _buildContent(BuildContext context) {
     final order = _order;
-    final prescriptionData = order.prescription;
-    final parsedPrescription = prescriptionData != null
-        ? CustomerPrescription.fromJson(prescriptionData)
+    final pData = order.prescription;
+    final parsedPrescription = pData != null
+        ? CustomerPrescription(
+            id: pData.id,
+            imageUrl: pData.imageUrl ?? '',
+            status: pData.status,
+          )
         : null;
 
     return ListView(

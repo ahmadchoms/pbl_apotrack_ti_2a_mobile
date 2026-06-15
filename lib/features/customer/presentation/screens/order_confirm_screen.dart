@@ -13,12 +13,12 @@ class OrderConfirmationScreen extends ConsumerStatefulWidget {
   final List<CartItem> cartItems;
   final String deliveryMethod;  // 'kirim' | 'ambil'
   final String paymentMethod;   // 'cash' | 'qris'
+  final String? courierCode;
   final int total;
   final int shippingCost;
   final AddressModel? deliveryAddress;
   final String pharmacyId;
   final File? prescriptionFile;
-  final String? courierCode;
   final String? courierService;
 
   const OrderConfirmationScreen({
@@ -26,12 +26,12 @@ class OrderConfirmationScreen extends ConsumerStatefulWidget {
     required this.cartItems,
     required this.deliveryMethod,
     required this.paymentMethod,
+    this.courierCode,
     required this.total,
     required this.shippingCost,
     this.deliveryAddress,
     required this.pharmacyId,
     this.prescriptionFile,
-    this.courierCode,
     this.courierService,
   });
 
@@ -81,7 +81,10 @@ class _OrderConfirmationScreenState
 
       if (isQris) {
         // QRIS: order dibuat + bayar di QrisPaymentScreen
-        if (!mounted) return;
+        // copy items BEFORE clearing cart (CartState is a singleton, same reference)
+        final pharmacyName = widget.cartItems.isNotEmpty
+            ? widget.cartItems.first.pharmacyName
+            : 'Apotek';
         final items = widget.cartItems
             .map((item) => {
                   'medicine_id': item.id,
@@ -93,23 +96,23 @@ class _OrderConfirmationScreenState
                   'subtotal': item.price * item.quantity,
                 })
             .toList();
+        CartState().clear();
+        if (!mounted) return;
 
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => QrisPaymentScreen(
+              builder: (_) => QrisPaymentScreen(
               pharmacyId: widget.pharmacyId,
-              pharmacyName: widget.cartItems.isNotEmpty
-                  ? widget.cartItems.first.pharmacyName
-                  : 'Apotek',
-              items: items,
-              subtotal: widget.total,
-              shippingCost: widget.shippingCost,
+              pharmacyName: pharmacyName,
               deliveryMethod: widget.deliveryMethod,
               addressId: widget.deliveryAddress?.id,
               notes: null,
               courierCode: widget.courierCode,
               courierService: widget.courierService,
+              items: items,
+              subtotal: widget.total - widget.shippingCost,
+              shippingCost: widget.shippingCost,
             ),
           ),
         );
@@ -133,7 +136,7 @@ class _OrderConfirmationScreenState
       final order = await service.createOrder(
         pharmacyId: widget.pharmacyId,
         items: cartItemModels,
-        subtotal: widget.total.toDouble(),
+        subtotal: (widget.total - widget.shippingCost).toDouble(),
         serviceType: isDelivery ? 'DELIVERY' : 'PICK_UP',
         paymentMethod: 'CASH',
         addressId: widget.deliveryAddress?.id,
@@ -155,6 +158,7 @@ class _OrderConfirmationScreenState
 
       if (isDelivery) {
         // Cash + Delivery: go home with success
+        CartState().clear();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Pesanan berhasil dibuat!'),
@@ -213,7 +217,7 @@ class _OrderConfirmationScreenState
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Order Confirmation',
+          'Konfirmasi Pesanan',
           style: TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 18,
@@ -232,8 +236,8 @@ class _OrderConfirmationScreenState
           _buildEstimationBanner(),
           _buildPaymentMethodSection(),
           _buildNotice(),
+          if (widget.prescriptionFile != null) _buildPrescriptionSection(),
           _buildOrderSummary(),
-          _buildBanner(context),
           _buildTotalTagihan(),
         ],
       ),
@@ -567,33 +571,6 @@ class _OrderConfirmationScreenState
                     color: Colors.grey.shade100,
                     indent: 16,
                     endIndent: 16),
-
-                // Prescription status
-                _summaryBlock(
-                  icon: Icons.assignment_turned_in_rounded,
-                  label: 'STATUS RESEP',
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Sudah Terverifikasi',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF10B981),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
@@ -634,70 +611,102 @@ class _OrderConfirmationScreenState
     );
   }
 
-  // ── Promo Banner ─────────────────────────────────────────────────
-  Widget _buildBanner(BuildContext context) {
+  // ── Prescription Section ─────────────────────────────────────────
+  Widget _buildPrescriptionSection() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            Image.network(
-              'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600',
-              height: 100,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                height: 100,
-                color: AppColors.primary,
-              ),
-            ),
-            Container(
-              height: 100,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary.withOpacity(0.85),
-                    Colors.transparent
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionLabel('RESEP DOKTER'),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade100),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
-              ),
+              ],
             ),
-            Positioned(
-              left: 16,
-              top: 0,
-              bottom: 0,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Kesehatan Anda,',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.image_rounded, size: 14, color: AppColors.primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.prescriptionFile != null
+                          ? widget.prescriptionFile!.path.endsWith('.pdf')
+                              ? 'File PDF Resep'
+                              : 'Gambar Resep'
+                          : 'Tidak ada resep',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.warningLight,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'Menunggu Verifikasi',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.warning,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (widget.prescriptionFile != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      widget.prescriptionFile!,
+                      height: 140,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 140,
+                        color: AppColors.background,
+                        child: const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.picture_as_pdf_rounded, size: 32, color: AppColors.textLight),
+                              SizedBox(height: 4),
+                              Text('File Resep (PDF)', style: TextStyle(fontSize: 12, color: AppColors.textLight)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  Text(
-                    'Prioritas Kami.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
+
+ 
   // ── Total Tagihan ────────────────────────────────────────────────
   Widget _buildTotalTagihan() {
     return Padding(
@@ -709,7 +718,7 @@ class _OrderConfirmationScreenState
             'Total Tagihan',
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: 14,
+              fontSize: 16,
               color: AppColors.textLight,
             ),
           ),

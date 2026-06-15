@@ -224,12 +224,10 @@ class AddressSection extends ConsumerWidget {
                   title: 'Tambah Alamat',
                   titleColor: AppColors.primary,
                   isLast: true,
-                  onTap: () => context
-                      .push(
-                        AppRouter.customerEditAddress,
-                        extra: {'isAdd': true},
-                      )
-                      .then((_) => onRefresh?.call()),
+                  onTap: () => context.push(
+                    AppRouter.customerEditAddress,
+                    extra: {'isAdd': true},
+                  ).then((_) => onRefresh?.call()),
                 ),
               ],
             ),

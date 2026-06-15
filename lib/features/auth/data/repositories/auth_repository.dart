@@ -99,7 +99,7 @@ class AuthRepository {
 
   Future<Map<String, dynamic>> updateProfile(dynamic data) async {
     try {
-      final response = await _dio.post('/profile', data: data);
+      final response = await _dio.put('/profile', data: data);
       return response.data['data'] as Map<String, dynamic>;
     } on DioException catch (e) {
       throw AuthException(e.message ?? 'Gagal memperbarui profil.');

@@ -262,7 +262,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          'Edit Profil',
+          'Ubah Profil',
           style: TextStyle(
               color: AppColors.textDark,
               fontWeight: FontWeight.w900,

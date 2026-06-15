@@ -277,7 +277,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               ],
             ),
           ),
-          _buildHeaderAction(Icons.notifications_none_rounded, () {}),
+          _buildHeaderAction(Icons.notifications_none_rounded, () => context.push('/staff/notifications')),
         ],
       ),
     );
@@ -620,7 +620,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       } else if (status == 'READY_FOR_PICKUP') {
                         if (_order.serviceType == 'DELIVERY') {
                           _shipOrder();
-                        } else if (_order.serviceType == 'PICK_UP') {
+                        } else {
                           _updateStatus('COMPLETED');
                         }
                       } else if (status == 'CANCEL_REQUESTED') {
@@ -705,28 +705,143 @@ class _MetadataCard extends StatelessWidget {
                 border:
                     Border.all(color: AppColors.warning.withOpacity(0.2)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(
-                    Icons.verified_user_rounded,
-                    color: AppColors.warning,
+                    order.prescription?.isVerified == true
+                        ? Icons.check_circle_rounded
+                        : order.prescription?.isRejected == true
+                            ? Icons.cancel_rounded
+                            : Icons.verified_user_rounded,
+                    color: order.prescription?.isVerified == true
+                        ? AppColors.success
+                        : order.prescription?.isRejected == true
+                            ? AppColors.danger
+                            : AppColors.warning,
                     size: 20,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Pesanan ini memerlukan verifikasi resep dokter.',
+                      order.prescription?.isVerified == true
+                          ? 'Resep sudah diverifikasi.'
+                          : order.prescription?.isRejected == true
+                              ? 'Resep ditolak.'
+                              : 'Pesanan ini memerlukan verifikasi resep dokter.',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF92400E),
+                        color: order.prescription?.isVerified == true
+                            ? const Color(0xFF166534)
+                            : order.prescription?.isRejected == true
+                                ? const Color(0xFF991B1B)
+                                : const Color(0xFF92400E),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            if (order.prescription?.imageUrl != null) ...[
+              GestureDetector(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => Dialog(
+                      backgroundColor: Colors.transparent,
+                      insetPadding: const EdgeInsets.all(16),
+                      child: Stack(
+                        children: [
+                          InteractiveViewer(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.network(
+                                order.prescription!.imageUrl ?? '',
+                                fit: BoxFit.contain,
+                                loadingBuilder: (c, child, progress) {
+                                  if (progress == null) return child;
+                                  return const Center(
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white),
+                                  );
+                                },
+                                errorBuilder: (c, error, stackTrace) {
+                                  return const Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.image_not_supported_rounded,
+                                          color: Colors.white54,
+                                          size: 48,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('Gagal memuat gambar',
+                                            style: TextStyle(
+                                                color: Colors.white54)),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: IconButton(
+                              icon: const Icon(Icons.close_rounded,
+                                  color: Colors.white),
+                              onPressed: () => Navigator.of(ctx).pop(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      order.prescription!.imageUrl ?? '',
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.image_not_supported_rounded,
+                                  color: AppColors.textLight, size: 32),
+                              SizedBox(height: 4),
+                              Text('Gagal memuat gambar',
+                                  style: TextStyle(
+                                      fontSize: 11, color: AppColors.textLight)),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
           ],
           if ((order.notes ?? '').isNotEmpty) ...[
             const Text(

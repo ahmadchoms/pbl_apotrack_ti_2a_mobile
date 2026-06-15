@@ -113,26 +113,27 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
                         MenuItemTile(
                           icon: Icons.person_outline_rounded,
                           title: 'Edit Profil',
-                          onTap: () => context
-                              .push(AppRouter.customerEditProfile)
-                              .then(
-                                (_) => ref
-                                    .read(customerProfileProvider.notifier)
-                                    .loadAll(),
-                              ),
+                          onTap: () => context.push(
+                            AppRouter.customerEditProfile,
+                          ).then(
+                            (_) => ref
+                                .read(customerProfileProvider.notifier)
+                                .loadAll(),
+                          ),
                         ),
                         MenuItemTile(
                           icon: Icons.lock_outline_rounded,
                           title: 'Ubah Password',
-                          onTap: () =>
-                              context.push(AppRouter.customerChangePassword),
+                          onTap: () => context.push(
+                            AppRouter.customerChangePassword,
+                          ),
                         ),
                       ],
                     ),
 
                     // ── Join Staff ──────────────────
                     MenuSection(
-                      title: 'JOIN SEBAGAI STAFF APOTEK',
+                      title: 'GABUNG SEBAGAI STAFF APOTEK',
                       items: [
                         MenuItemCustom(child: const ScanQrInvitationCard()),
                       ],
@@ -172,7 +173,7 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
                         ),
                         MenuItemTile(
                           icon: Icons.logout_rounded,
-                          title: 'Keluar / Logout',
+                          title: 'Keluar',
                           isDestructive: true,
                           onTap: () => ConfirmDialog.show(
                             context,

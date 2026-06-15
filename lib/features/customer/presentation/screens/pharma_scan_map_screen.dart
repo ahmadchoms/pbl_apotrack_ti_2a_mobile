@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/customer/data/models/pharmacy_model.dart';
 import 'package:mobile/features/customer/data/services/pharmacy_service.dart';
@@ -186,6 +187,20 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
       child: Row(
         children: [
+          GestureDetector(
+            onTap: () => context.pop(),
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.primary, size: 18),
+            ),
+          ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

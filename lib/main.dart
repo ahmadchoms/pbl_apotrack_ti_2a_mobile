@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,8 +13,15 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/customer/presentation/screens/order_datail.dart';
 import 'features/staff/presentation/screens/staff_orders_screen.dart';
 import 'features/staff/presentation/screens/staff_inventory_screen.dart';
+import 'shared/widgets/notification_popup.dart';
 import 'dart:async';
 import 'package:intl/date_symbol_data_local.dart';
+
+bool get _supportsFcm {
+  if (kIsWeb) return false;
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) return false;
+  return true;
+}
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -26,7 +34,7 @@ Future<void> main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
 
-      if (!kIsWeb) {
+      if (_supportsFcm) {
         await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform,
         );
@@ -78,7 +86,7 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!kIsWeb) {
+      if (_supportsFcm) {
         _setupForegroundListener();
         _setupBackgroundTapListener();
         _checkInitialMessage();
@@ -91,17 +99,18 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
     FirebaseMessaging.onMessage.listen((message) {
       final title = message.notification?.title ?? 'Notifikasi Baru';
       final body = message.notification?.body ?? '';
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$title: $body'),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(label: 'Lihat', onPressed: () {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              _navigateToScreen(message);
-            }),
-          ),
+      final data = message.data;
+      final type = (data['type'] ?? '').toString().toUpperCase();
+      final referenceId = data['reference_id'];
+      final navContext = AppRouter.navigatorKey.currentContext;
+      if (navContext != null) {
+        NotificationPopup.show(
+          context: navContext,
+          title: title,
+          body: body,
+          type: type,
+          referenceId: referenceId,
+          onTap: () => _navigateToScreen(message),
         );
       }
     });
@@ -142,6 +151,7 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
     if (user.isCustomer) {
       switch (type) {
         case 'ORDER':
+        case 'ORDER_STATUS':
           if (referenceId != null && referenceId.isNotEmpty) {
             navigator.push(
               MaterialPageRoute(
@@ -156,6 +166,7 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
     } else if (user.isStaff) {
       switch (type) {
         case 'ORDER':
+        case 'ORDER_STATUS':
           navigator.push(
             MaterialPageRoute(builder: (_) => const StaffOrdersScreen()),
           );

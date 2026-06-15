@@ -1,26 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/models/notification_model.dart';
-import '../../data/services/staff_notification_service.dart';
+import '../../../customer/data/services/notification_service.dart';
 
 class NotificationScreen extends ConsumerStatefulWidget {
-  const NotificationScreen({super.key});
+  final bool showBack;
+
+  const NotificationScreen({
+    super.key,
+    this.showBack = true,
+  });
 
   @override
   ConsumerState<NotificationScreen> createState() => _NotificationScreenState();
 }
 
 class _NotificationScreenState extends ConsumerState<NotificationScreen> {
-  late final StaffNotificationService _notificationService;
+  late final NotificationService _notificationService;
   List<NotificationModel> _notifications = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _notificationService = StaffNotificationService(ref.read(dioProvider));
+    _notificationService = NotificationService(ref.read(dioProvider));
     _loadNotifications();
   }
 
@@ -36,6 +42,9 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat notifikasi: $e')),
+        );
       }
     }
   }
@@ -47,22 +56,26 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black, size: 20),
-          onPressed: () => context.pop(),
-        ),
+        leading: widget.showBack
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                    color: AppColors.textDark, size: 18),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: const Text(
           'Notifikasi',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 17),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 17,
+            color: AppColors.textDark,
+          ),
         ),
         centerTitle: true,
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text('Tandai Dibaca', style: TextStyle(color: Color(0xFF1D70F5), fontWeight: FontWeight.w700, fontSize: 12)),
-          ),
-          const SizedBox(width: 8),
-        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: Colors.grey.shade100),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -74,26 +87,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     itemCount: _notifications.length,
                     itemBuilder: (context, index) {
-                      return _buildNotificationItem(context, _notifications[index]);
+                      final notif = _notifications[index];
+                      return _buildNotificationItem(context, notif);
                     },
                   ),
                 ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.notifications_none_rounded, size: 80, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          const Text(
-            'Belum ada notifikasi',
-            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w700, fontSize: 16),
-          ),
-        ],
-      ),
     );
   }
 
@@ -110,12 +108,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            if (!notif.isRead) {
-              _notificationService.markAsRead(notif.id);
-            }
-            _handleNotificationTap(notif);
-          },
+          onTap: () => _handleNotificationTap(context, notif),
           borderRadius: BorderRadius.circular(20),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -124,10 +117,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: _getIconColor(notif.type).withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
+                  decoration: BoxDecoration(color: _getIconBgColor(notif.type), shape: BoxShape.circle),
                   child: Icon(_getIcon(notif.type), color: _getIconColor(notif.type), size: 20),
                 ),
                 const SizedBox(width: 16),
@@ -152,10 +142,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                             Container(
                               width: 8,
                               height: 8,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF1D70F5),
-                                shape: BoxShape.circle,
-                              ),
+                              decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                             ),
                         ],
                       ),
@@ -180,41 +167,91 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
     );
   }
 
-  void _handleNotificationTap(NotificationModel notif) {
-    switch (notif.type) {
+  void _handleNotificationTap(BuildContext context, NotificationModel notif) {
+    if (!notif.isRead) {
+      _notificationService.markAsRead(notif.id);
+      setState(() {
+        notif = NotificationModel(
+          id: notif.id,
+          title: notif.title,
+          message: notif.message,
+          type: notif.type,
+          isRead: true,
+          referenceId: notif.referenceId,
+          createdAt: notif.createdAt,
+        );
+        final index = _notifications.indexWhere((n) => n.id == notif.id);
+        if (index != -1) _notifications[index] = notif;
+      });
+    }
+    if (notif.referenceId != null && notif.referenceId!.isNotEmpty) {
+      context.push('/staff/orders');
+      context.push('/staff/order-detail', extra: <String, dynamic>{
+        'id': notif.referenceId,
+      });
+    }
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.notifications_none_rounded, size: 80, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            Text(
+              'Belum ada notifikasi',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Anda akan melihat notifikasi di sini',
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getIconBgColor(String type) {
+    switch (type) {
       case 'ORDER':
-        context.push('/staff/orders');
-        break;
-      case 'STOCK':
-      case 'INVENTORY':
-        context.push('/staff/inventory');
-        break;
+        return AppColors.primary.withOpacity(0.1);
+      case 'SYSTEM':
+        return Colors.orange.withOpacity(0.1);
+      case 'PROMO':
+        return Colors.purple.withOpacity(0.1);
       default:
-        break;
+        return Colors.blue.withOpacity(0.1);
     }
   }
 
   IconData _getIcon(String type) {
     switch (type) {
       case 'ORDER':
-        return Icons.shopping_bag_outlined;
-      case 'STOCK':
-      case 'INVENTORY':
-        return Icons.inventory_2_outlined;
+        return Icons.shopping_bag_rounded;
+      case 'SYSTEM':
+        return Icons.info_rounded;
+      case 'PROMO':
+        return Icons.discount_rounded;
       default:
-        return Icons.info_outline_rounded;
+        return Icons.notifications_rounded;
     }
   }
 
   Color _getIconColor(String type) {
     switch (type) {
       case 'ORDER':
-        return const Color(0xFF1D70F5);
-      case 'STOCK':
-      case 'INVENTORY':
-        return const Color(0xFFF59E0B);
+        return AppColors.primary;
+      case 'SYSTEM':
+        return Colors.orange;
+      case 'PROMO':
+        return Colors.purple;
       default:
-        return const Color(0xFF64748B);
+        return Colors.blue;
     }
   }
 

@@ -30,6 +30,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         children: [
           QrScannerView(onDetect: _onQrDetected),
 
+          // --- VIEW FINDER OVERLAY ---
           Positioned.fill(
             child: Container(
               decoration: ShapeDecoration(
@@ -44,6 +45,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             ),
           ),
 
+          // --- INSTRUCTION TEXT ---
           Positioned(
             top: 60,
             left: 20,
@@ -61,7 +63,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             left: 0,
             right: 0,
             child: const Text(
-              'Arahkan kamera ke QR Undangan',
+              'Arahkan kamera ke Kode QR Pelanggan',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.white,

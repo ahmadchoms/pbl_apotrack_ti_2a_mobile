@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/models/notification_model.dart';
 import '../../../../routes/app_router.dart';
 import '../../data/models/cart.dart';
+import '../../data/services/notification_service.dart';
+import '../providers/customer_profile_provider.dart';
 import 'cart_screen.dart';
 import 'notification.dart';
 
@@ -17,6 +20,7 @@ class CustomerHomeScreen extends ConsumerStatefulWidget {
 
 class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   int _cartCount = 0;
+  int _notifCount = 0;
   List<Map<String, dynamic>> _medicines = [];
   bool _isLoading = true;
 
@@ -24,6 +28,18 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   void initState() {
     super.initState();
     _loadData();
+    _loadNotifCount();
+  }
+
+  Future<void> _loadNotifCount() async {
+    try {
+      final dio = ref.read(dioProvider);
+      final data = await NotificationService(dio).getNotifications();
+      if (mounted) {
+        final models = data.map((e) => NotificationModel.fromJson(e)).toList();
+        setState(() => _notifCount = models.where((n) => !n.isRead).length);
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadData() async {
@@ -82,6 +98,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(customerProfileProvider);
+    final profile = state.profile;
+    final userName = profile?.username ?? 'Pengguna';
     return Scaffold(
       backgroundColor: AppColors.background,
       body: _isLoading
@@ -96,7 +115,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildGreetingSection(),
+                            _buildGreetingSection(userName),
                             _buildFindPharmacySection(context),
                             _buildSectionHeader('Obat Populer', () {}),
                             _buildProductGrid(),
@@ -113,6 +132,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   }
 
   Widget _buildHeader() {
+    final state = ref.watch(customerProfileProvider);
+    final primaryAddr = state.addresses.where((a) => a.isPrimary).firstOrNull;
+    final locationName = primaryAddr?.displayAddress ?? 'Atur Alamat';
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -126,33 +148,63 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Lokasi Anda',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Row(
+              Flexible(
+                child: GestureDetector(
+                  onTap: () => context.push(AppRouter.customerAccountHub),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
-                      SizedBox(width: 4),
-                      Text('Seturan, Yogyakarta',
-                        style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
+                      Text(
+                        'Lokasi Anda',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(locationName,
+                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
               const Spacer(),
-              _buildHeaderIcon(Icons.notifications_none_rounded, onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen()));
-              }),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen())).then(
+                    (_) => _loadNotifCount(),
+                  );
+                },
+                child: Stack(
+                  children: [
+                    _buildHeaderIcon(Icons.notifications_none_rounded),
+                    if (_notifCount > 0)
+                      Positioned(
+                        top: 0, right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
+                          constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                          child: Text('$_notifCount',
+                            style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
               const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
@@ -161,12 +213,11 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   );
                 },
                 child: Stack(
-                  clipBehavior: Clip.none,
                   children: [
                     _buildHeaderIcon(Icons.shopping_cart_outlined),
                     if (_cartCount > 0)
                       Positioned(
-                        top: -4, right: -4,
+                        top: 0, right: 0,
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
@@ -201,7 +252,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     );
   }
 
-  Widget _buildGreetingSection() {
+  Widget _buildGreetingSection(String userName) {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -217,8 +268,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Halo, Cipuy!',
-              style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+            Text('Halo, $userName!',
+              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             const Text('Cari Obat Apa?',
@@ -345,7 +396,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       ),
     );
   }
-
+  // ── Section Header ───────────────────────────────────────────────
   Widget _buildSectionHeader(String title, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 32, 20, 16),
@@ -376,6 +427,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     );
   }
 
+  // ── Product Grid ─────────────────────────────────────────────────
   Widget _buildProductGrid() {
     final products = _medicines;
 

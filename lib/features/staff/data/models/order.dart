@@ -108,6 +108,30 @@ class OrderStatusLog {
   }
 }
 
+class PrescriptionData {
+  final String id;
+  final String? imageUrl;
+  final String status;
+
+  PrescriptionData({
+    required this.id,
+    this.imageUrl,
+    required this.status,
+  });
+
+  factory PrescriptionData.fromJson(Map<String, dynamic> json) {
+    return PrescriptionData(
+      id: json['id']?.toString() ?? '',
+      imageUrl: json['image_url']?.toString(),
+      status: json['status']?.toString() ?? 'UPLOADING',
+    );
+  }
+
+  bool get isPending => status == 'PENDING';
+  bool get isVerified => status == 'VERIFIED';
+  bool get isRejected => status == 'REJECTED';
+}
+
 class Order {
   final String id;
   final String orderNumber;
@@ -127,9 +151,8 @@ class Order {
   final List<OrderStatusLog> statusLogs;
   final DeliveryTracking? tracking;
   final Map<String, dynamic>? address;
-  final Map<String, dynamic>? prescription;
   final String? verificationCode;
-  final bool canReview;
+  final PrescriptionData? prescription;
 
   Order({
     required this.id,
@@ -150,9 +173,8 @@ class Order {
     this.statusLogs = const [],
     this.tracking,
     this.address,
-    this.prescription,
     this.verificationCode,
-    this.canReview = true,
+    this.prescription,
   });
 
   // Getter untuk backward compatibility dengan kode staff yang pakai order.customer
@@ -203,11 +225,11 @@ class Order {
       address: json['address'] is Map
           ? json['address'] as Map<String, dynamic>
           : null,
-      prescription: json['prescription'] is Map
-          ? json['prescription'] as Map<String, dynamic>
-          : null,
       verificationCode: json['verification_code']?.toString(),
-      canReview: json['can_review'] == true,
+      prescription: json['prescription'] is Map
+          ? PrescriptionData.fromJson(
+              json['prescription'] as Map<String, dynamic>)
+          : null,
     );
   }
 

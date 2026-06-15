@@ -625,6 +625,7 @@ class _RecentOrderTile extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(String status) {
+
     final Map<String, ({String label, Color color, IconData icon})>
     statusConfig = {
       'PENDING': (

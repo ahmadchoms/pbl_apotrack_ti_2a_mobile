@@ -133,7 +133,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     switch (order.orderStatus) {
       case 'COMPLETED':
       case 'REVIEWED':
-        if (!order.canReview) return null;
         return () {
           context.push(AppRouter.customerUlasan, extra: {
             'orderNumber': order.orderNumber,

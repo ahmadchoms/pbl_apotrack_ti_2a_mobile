@@ -47,11 +47,14 @@ import '../features/staff/presentation/screens/scanner_screen.dart';
 import '../features/staff/presentation/screens/staff_orders_screen.dart';
 
 class AppRouter {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
   static const String customerHome = '/customer';
+  static const String customerPharmacySearch = '/customer/pharmacy-search';
   static const String staffHome = '/staff';
 
   static const String customerAccountHub = '/customer/account-hub';
@@ -60,7 +63,6 @@ class AppRouter {
   static const String customerEditAddress = '/customer/edit-address';
   static const String customerOrderDetail = '/customer/order-detail';
   static const String customerTrackOrder = '/customer/track-order';
-  static const String customerPharmacySearch = '/customer/pharmacy-search';
   static const String customerMedicineList = '/customer/medicine-list';
   static const String customerPayment = '/customer/payment';
   static const String customerUlasan = '/customer/ulasan';
@@ -82,6 +84,7 @@ class AppRouter {
     final notifier = ref.read(routerNotifierProvider);
 
     final router = GoRouter(
+      navigatorKey: navigatorKey,
       initialLocation: splash,
       refreshListenable: notifier,
 

@@ -99,7 +99,7 @@ class ScanResultScreen extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         const Text(
-          'Scan Berhasil',
+          'Pindai Berhasil',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w900,

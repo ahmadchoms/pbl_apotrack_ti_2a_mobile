@@ -39,18 +39,18 @@ class _ChangePasswordScreenState
     bool valid = true;
 
     if (_oldPassController.text.trim().isEmpty) {
-      _oldPassError = 'Password lama tidak boleh kosong';
+      _oldPassError = 'Kata Sandi lama tidak boleh kosong';
       valid = false;
     } else {
       _oldPassError = null;
     }
 
     if (_newPassController.text.trim().length < 8) {
-      _newPassError = 'Password minimal 8 karakter';
+      _newPassError = 'Kata Sandi minimal 8 karakter';
       valid = false;
     } else if (_newPassController.text.trim() ==
         _oldPassController.text.trim()) {
-      _newPassError = 'Password baru tidak boleh sama dengan password lama';
+      _newPassError = 'Kata Sandi baru tidak boleh sama dengan kata sandi lama';
       valid = false;
     } else {
       _newPassError = null;
@@ -58,7 +58,7 @@ class _ChangePasswordScreenState
 
     if (_confirmPassController.text.trim() !=
         _newPassController.text.trim()) {
-      _confirmPassError = 'Password tidak cocok';
+      _confirmPassError = 'Kata Sandi tidak cocok';
       valid = false;
     } else {
       _confirmPassError = null;
@@ -78,13 +78,13 @@ class _ChangePasswordScreenState
             newPassword: _newPassController.text.trim(),
           );
       if (mounted) {
-        _showSnack('Password berhasil diperbarui!');
+        _showSnack('Kata Sandi berhasil diperbarui!');
         context.pop();
       }
     } catch (e) {
       String errorMessage = e.toString();
       if (errorMessage.contains('current_password')) {
-        errorMessage = 'Password lama yang Anda masukkan salah';
+        errorMessage = 'Kata Sandi lama yang Anda masukkan salah';
       }
       if (mounted) _showSnack(errorMessage, isError: true);
     } finally {
@@ -135,7 +135,7 @@ class _ChangePasswordScreenState
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          'Ubah Password',
+          'Ubah Kata Sandi',
           style: TextStyle(
               color: AppColors.textDark,
               fontWeight: FontWeight.w900,
@@ -195,7 +195,7 @@ class _ChangePasswordScreenState
 
             // Field dengan error inline (dari customer)
             _buildPasswordField(
-              label: 'Password Saat Ini',
+              label: 'Kata Sandi Saat Ini',
               controller: _oldPassController,
               obscure: _obscureOld,
               toggle: (v) => setState(() => _obscureOld = v),
@@ -208,7 +208,7 @@ class _ChangePasswordScreenState
             ),
             const SizedBox(height: 16),
             _buildPasswordField(
-              label: 'Password Baru',
+              label: 'Kata Sandi Baru',
               controller: _newPassController,
               obscure: _obscureNew,
               toggle: (v) => setState(() => _obscureNew = v),
@@ -221,7 +221,7 @@ class _ChangePasswordScreenState
             ),
             const SizedBox(height: 16),
             _buildPasswordField(
-              label: 'Konfirmasi Password Baru',
+              label: 'Konfirmasi Kata Sandi Baru',
               controller: _confirmPassController,
               obscure: _obscureConfirm,
               toggle: (v) => setState(() => _obscureConfirm = v),
@@ -253,7 +253,7 @@ class _ChangePasswordScreenState
                         width: 20,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : const Text('Perbarui Password',
+                    : const Text('Perbarui Kata Sandi',
                         style: TextStyle(
                             fontWeight: FontWeight.w900, fontSize: 16)),
               ),

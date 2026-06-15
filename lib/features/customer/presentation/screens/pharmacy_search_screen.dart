@@ -41,6 +41,10 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text('Cari Apotek'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
