@@ -10,7 +10,8 @@ import 'secure_storage_service.dart';
 /// Override at build time: flutter run --dart-define=API_BASE_URL=https://api.example.com
 const String _kBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://127.0.1:8000/api',
+  defaultValue: 'https://alpha-unsunk-retrogradingly.ngrok-free.dev/api',
+  // defaultValue: 'http://127.0.0.1:8000/api',
 );
 
 /// Riverpod Provider untuk instance Dio yang sudah terkonfigurasi penuh.
@@ -34,7 +35,10 @@ Dio _buildDio(SecureStorageService storageService, Ref ref, String baseUrl) {
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 30),
-      headers: {'Accept': 'application/json'},
+      headers: {
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
     ),
   );
 
