@@ -132,7 +132,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   VoidCallback? _getSecondaryAction(BuildContext context, Order order) {
     switch (order.orderStatus) {
       case 'COMPLETED':
-      case 'REVIEWED':
         return () {
           context.push(AppRouter.customerUlasan, extra: {
             'orderNumber': order.orderNumber,

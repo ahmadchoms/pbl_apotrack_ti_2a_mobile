@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/services/order_service.dart';
+import '../../data/services/pharmacy_service.dart';
 
 class BeriUlasanScreen extends ConsumerStatefulWidget {
   final String orderNumber;
@@ -84,6 +85,10 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
         rating: _rating,
         comment: _controller.text.trim(),
       );
+
+      ref.invalidate(activePharmaciesProvider);
+      ref.invalidate(myOrdersProvider);
+      ref.invalidate(activeOrdersProvider);
 
       if (!mounted) return;
       setState(() {
