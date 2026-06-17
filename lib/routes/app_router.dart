@@ -201,7 +201,13 @@ class AppRouter {
         ),
         GoRoute(
           path: customerPharmacySearch,
-          builder: (context, state) => const PharmaScanMapScreen(),
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return PharmaScanMapScreen(
+              categoryId: extra?['categoryId'] as String?,
+              categoryName: extra?['categoryName'] as String?,
+            );
+          },
         ),
         GoRoute(
           path: customerMedicineList,
@@ -214,6 +220,7 @@ class AppRouter {
                   (extra['pharmacyRating'] as num?)?.toDouble() ?? 4.5,
               pharmacyDistance: extra['pharmacyDistance'] as String? ?? '-',
               pharmacyArea: extra['pharmacyArea'] as String? ?? '-',
+              categoryId: extra['categoryId'] as String?,
             );
           },
         ),

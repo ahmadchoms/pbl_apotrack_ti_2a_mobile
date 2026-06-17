@@ -118,12 +118,14 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                             child: CircleAvatar(
                               radius: 50,
                               backgroundColor: AppColors.surfaceLight,
-                              backgroundImage: (profile?.avatarUrl != null &&
+                              backgroundImage:
+                                  (profile?.avatarUrl != null &&
                                       profile!.avatarUrl!.isNotEmpty)
                                   ? NetworkImage(profile.avatarUrl!)
-                                      as ImageProvider
+                                        as ImageProvider
                                   : null,
-                              child: (profile?.avatarUrl == null ||
+                              child:
+                                  (profile?.avatarUrl == null ||
                                       profile!.avatarUrl!.isEmpty)
                                   ? Text(
                                       profile?.username
@@ -222,7 +224,9 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                             final route = isCustomer
                                 ? AppRouter.customerEditProfile
                                 : AppRouter.staffEditProfile;
-                            context.push(route).then(
+                            context
+                                .push(route)
+                                .then(
                                   (_) => ref
                                       .read(profileProvider.notifier)
                                       .fetchProfile(),
@@ -304,13 +308,14 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                           onTap: () => ConfirmDialog.show(
                             context,
                             icon: Icons.logout_rounded,
-                            iconColor: AppColors.warning,
-                            iconBgColor: AppColors.warningLight,
+                            iconColor: AppColors.danger,
+                            iconBgColor: AppColors.dangerLight,
                             title: 'Keluar Akun?',
-                            message: 'Kamu akan keluar dari akunmu. '
+                            message:
+                                'Kamu akan keluar dari akunmu. '
                                 'Kamu bisa login kembali kapan saja.',
                             confirmLabel: 'Ya, Keluar',
-                            confirmColor: AppColors.warning,
+                            confirmColor: AppColors.danger,
                             onConfirm: () {
                               Navigator.pop(context);
                               _handleLogout();

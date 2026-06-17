@@ -272,7 +272,16 @@ class _CustomerOrderDetailScreenState
         const SizedBox(height: 12),
         _buildPharmacyCard(order),
         const SizedBox(height: 12),
-        if (order.serviceType == 'PICK_UP' && order.verificationCode != null && order.verificationCode!.isNotEmpty) ...[
+        if (order.serviceType == 'DELIVERY') ...[
+          _buildDeliveryAddressCard(order),
+          const SizedBox(height: 12),
+        ],
+        if (order.serviceType == 'PICK_UP' &&
+            order.verificationCode != null &&
+            order.verificationCode!.isNotEmpty &&
+            order.orderStatus != 'COMPLETED' &&
+            order.orderStatus != 'REVIEWED' &&
+            order.orderStatus != 'CANCELLED') ...[
           _buildQrCard(context, order),
           const SizedBox(height: 12),
         ],
@@ -580,29 +589,127 @@ class _CustomerOrderDetailScreenState
   }
 
   Widget _buildTransactionTimeCard(Order detail) {
+    final isPickup = detail.serviceType == 'PICK_UP';
+    final serviceLabel = isPickup ? 'Ambil di Tempat' : 'Dikirim (Kurir)';
+    final serviceIcon = isPickup ? Icons.storefront_rounded : Icons.local_shipping_rounded;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(color: AppColors.primaryLight),
+      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'WAKTU TRANSAKSI',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-              color: AppColors.textMuted,
-              letterSpacing: 0.8,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'TIPE LAYANAN',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(serviceIcon, color: AppColors.textPrimary, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          serviceLabel,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 40,
+                color: AppColors.divider,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'WAKTU TRANSAKSI',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textMuted,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      detail.createdAt,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeliveryAddressCard(Order detail) {
+    final addressData = detail.address;
+    if (addressData == null) return const SizedBox.shrink();
+
+    final deliveryAddress = addressData['address_detail']?.toString() ??
+        addressData['complete_address']?.toString() ??
+        '—';
+    final deliveryLabel = addressData['label']?.toString() ?? 'Alamat Pengiriman';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.location_on_rounded,
+                  size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'ALAMAT PENGIRIMAN (${deliveryLabel.toUpperCase()})',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primary,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
           Text(
-            detail.createdAt,
+            deliveryAddress,
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              fontSize: 13,
+              color: AppColors.textSlate,
+              height: 1.4,
             ),
           ),
         ],

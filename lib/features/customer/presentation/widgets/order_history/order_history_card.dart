@@ -123,9 +123,12 @@ class OrderHistoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cfg = _config;
     final bool hasActions = cfg.primaryLabel != null;
-    final bool hasTwoActions = cfg.secondaryLabel != null && (onSecondaryActionTap != null || cfg.secondaryDisabled);
+    final bool hasTwoActions =
+        cfg.secondaryLabel != null &&
+        (onSecondaryActionTap != null || cfg.secondaryDisabled);
 
     final pharmacyName = order.pharmacy['name']?.toString() ?? '—';
+    final pharmacyLogoUrl = order.pharmacy['logo_url']?.toString() ?? '';
 
     return AppCard(
       margin: const EdgeInsets.only(bottom: 12),
@@ -137,15 +140,42 @@ class OrderHistoryCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: cfg.iconBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(cfg.icon, color: cfg.iconColor, size: 22),
-              ),
+              pharmacyLogoUrl.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        pharmacyLogoUrl,
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: cfg.iconBg,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.local_pharmacy_rounded,
+                            color: cfg.iconColor,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: cfg.iconBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.local_pharmacy_rounded,
+                        color: cfg.iconColor,
+                        size: 22,
+                      ),
+                    ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -269,7 +299,9 @@ class OrderHistoryCard extends StatelessWidget {
                       label: cfg.secondaryLabel!,
                       solid: false,
                       disabled: cfg.secondaryDisabled,
-                      onTap: cfg.secondaryDisabled ? null : onSecondaryActionTap,
+                      onTap: cfg.secondaryDisabled
+                          ? null
+                          : onSecondaryActionTap,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -309,18 +341,18 @@ class OrderHistoryCard extends StatelessWidget {
     final bgColor = disabled
         ? AppColors.surfaceLight
         : solid
-            ? AppColors.primary
-            : AppColors.white;
+        ? AppColors.primary
+        : AppColors.white;
     final borderColor = disabled
         ? AppColors.divider
         : solid
-            ? AppColors.primary
-            : AppColors.divider;
+        ? AppColors.primary
+        : AppColors.divider;
     final textColor = disabled
         ? AppColors.textMuted
         : solid
-            ? AppColors.white
-            : AppColors.textMid;
+        ? AppColors.white
+        : AppColors.textMid;
 
     return GestureDetector(
       onTap: disabled ? null : onTap,

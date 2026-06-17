@@ -21,7 +21,7 @@ class CustomerHomeScreen extends ConsumerStatefulWidget {
 class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   int _cartCount = 0;
   int _notifCount = 0;
-  List<Map<String, dynamic>> _medicines = [];
+  List<Map<String, dynamic>> _popularCategories = [];
   bool _isLoading = true;
 
   @override
@@ -45,15 +45,11 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   Future<void> _loadData() async {
     try {
       final dio = ref.read(dioProvider);
-      final response = await dio.get('/medicines', queryParameters: {
-        'per_page': 4,
-        'sort_by': 'name',
-        'sort_order': 'asc',
-      });
+      final response = await dio.get('/categories/popular');
       final list = response.data['data'] as List<dynamic>;
       if (mounted) {
         setState(() {
-          _medicines = list.cast<Map<String, dynamic>>();
+          _popularCategories = list.cast<Map<String, dynamic>>();
           _isLoading = false;
         });
       }
@@ -63,7 +59,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   }
 
   void _addToCart(Map<String, dynamic> product) {
-    final pharmacyData = (product['pharmacy'] ?? product['pharmacies']) as Map<String, dynamic>?;
+    final pharmacyData =
+        (product['pharmacy'] ?? product['pharmacies']) as Map<String, dynamic>?;
     final price = product['price'] is int
         ? product['price'] as int
         : (product['price'] as num).toInt();
@@ -79,6 +76,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         imageUrl: imageUrl,
         pharmacyName: pharmacyData?['name'] as String? ?? 'Apotek',
         pharmacyId: pharmacyData?['id']?.toString() ?? '',
+        stock: (product['total_active_stock'] as num?)?.toInt() ?? 99,
       ),
     );
     setState(() {
@@ -117,8 +115,13 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                           children: [
                             _buildGreetingSection(userName),
                             _buildFindPharmacySection(context),
-                            _buildSectionHeader('Obat Populer', () {}),
-                            _buildProductGrid(),
+                            _buildSectionHeader(
+                              'Jenis Obat Terpopuler',
+                              () => context.push(
+                                AppRouter.customerPharmacySearch,
+                              ),
+                            ),
+                            _buildCategoryGrid(),
                             const SizedBox(height: 100),
                           ],
                         ),
@@ -135,103 +138,150 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     final state = ref.watch(customerProfileProvider);
     final primaryAddr = state.addresses.where((a) => a.isPrimary).firstOrNull;
     final locationName = primaryAddr?.displayAddress ?? 'Atur Alamat';
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primaryDark],
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.primary, AppColors.primaryDark],
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-          child: Row(
-            children: [
-              Flexible(
-                child: GestureDetector(
-                  onTap: () => context.push(AppRouter.customerAccountHub),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Lokasi Anda',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+            child: Row(
+              children: [
+                Flexible(
+                  child: GestureDetector(
+                    onTap: () => context.push(AppRouter.customerAccountHub),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Lokasi Anda',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_rounded,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                locationName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationScreen(),
                       ),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(locationName,
-                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
-                              overflow: TextOverflow.ellipsis,
+                    ).then((_) => _loadNotifCount());
+                  },
+                  child: Stack(
+                    children: [
+                      _buildHeaderIcon(Icons.notifications_none_rounded),
+                      if (_notifCount > 0)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEF4444),
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            child: Text(
+                              '$_notifCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
-                          const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
-                        ],
-                      ),
+                        ),
                     ],
                   ),
                 ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen())).then(
-                    (_) => _loadNotifCount(),
-                  );
-                },
-                child: Stack(
-                  children: [
-                    _buildHeaderIcon(Icons.notifications_none_rounded),
-                    if (_notifCount > 0)
-                      Positioned(
-                        top: 0, right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
-                          constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                          child: Text('$_notifCount',
-                            style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
-                            textAlign: TextAlign.center,
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CartScreen()),
+                    ).then(
+                      (_) =>
+                          setState(() => _cartCount = CartState().totalCount),
+                    );
+                  },
+                  child: Stack(
+                    children: [
+                      _buildHeaderIcon(Icons.shopping_cart_outlined),
+                      if (_cartCount > 0)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEF4444),
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            child: Text(
+                              '$_cartCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CartScreen())).then(
-                    (_) => setState(() => _cartCount = CartState().totalCount),
-                  );
-                },
-                child: Stack(
-                  children: [
-                    _buildHeaderIcon(Icons.shopping_cart_outlined),
-                    if (_cartCount > 0)
-                      Positioned(
-                        top: 0, right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
-                          constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                          child: Text('$_cartCount',
-                            style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -268,28 +318,31 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Halo, $userName!',
-              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            const Text('Cari Obat Apa?',
-              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-            ),
-            const SizedBox(height: 16),
             Container(
               height: 44,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 3)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
                 ],
               ),
               child: const TextField(
                 decoration: InputDecoration(
                   hintText: 'Cari obat, vitamin, atau alat kesehatan...',
-                  hintStyle: TextStyle(color: AppColors.textLight, fontSize: 13),
-                  prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
+                  hintStyle: TextStyle(
+                    color: AppColors.textLight,
+                    fontSize: 13,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 10),
                 ),
@@ -396,6 +449,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       ),
     );
   }
+
   // ── Section Header ───────────────────────────────────────────────
   Widget _buildSectionHeader(String title, VoidCallback onTap) {
     return Padding(
@@ -427,9 +481,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     );
   }
 
-  // ── Product Grid ─────────────────────────────────────────────────
-  Widget _buildProductGrid() {
-    final products = _medicines;
+  // ── Category Grid ─────────────────────────────────────────────────
+  Widget _buildCategoryGrid() {
+    final categories = _popularCategories;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -438,99 +492,141 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.72,
+          childAspectRatio: 1.4,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
         ),
-        itemCount: products.length,
-        itemBuilder: (_, i) => _buildProductCard(products[i]),
+        itemCount: categories.length,
+        itemBuilder: (_, i) => _buildCategoryCard(categories[i]),
       ),
     );
   }
 
-  Widget _buildProductCard(Map<String, dynamic> product) {
-    final price = product['price'] is int
-        ? product['price'] as int
-        : (product['price'] as num).toInt();
-    final imageUrl = product['image_url'] as String? ?? '';
+  Widget _buildCategoryCard(Map<String, dynamic> category) {
+    final name = category['name']?.toString() ?? 'Kategori';
+    final id = category['id']?.toString() ?? '';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              child: Image.network(
-                imageUrl,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: AppColors.background,
-                  child: Center(
-                    child: Icon(Icons.medication_rounded, size: 48, color: AppColors.primary.withOpacity(0.3)),
-                  ),
-                ),
+    // Icon mapping
+    IconData iconData = Icons.medication_rounded;
+    List<Color> gradientColors = [AppColors.primary, AppColors.primaryDark];
+
+    if (name.contains('Antibiotik')) {
+      iconData = Icons.biotech_rounded;
+      gradientColors = [const Color(0xFF0EA5E9), const Color(0xFF0284C7)];
+    } else if (name.contains('Analgesik')) {
+      iconData = Icons.healing_rounded;
+      gradientColors = [const Color(0xFF10B981), const Color(0xFF059669)];
+    } else if (name.contains('Antipiretik')) {
+      iconData = Icons.thermostat_rounded;
+      gradientColors = [const Color(0xFFEF4444), const Color(0xFFDC2626)];
+    } else if (name.contains('Antihipertensi')) {
+      iconData = Icons.favorite_rounded;
+      gradientColors = [const Color(0xFFEC4899), const Color(0xFFDB2777)];
+    } else if (name.contains('Antidiabetes')) {
+      iconData = Icons.water_drop_rounded;
+      gradientColors = [const Color(0xFF6366F1), const Color(0xFF4F46E5)];
+    } else if (name.contains('Vitamin')) {
+      iconData = Icons.spa_rounded;
+      gradientColors = [const Color(0xFF84CC16), const Color(0xFF65A30D)];
+    } else if (name.contains('Antihistamin')) {
+      iconData = Icons.masks_rounded;
+      gradientColors = [const Color(0xFFF59E0B), const Color(0xFFD97706)];
+    } else if (name.contains('Antasida')) {
+      iconData = Icons.sick_rounded;
+      gradientColors = [const Color(0xFF8B5CF6), const Color(0xFF7C3AED)];
+    } else if (name.contains('Batuk')) {
+      iconData = Icons.coronavirus_rounded;
+      gradientColors = [const Color(0xFF14B8A6), const Color(0xFF0D9488)];
+    } else if (name.contains('P3K') || name.contains('Antiseptik')) {
+      iconData = Icons.medical_services_rounded;
+      gradientColors = [const Color(0xFFF43F5E), const Color(0xFFB91C1C)];
+    } else if (name.contains('Mata')) {
+      iconData = Icons.visibility_rounded;
+      gradientColors = [const Color(0xFF06B6D4), const Color(0xFF0891B2)];
+    } else if (name.contains('Ibu') || name.contains('Bayi')) {
+      iconData = Icons.child_care_rounded;
+      gradientColors = [const Color(0xFFEC4899), const Color(0xFFDB2777)];
+    }
+
+    return GestureDetector(
+      onTap: () {
+        context.push(
+          AppRouter.customerPharmacySearch,
+          extra: {'categoryId': id, 'categoryName': name},
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradientColors,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: gradientColors[0].withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -10,
+              bottom: -10,
+              child: Icon(
+                iconData,
+                size: 72,
+                color: Colors.white.withOpacity(0.15),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product['name'] as String? ?? '',
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.textDark),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  product['dosage_info'] as String? ?? '',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Rp ${_formatPrice(price)}',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.primary),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
                     ),
-                    GestureDetector(
-                      onTap: () => _addToCart(product),
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(8),
+                    child: Icon(iconData, color: Colors.white, size: 20),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          color: Colors.white,
+                          height: 1.2,
                         ),
-                        child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Pesan Sekarang',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    );
-  }
-
-  String _formatPrice(int price) {
-    return price.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
     );
   }
 }

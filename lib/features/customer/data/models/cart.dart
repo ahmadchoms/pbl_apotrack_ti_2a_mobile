@@ -8,6 +8,7 @@ class CartItem {
   final String pharmacyName;
   final String pharmacyId;  // pharmacy UUID
   int quantity;
+  final int stock;
 
   CartItem({
     required this.id,
@@ -18,6 +19,7 @@ class CartItem {
     required this.pharmacyName,
     required this.pharmacyId,
     this.quantity = 1,
+    this.stock = 99,
   });
 }
 
@@ -31,7 +33,15 @@ class CartState {
   void addItem(CartItem newItem) {
     final existing = items.firstWhere(
       (e) => e.id == newItem.id && e.pharmacyId == newItem.pharmacyId,
-      orElse: () => CartItem(id: '', name: '', price: 0, unit: '', imageUrl: '', pharmacyName: '', pharmacyId: ''),
+      orElse: () => CartItem(
+          id: '',
+          name: '',
+          price: 0,
+          unit: '',
+          imageUrl: '',
+          pharmacyName: '',
+          pharmacyId: '',
+          stock: 0),
     );
     if (existing.id.isNotEmpty) {
       existing.quantity++;

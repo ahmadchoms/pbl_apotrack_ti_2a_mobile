@@ -15,6 +15,7 @@ class MedicineListScreen extends ConsumerStatefulWidget {
   final String pharmacyDistance;
   final String pharmacyArea;
   final bool isOpen;
+  final String? categoryId;
 
   const MedicineListScreen({
     super.key,
@@ -24,11 +25,11 @@ class MedicineListScreen extends ConsumerStatefulWidget {
     this.pharmacyDistance = '-',
     this.pharmacyArea = '-',
     this.isOpen = true,
+    this.categoryId,
   });
 
   @override
-  ConsumerState<MedicineListScreen> createState() =>
-      _MedicineListScreenState();
+  ConsumerState<MedicineListScreen> createState() => _MedicineListScreenState();
 }
 
 class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
@@ -39,17 +40,15 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
 
   String _rupiah(double amount) {
     final str = amount.toStringAsFixed(0);
-    return 'Rp ${str.replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
-    )}';
+    return 'Rp ${str.replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
   }
 
   List<MedicineModel> _filterMedicines(List<MedicineModel> all) {
     return all.where((m) {
-      final matchCat = _selectedCategoryId.isEmpty ||
-          m.categoryId == _selectedCategoryId;
-      final matchSearch = _search.isEmpty ||
+      final matchCat =
+          _selectedCategoryId.isEmpty || m.categoryId == _selectedCategoryId;
+      final matchSearch =
+          _search.isEmpty ||
           m.name.toLowerCase().contains(_search.toLowerCase());
       return matchCat && matchSearch;
     }).toList();
@@ -89,26 +88,27 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
     final cartState = CartState();
     cartState.items.clear();
 
-    final allMeds = ref.read(medicinesProvider(widget.pharmacyId)).valueOrNull ?? [];
+    final allMeds =
+        ref.read(medicinesProvider(widget.pharmacyId)).valueOrNull ?? [];
     for (final entry in _cart.entries) {
       final med = allMeds.firstWhere((m) => m.id == entry.key);
-      cartState.items.add(CartItem(
-        id: med.id,
-        name: med.name,
-        price: med.price.toInt(),
-        unit: med.unitName ?? 'Pcs',
-        imageUrl: med.imageUrl ?? '',
-        pharmacyName: widget.pharmacyName,
-        pharmacyId: widget.pharmacyId,
-        quantity: entry.value,
-      ));
+      cartState.items.add(
+        CartItem(
+          id: med.id,
+          name: med.name,
+          price: med.price.toInt(),
+          unit: med.unitName ?? 'Pcs',
+          imageUrl: med.imageUrl ?? '',
+          pharmacyName: widget.pharmacyName,
+          pharmacyId: widget.pharmacyId,
+          quantity: entry.value,
+        ),
+      );
     }
 
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => CheckoutScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => CheckoutScreen()),
     );
   }
 
@@ -130,6 +130,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedCategoryId = widget.categoryId ?? '';
     _searchFocus.addListener(() => setState(() {}));
   }
 
@@ -161,17 +162,28 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.wifi_off_rounded, size: 56, color: AppColors.textSubtle),
+                      const Icon(
+                        Icons.wifi_off_rounded,
+                        size: 56,
+                        color: AppColors.textSubtle,
+                      ),
                       const SizedBox(height: 16),
                       const Text(
                         'Gagal memuat data',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textLight),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textLight,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '$e',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 13, color: AppColors.textSubtle),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSubtle,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       SizedBox(
@@ -181,17 +193,31 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
-                              BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6)),
+                              BoxShadow(
+                                color: AppColors.primary.withOpacity(0.3),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
                             ],
                           ),
                           child: ElevatedButton(
-                            onPressed: () => ref.refresh(medicinesProvider(widget.pharmacyId)),
+                            onPressed: () => ref.refresh(
+                              medicinesProvider(widget.pharmacyId),
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                             ),
-                            child: const Text('Coba Lagi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                            child: const Text(
+                              'Coba Lagi',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -200,8 +226,15 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                 ),
               ),
               data: (medicines) {
-                final filtered = _filterMedicines(medicines);
-                final popular = medicines.take(3).toList();
+                final sortedMeds = List<MedicineModel>.from(medicines);
+                sortedMeds.sort((a, b) {
+                  final aAvail = a.isActive && a.totalActiveStock > 0 ? 1 : 0;
+                  final bAvail = b.isActive && b.totalActiveStock > 0 ? 1 : 0;
+                  return bAvail.compareTo(aAvail);
+                });
+
+                final filtered = _filterMedicines(sortedMeds);
+                final popular = sortedMeds.take(3).toList();
 
                 return ListView(
                   padding: EdgeInsets.zero,
@@ -214,7 +247,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                       data: (cats) => _buildPopularSection(popular, cats),
                     ),
                     const SizedBox(height: 12),
-                    _buildAllProductsSection(filtered, medicines),
+                    _buildAllProductsSection(filtered, sortedMeds),
                     const SizedBox(height: 16),
                   ],
                 );
@@ -223,8 +256,9 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
           ),
         ],
       ),
-      bottomNavigationBar:
-          (_cartTotal > 0 && widget.isOpen) ? _buildCheckoutBar() : null,
+      bottomNavigationBar: (_cartTotal > 0 && widget.isOpen)
+          ? _buildCheckoutBar()
+          : null,
     );
   }
 
@@ -240,13 +274,23 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
               fontWeight: FontWeight.w900,
               fontSize: 16,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           Row(
             children: [
               const Icon(Icons.star_rounded, color: Colors.amber, size: 13),
-              Text(
-                ' ${widget.pharmacyRating}  •  ${widget.pharmacyDistance}  •  ${widget.pharmacyArea}',
-                style: const TextStyle(color: AppColors.textLight, fontSize: 12),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  ' ${widget.pharmacyRating}  •  ${widget.pharmacyDistance}  •  ${widget.pharmacyArea}',
+                  style: const TextStyle(
+                    color: AppColors.textLight,
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -256,20 +300,32 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
         Stack(
           children: [
             IconButton(
-              icon: const Icon(Icons.shopping_cart_outlined, color: AppColors.primary),
-              onPressed: (!widget.isOpen || _cartItemCount == 0) ? null : _goToCheckout,
+              icon: const Icon(
+                Icons.shopping_cart_outlined,
+                color: AppColors.primary,
+              ),
+              onPressed: (!widget.isOpen || _cartItemCount == 0)
+                  ? null
+                  : _goToCheckout,
             ),
             if (_cartItemCount > 0 && widget.isOpen)
               Positioned(
-                right: 6, top: 6,
+                right: 6,
+                top: 6,
                 child: Container(
-                  width: 18, height: 18,
-                  decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
+                  width: 18,
+                  height: 18,
+                  decoration: const BoxDecoration(
+                    color: AppColors.danger,
+                    shape: BoxShape.circle,
+                  ),
                   child: Center(
                     child: Text(
                       '$_cartItemCount',
                       style: const TextStyle(
-                        color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -293,7 +349,11 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
           Expanded(
             child: Text(
               'Apotek sedang tutup. Kamu masih bisa lihat-lihat, tapi tidak bisa memesan sekarang.',
-              style: TextStyle(fontSize: 12, color: AppColors.warning, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.warning,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -315,19 +375,46 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
             width: isFocused ? 2 : 1.5,
           ),
           boxShadow: isFocused
-              ? [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 16, offset: const Offset(0, 4))]
-              : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4))],
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.1),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
         ),
         child: TextField(
           focusNode: _searchFocus,
           onChanged: (v) => setState(() => _search = v),
-          style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.w500, fontSize: 14),
+          style: const TextStyle(
+            color: AppColors.textDark,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
           decoration: InputDecoration(
             hintText: 'Cari obat, vitamin, atau alat kesehatan...',
-            hintStyle: const TextStyle(color: AppColors.textSubtle, fontWeight: FontWeight.w400, fontSize: 14),
-            prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textLight, size: 20),
+            hintStyle: const TextStyle(
+              color: AppColors.textSubtle,
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
+            ),
+            prefixIcon: const Icon(
+              Icons.search_rounded,
+              color: AppColors.textLight,
+              size: 20,
+            ),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 14,
+              horizontal: 16,
+            ),
           ),
         ),
       ),
@@ -345,7 +432,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
         : popular.where((m) => m.categoryId == _selectedCategoryId).toList();
 
     final allCategories = [
-      MedicineCategoryModel(id: '', name: 'SEMUA'),
+      MedicineCategoryModel(id: '', name: 'Semua'),
       ...cats,
     ];
 
@@ -398,7 +485,10 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                   onTap: () => setState(() => _selectedCategoryId = cat.id),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: selected ? AppColors.primary : Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -451,8 +541,10 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
           ? Padding(
               padding: const EdgeInsets.all(32),
               child: Center(
-                child: Text('Obat tidak ditemukan.',
-                    style: TextStyle(color: AppColors.textLight)),
+                child: Text(
+                  'Obat tidak ditemukan.',
+                  style: TextStyle(color: AppColors.textLight),
+                ),
               ),
             )
           : const SizedBox.shrink();
@@ -477,15 +569,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
               ),
             ),
           ),
-          ...List.generate(items.length, (i) {
-            return Column(
-              children: [
-                if (i > 0)
-                  const Divider(height: 1, indent: 24, endIndent: 24, color: AppColors.divider),
-                _buildMedicineRow(items[i]),
-              ],
-            );
-          }),
+          ...items.map((m) => _buildMedicineRow(m)),
         ],
       ),
     );
@@ -493,12 +577,13 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
 
   Widget _buildMedicineRow(MedicineModel m) {
     final qty = _cart[m.id] ?? 0;
-    const stock = 99;
-    final isUnavailable = !widget.isOpen;
+    final stock = m.totalActiveStock;
+    final isMedicineAvailable = m.isActive && m.totalActiveStock > 0;
+    final isUnavailable = !widget.isOpen || !isMedicineAvailable;
 
-    final String stockLabel;
-    final Color stockColor;
-    final Color stockBg;
+    final String? stockLabel;
+    final Color? stockColor;
+    final Color? stockBg;
     final IconData? stockIcon;
 
     if (!widget.isOpen) {
@@ -511,106 +596,148 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
       stockColor = AppColors.accentPurple;
       stockBg = const Color(0xFFF3F0FF);
       stockIcon = Icons.description_outlined;
-    } else {
-      stockLabel = 'Tersedia';
+    } else if (isMedicineAvailable) {
+      stockLabel = null;
       stockColor = AppColors.success;
       stockBg = AppColors.successLight;
       stockIcon = Icons.check_circle_outline;
+    } else {
+      stockLabel = null;
+      stockColor = null;
+      stockBg = null;
+      stockIcon = null;
     }
 
     final typeColors = _typeColor(m.typeName);
     final typeColor = isUnavailable ? AppColors.textLight : typeColors['fg']!;
     final typeBg = isUnavailable ? AppColors.divider : typeColors['bg']!;
 
-    return Opacity(
-      opacity: isUnavailable ? 0.45 : 1.0,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    m.name.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.3,
-                      color: isUnavailable ? AppColors.textLight : AppColors.textDark,
-                    ),
+    Widget card = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  m.name.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.3,
+                    color: isUnavailable
+                        ? AppColors.textLight
+                        : AppColors.textDark,
                   ),
-                  const SizedBox(height: 6),
-                  StatusBadge(
-                    label: m.typeName ?? 'Obat Bebas',
-                    color: typeColor,
-                    backgroundColor: typeBg,
+                ),
+                const SizedBox(height: 6),
+                StatusBadge(
+                  label: m.typeName ?? 'Obat Bebas',
+                  color: typeColor,
+                  backgroundColor: typeBg,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  m.description,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textLight,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    m.description,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textLight),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  _rupiah(m.price),
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: isUnavailable
+                        ? AppColors.textLight
+                        : AppColors.textDark,
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _rupiah(m.price),
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: isUnavailable ? AppColors.textLight : AppColors.textDark,
-                    ),
-                  ),
+                ),
+                if (stockLabel != null) ...[
                   const SizedBox(height: 6),
                   StatusBadge(
                     label: stockLabel,
-                    color: stockColor,
-                    backgroundColor: stockBg,
+                    color: stockColor ?? AppColors.success,
+                    backgroundColor: stockBg ?? AppColors.successLight,
                     icon: stockIcon,
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(width: 14),
-            Column(
-              children: [
-                ColorFiltered(
-                  colorFilter: isUnavailable
-                      ? const ColorFilter.matrix([
-                          0.2126, 0.7152, 0.0722, 0, 0,
-                          0.2126, 0.7152, 0.0722, 0, 0,
-                          0.2126, 0.7152, 0.0722, 0, 0,
-                          0, 0, 0, 1, 0,
-                        ])
-                      : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
-                  child: Container(
-                    width: 88,
-                    height: 88,
-                    decoration: BoxDecoration(
-                      color: AppColors.divider,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: _buildMedicineImage(m.imageUrl),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                if (isUnavailable)
-                  _buildDisabledButton('Tutup')
-                else if (qty == 0)
-                  _buildTambahButton(m.id)
-                else
-                  _buildQtyControl(m.id, qty, stock),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            children: [
+              Container(
+                width: 88,
+                height: 88,
+                decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: _buildMedicineImage(m.imageUrl),
+                ),
+              ),
+              const SizedBox(height: 10),
+              if (isUnavailable)
+                _buildDisabledButton(widget.isOpen ? 'Habis' : 'Tutup')
+              else if (qty == 0)
+                _buildTambahButton(m.id)
+              else
+                _buildQtyControl(m.id, qty, stock),
+            ],
+          ),
+        ],
       ),
+    );
+
+    if (isUnavailable) {
+      card = ColorFiltered(
+        colorFilter: const ColorFilter.matrix(<double>[
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+        ]),
+        child: Opacity(opacity: 0.6, child: card),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        card,
+        const Divider(
+          height: 1,
+          indent: 24,
+          endIndent: 24,
+          color: AppColors.divider,
+        ),
+      ],
     );
   }
 
@@ -618,7 +745,8 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
     if (imageUrl == null || imageUrl.isEmpty) return _placeholderIcon();
     return Image.network(
       imageUrl,
-      width: 88, height: 88,
+      width: 88,
+      height: 88,
       fit: BoxFit.cover,
       loadingBuilder: (ctx, child, progress) =>
           progress == null ? child : _loadingIndicator(),
@@ -628,16 +756,21 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
 
   Widget _placeholderIcon() {
     return const SizedBox(
-      width: 88, height: 88,
+      width: 88,
+      height: 88,
       child: Icon(Icons.medication, color: AppColors.textSubtle, size: 40),
     );
   }
 
   Widget _loadingIndicator() {
     return const SizedBox(
-      width: 88, height: 88,
+      width: 88,
+      height: 88,
       child: Center(
-        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: AppColors.primary,
+        ),
       ),
     );
   }
@@ -649,10 +782,15 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
         onPressed: null,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: Colors.grey.shade300),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           padding: const EdgeInsets.symmetric(vertical: 8),
         ),
-        child: Text(label, style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+        child: Text(
+          label,
+          style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+        ),
       ),
     );
   }
@@ -664,12 +802,18 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
         onPressed: () => setState(() => _cart[id] = 1),
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: AppColors.primary),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           padding: const EdgeInsets.symmetric(vertical: 8),
         ),
         child: const Text(
           'Tambah',
-          style: TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: AppColors.primary,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -694,11 +838,19 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                 _cart.remove(id);
               }
             }),
-            child: const Icon(Icons.remove_rounded, color: Colors.white, size: 16),
+            child: const Icon(
+              Icons.remove_rounded,
+              color: Colors.white,
+              size: 16,
+            ),
           ),
           Text(
             '$qty',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
           ),
           GestureDetector(
             onTap: () => setState(() {
@@ -725,7 +877,11 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
             color: AppColors.primary,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
-              BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8)),
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.35),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
             ],
           ),
           child: ElevatedButton(
@@ -733,7 +889,9 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -743,17 +901,30 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                     Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 22),
+                        const Icon(
+                          Icons.shopping_cart_outlined,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                         if (_cartItemCount > 0)
                           Positioned(
-                            right: -6, top: -6,
+                            right: -6,
+                            top: -6,
                             child: Container(
-                              width: 16, height: 16,
-                              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                              width: 16,
+                              height: 16,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
                               child: Center(
                                 child: Text(
                                   '$_cartItemCount',
-                                  style: const TextStyle(color: AppColors.primary, fontSize: 9, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
@@ -763,7 +934,11 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                     const SizedBox(width: 14),
                     Text(
                       _rupiah(_cartTotal),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
@@ -772,11 +947,18 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                     Text(
                       'CHECKOUT',
                       style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        letterSpacing: 0.5,
                       ),
                     ),
                     SizedBox(width: 6),
-                    Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ],
                 ),
               ],

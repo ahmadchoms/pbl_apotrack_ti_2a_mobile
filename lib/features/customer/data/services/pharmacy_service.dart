@@ -7,20 +7,22 @@ class PharmacyService {
   PharmacyService({required CustomerApiService api}) : _api = api;
   final CustomerApiService _api;
 
-  Future<List<Map<String, dynamic>>> getPharmacies({Position? userPosition}) async {
+  Future<List<Map<String, dynamic>>> getPharmacies({Position? userPosition, String? categoryId}) async {
     final data = await _api.getPharmacies(
       latitude: userPosition?.latitude,
       longitude: userPosition?.longitude,
       radius: 20.0,
+      categoryId: categoryId,
     );
     return data.map((e) => e.toJson()).toList();
   }
 
-  Future<List<PharmacyModel>> getActivePharmacies({Position? userPosition}) async {
+  Future<List<PharmacyModel>> getActivePharmacies({Position? userPosition, String? categoryId}) async {
     final data = await _api.getPharmacies(
       latitude: userPosition?.latitude,
       longitude: userPosition?.longitude,
       radius: 20.0,
+      categoryId: categoryId,
     );
     return data
         .map((e) => PharmacyModel.fromJson(e.toJson()))
@@ -58,8 +60,8 @@ final pharmacyServiceProvider = Provider<PharmacyService>((ref) {
   return PharmacyService(api: ref.watch(customerApiServiceProvider));
 });
 
-final activePharmaciesProvider = FutureProvider<List<PharmacyModel>>((ref) {
-  return ref.watch(pharmacyServiceProvider).getActivePharmacies();
+final activePharmaciesProvider = FutureProvider.family<List<PharmacyModel>, String?>((ref, categoryId) {
+  return ref.watch(pharmacyServiceProvider).getActivePharmacies(categoryId: categoryId);
 });
 
 final pharmacyDetailProvider =
