@@ -11,7 +11,8 @@ import 'secure_storage_service.dart';
 const String _kBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
   // defaultValue: 'https://alpha-unsunk-retrogradingly.ngrok-free.dev/api',
-  defaultValue: 'http://127.0.0.1:8000/api',
+  // defaultValue: 'http://127.0.0.1:8000/api',
+  defaultValue: 'http://10.157.44.48:8000/api',
 );
 
 /// Riverpod Provider untuk instance Dio yang sudah terkonfigurasi penuh.

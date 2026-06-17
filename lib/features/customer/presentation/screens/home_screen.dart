@@ -11,6 +11,9 @@ import '../../data/services/notification_service.dart';
 import '../providers/customer_profile_provider.dart';
 import 'cart_screen.dart';
 import 'notification.dart';
+import 'address/address_model.dart';
+import 'address/address_provider.dart';
+import 'address/address_picker_sheet.dart';
 
 class CustomerHomeScreen extends ConsumerStatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -24,10 +27,12 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   int _notifCount = 0;
   List<Map<String, dynamic>> _popularCategories = [];
   bool _isLoading = true;
+  late final AddressProvider _addressProvider;
 
   @override
   void initState() {
     super.initState();
+    _addressProvider = AddressProvider();
     _loadData();
     _loadNotifCount();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -120,8 +125,53 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     );
   }
 
+  void _openAddressPicker() {
+    showAddressPickerSheet(
+      context,
+      _addressProvider,
+      onSelected: () => setState(() {}),
+      onSetPrimary: (address) {
+        ref.read(customerProfileProvider.notifier).setPrimaryAddress(address.id);
+        _addressProvider.updatePrimaryFlags(address.id);
+      },
+      onAddressSaved: (address, isEdit) async {
+        final notifier = ref.read(customerProfileProvider.notifier);
+        if (isEdit) {
+          await notifier.updateAddress(
+            id: address.id,
+            label: address.name,
+            addressDetail: address.fullAddress,
+            latitude: address.latitude ?? -6.208800,
+            longitude: address.longitude ?? 106.845600,
+            isPrimary: address.isPrimary,
+          );
+        } else {
+          final newAddr = await notifier.addAddress(
+            label: address.name,
+            addressDetail: address.fullAddress,
+            latitude: address.latitude ?? -6.208800,
+            longitude: address.longitude ?? 106.845600,
+            isPrimary: address.isPrimary,
+          );
+          _addressProvider.updateAddressId(address.id, newAddr.id);
+        }
+      },
+      onAddressDeleted: (id) {
+        ref.read(customerProfileProvider.notifier).deleteAddress(id);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen(customerProfileProvider, (prev, next) {
+      if (!next.isLoading) {
+        final converted =
+            next.addresses.map(AddressModel.fromCustomerAddress).toList();
+        _addressProvider.loadFromApi(converted);
+      }
+    });
+
     final state = ref.watch(customerProfileProvider);
     final profile = state.profile;
     final userName = profile?.username ?? 'Pengguna';
@@ -181,7 +231,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
               children: [
                 Flexible(
                   child: GestureDetector(
-                    onTap: () => context.push(AppRouter.customerAccountHub),
+                    onTap: _openAddressPicker,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
