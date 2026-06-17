@@ -61,7 +61,6 @@ class OrderHistoryCard extends StatelessWidget {
           primarySolid: true,
         );
       case 'COMPLETED':
-      case 'REVIEWED':
         return _StatusConfig(
           badgeLabel: 'Selesai',
           badgeColor: AppColors.success,
@@ -72,6 +71,19 @@ class OrderHistoryCard extends StatelessWidget {
           primaryLabel: 'Pesan Lagi',
           primarySolid: true,
           secondaryLabel: 'Ulasan',
+        );
+      case 'REVIEWED':
+        return _StatusConfig(
+          badgeLabel: 'Selesai',
+          badgeColor: AppColors.success,
+          badgeBg: AppColors.successLight,
+          iconColor: AppColors.success,
+          iconBg: AppColors.successLight,
+          icon: Icons.check_circle_rounded,
+          primaryLabel: 'Pesan Lagi',
+          primarySolid: true,
+          secondaryLabel: 'Sudah Diulas',
+          secondaryDisabled: true,
         );
       case 'CANCELLED':
         return _StatusConfig(
@@ -111,7 +123,7 @@ class OrderHistoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cfg = _config;
     final bool hasActions = cfg.primaryLabel != null;
-    final bool hasTwoActions = cfg.secondaryLabel != null && onSecondaryActionTap != null;
+    final bool hasTwoActions = cfg.secondaryLabel != null && (onSecondaryActionTap != null || cfg.secondaryDisabled);
 
     final pharmacyName = order.pharmacy['name']?.toString() ?? '—';
 
@@ -256,7 +268,8 @@ class OrderHistoryCard extends StatelessWidget {
                     child: _actionBtn(
                       label: cfg.secondaryLabel!,
                       solid: false,
-                      onTap: onSecondaryActionTap,
+                      disabled: cfg.secondaryDisabled,
+                      onTap: cfg.secondaryDisabled ? null : onSecondaryActionTap,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -290,18 +303,33 @@ class OrderHistoryCard extends StatelessWidget {
   Widget _actionBtn({
     required String label,
     required bool solid,
+    bool disabled = false,
     VoidCallback? onTap,
   }) {
+    final bgColor = disabled
+        ? AppColors.surfaceLight
+        : solid
+            ? AppColors.primary
+            : AppColors.white;
+    final borderColor = disabled
+        ? AppColors.divider
+        : solid
+            ? AppColors.primary
+            : AppColors.divider;
+    final textColor = disabled
+        ? AppColors.textMuted
+        : solid
+            ? AppColors.white
+            : AppColors.textMid;
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: disabled ? null : onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: solid ? AppColors.primary : AppColors.white,
+          color: bgColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: solid ? AppColors.primary : AppColors.divider,
-          ),
+          border: Border.all(color: borderColor),
         ),
         child: Center(
           child: Text(
@@ -309,7 +337,7 @@ class OrderHistoryCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w800,
-              color: solid ? AppColors.white : AppColors.textMid,
+              color: textColor,
             ),
           ),
         ),
@@ -337,6 +365,7 @@ class _StatusConfig {
   final String? primaryLabel;
   final bool primarySolid;
   final String? secondaryLabel;
+  final bool secondaryDisabled;
   final bool priceStrikethrough;
 
   const _StatusConfig({
@@ -349,6 +378,7 @@ class _StatusConfig {
     this.primaryLabel,
     this.primarySolid = false,
     this.secondaryLabel,
+    this.secondaryDisabled = false,
     this.priceStrikethrough = false,
   });
 }

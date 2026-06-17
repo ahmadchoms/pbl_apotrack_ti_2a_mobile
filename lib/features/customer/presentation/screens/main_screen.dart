@@ -9,8 +9,6 @@ import 'home_screen.dart';
 import 'notification.dart';
 import 'customer_profile_screen.dart';
 import 'order_history_screen.dart';
-import 'scanner_screen.dart';
-import 'scan_result.dart';
 
 class CustomerMainScreen extends ConsumerStatefulWidget {
   const CustomerMainScreen({super.key});
@@ -53,87 +51,11 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: _buildBottomNav(),
-      floatingActionButton: _buildFloatingButton(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-
-  Future<void> _onScan() async {
-    HapticFeedback.mediumImpact();
-    final code = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(builder: (_) => const ScannerScreen()),
-    );
-    if (code == null || !mounted) return;
-
-    try {
-      final dio = ref.read(dioProvider);
-      final response = await dio.get('/orders/$code');
-      final order = response.data['data'] as Map<String, dynamic>;
-      final rawItems = order['items'] as List<dynamic>? ?? [];
-      final items = rawItems.map((e) {
-        final item = e as Map<String, dynamic>;
-        final medicine = item['medicine'] as Map<String, dynamic>?;
-        return ScannedItem(
-          name: item['medicine_name'] as String? ?? '',
-          quantity: item['quantity'] as int? ?? 0,
-          unit: medicine?['unit'] as String? ?? 'pcs',
-          pricePerUnit: (item['price'] as num?)?.toInt() ?? 0,
-        );
-      }).toList();
-
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ScanResultScreen(
-              scanCode: code,
-              items: items.isNotEmpty ? items : const [
-                ScannedItem(name: 'Tidak ada item ditemukan', quantity: 0, unit: '', pricePerUnit: 0),
-              ],
-            ),
-          ),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal memuat data pesanan')),
-        );
-      }
-    }
-  }
-
-  Widget _buildFloatingButton() {
-    return GestureDetector(
-      onTap: _onScan,
-      child: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppColors.primary,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.35),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.qr_code_scanner_rounded,
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
     );
   }
 
   Widget _buildBottomNav() {
     return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8,
       elevation: 0,
       padding: EdgeInsets.zero,
       color: Colors.white,
@@ -158,7 +80,6 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                 _navItem(0, Icons.home_rounded, Icons.home_outlined, 'Beranda'),
                 _navItemWithBadge(1, Icons.notifications_rounded,
                     Icons.notifications_none_rounded, 'Notifikasi', _unreadNotifCount),
-                const SizedBox(width: 60),
                 _navItem(2, Icons.assignment_rounded, Icons.assignment_outlined, 'Riwayat'),
                 _navItem(3, Icons.person_rounded,
                     Icons.person_outline_rounded, 'Profil'),
