@@ -198,6 +198,8 @@ class AppRouter {
               pharmacyName: extra['pharmacyName'] as String,
               pharmacyRating:
                   (extra['pharmacyRating'] as num?)?.toDouble() ?? 4.5,
+              pharmacyDistance: extra['pharmacyDistance'] as String? ?? '-',
+              pharmacyArea: extra['pharmacyArea'] as String? ?? '-',
             );
           },
         ),

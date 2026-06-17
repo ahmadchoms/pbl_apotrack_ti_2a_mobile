@@ -21,8 +21,8 @@ class MedicineListScreen extends ConsumerStatefulWidget {
     required this.pharmacyId,
     required this.pharmacyName,
     this.pharmacyRating = 4.9,
-    this.pharmacyDistance = '1.2 km',
-    this.pharmacyArea = 'Menteng',
+    this.pharmacyDistance = '-',
+    this.pharmacyArea = '-',
     this.isOpen = true,
   });
 

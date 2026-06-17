@@ -137,6 +137,7 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
   }
 
   void _goToPharmacy(PharmacyModel p) {
+    final jarak = _hitungJarak(p);
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -144,6 +145,8 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
           pharmacyId: p.id,
           pharmacyName: p.name,
           pharmacyRating: p.rating,
+          pharmacyDistance: _formatJarak(jarak),
+          pharmacyArea: p.address,
           isOpen: p.isOpen,
         ),
       ),
