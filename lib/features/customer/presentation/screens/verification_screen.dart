@@ -70,13 +70,13 @@ class VerificationScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.success,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: AppColors.success.withOpacity(0.3), blurRadius: 24, offset: const Offset(0, 8))],
+        boxShadow: [BoxShadow(color: AppColors.success.withValues(alpha: 0.3), blurRadius: 24, offset: const Offset(0, 8))],
       ),
       child: Column(
         children: [
           Container(
             width: 64, height: 64,
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
             child: const Icon(Icons.check_rounded, color: Colors.white, size: 36),
           ),
           const SizedBox(height: 16),
@@ -87,7 +87,7 @@ class VerificationScreen extends StatelessWidget {
                 ? 'Tunjukkan QR Code ini ke petugas apotek\nsaat mengambil obat'
                 : 'Pesananmu sedang diproses dan akan segera dikirim',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13, height: 1.5),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13, height: 1.5),
           ),
         ],
       ),
@@ -101,7 +101,7 @@ class VerificationScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,7 +149,7 @@ class VerificationScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, 4))],
       ),
       child: Column(
         children: [

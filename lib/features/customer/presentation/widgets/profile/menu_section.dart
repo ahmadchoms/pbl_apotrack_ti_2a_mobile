@@ -36,7 +36,7 @@ class MenuSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.black.withOpacity(0.04),
+                  color: AppColors.black.withValues(alpha: 0.04),
                   blurRadius: 15,
                   offset: const Offset(0, 4),
                 ),
@@ -84,7 +84,7 @@ class MenuItemTile extends StatelessWidget {
       trailing: Icon(
         Icons.chevron_right_rounded,
         color: isDestructive
-            ? AppColors.danger.withOpacity(0.3)
+            ? AppColors.danger.withValues(alpha: 0.3)
             : AppColors.textSubtle,
       ),
       onTap: onTap,

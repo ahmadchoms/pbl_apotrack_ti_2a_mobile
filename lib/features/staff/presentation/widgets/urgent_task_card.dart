@@ -27,10 +27,10 @@ class UrgentTaskCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.1), width: 1.5),
+          border: Border.all(color: color.withValues(alpha: 0.1), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.03),
+              color: color.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -41,7 +41,7 @@ class UrgentTaskCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 20),

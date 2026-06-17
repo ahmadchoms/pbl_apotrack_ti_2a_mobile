@@ -97,6 +97,7 @@ class CustomerApiService {
         'subtotal_amount': subtotalAmount,
         'service_type': serviceType,
         'payment_method': paymentMethod,
+        // ignore: use_null_aware_elements
         if (shippingCost != null) 'shipping_cost': shippingCost,
         if (notes != null && notes.isNotEmpty) 'notes': notes,
       });

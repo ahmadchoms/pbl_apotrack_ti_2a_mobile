@@ -216,7 +216,7 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
               backgroundColor: AppColors.danger,
               foregroundColor: AppColors.white,
               disabledBackgroundColor:
-                  AppColors.danger.withOpacity(0.4),
+                  AppColors.danger.withValues(alpha: 0.4),
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(

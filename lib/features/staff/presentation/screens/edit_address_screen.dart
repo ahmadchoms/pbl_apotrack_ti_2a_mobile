@@ -195,7 +195,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.black.withOpacity(0.12),
+                                  color: AppColors.black.withValues(alpha: 0.12),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -209,7 +209,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
-                              color: AppColors.white.withOpacity(0.9),
+                              color: AppColors.white.withValues(alpha: 0.9),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Text(
@@ -292,7 +292,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
               child: SwitchListTile(
                 value: _isPrimary,
                 onChanged: (v) => setState(() => _isPrimary = v),
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 4),
                 title: const Text(
@@ -315,7 +315,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.06),
+                color: AppColors.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -442,7 +442,7 @@ class _MapGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.mapGrid.withOpacity(0.5)
+      ..color = AppColors.mapGrid.withValues(alpha: 0.5)
       ..strokeWidth = 1;
     const spacing = 30.0;
     for (double x = 0; x < size.width; x += spacing) {

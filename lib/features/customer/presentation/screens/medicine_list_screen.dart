@@ -67,24 +67,6 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
 
   int get _cartItemCount => _cart.values.fold(0, (a, b) => a + b);
 
-  List<Map<String, dynamic>> get _cartItems {
-    final allMeds =
-        ref.read(medicinesProvider(widget.pharmacyId)).valueOrNull ?? [];
-    return allMeds.where((m) => (_cart[m.id] ?? 0) > 0).map((m) {
-      final qty = _cart[m.id]!;
-      final subtotal = (qty * m.price).toInt();
-      return {
-        'medicine_id': m.id,
-        'medicine_name': m.name,
-        'unit_name': m.unitName ?? 'Pcs',
-        'quantity': qty,
-        'price': m.price.toInt(),
-        'subtotal': subtotal,
-        'requires_prescription': m.requiresPrescription,
-      };
-    }).toList();
-  }
-
   void _goToCheckout() {
     final cartState = CartState();
     cartState.items.clear();
@@ -181,7 +163,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
-                              BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6)),
+                              BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6)),
                             ],
                           ),
                           child: ElevatedButton(
@@ -210,7 +192,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
                     const SizedBox(height: 12),
                     categoriesAsync.when(
                       loading: () => const SizedBox(height: 52),
-                      error: (_, __) => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
                       data: (cats) => _buildPopularSection(popular, cats),
                     ),
                     const SizedBox(height: 12),
@@ -315,8 +297,8 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
             width: isFocused ? 2 : 1.5,
           ),
           boxShadow: isFocused
-              ? [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 16, offset: const Offset(0, 4))]
-              : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4))],
+              ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, 4))]
+              : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4))],
         ),
         child: TextField(
           focusNode: _searchFocus,
@@ -390,7 +372,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.only(left: 24, right: 8),
               itemCount: allCategories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
                 final cat = allCategories[i];
                 final selected = _selectedCategoryId == cat.id;
@@ -622,7 +604,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
       fit: BoxFit.cover,
       loadingBuilder: (ctx, child, progress) =>
           progress == null ? child : _loadingIndicator(),
-      errorBuilder: (ctx, _, __) => _placeholderIcon(),
+      errorBuilder: (ctx, _, _) => _placeholderIcon(),
     );
   }
 
@@ -725,7 +707,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
             color: AppColors.primary,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
-              BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8)),
+              BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8)),
             ],
           ),
           child: ElevatedButton(

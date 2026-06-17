@@ -74,7 +74,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   // NAVIGASI ANTAR STEP
   // ─────────────────────────────────────────────
   void _animateToStep(int nextStep) {
-    print("DEBUG: Mencoba berpindah ke Step Index $nextStep...");
+    debugPrint("DEBUG: Mencoba berpindah ke Step Index $nextStep...");
     
     // 1. Update state
     if (mounted) {
@@ -96,13 +96,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeOutCubic,
         ).then((_) {
-          print("DEBUG: Berhasil berpindah ke halaman $nextStep");
+          debugPrint("DEBUG: Berhasil berpindah ke halaman $nextStep");
         });
       } else {
-        print("DEBUG ERROR: PageController tidak memiliki client!");
+        debugPrint("DEBUG ERROR: PageController tidak memiliki client!");
       }
     } catch (e) {
-      print("DEBUG ERROR di _animateToStep: $e");
+      debugPrint("DEBUG ERROR di _animateToStep: $e");
     }
   }
 
@@ -183,7 +183,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && _currentStep == 2) {
           FocusScope.of(context).requestFocus(_otpFocus);
-          print("DEBUG: Focus requested on OTP field");
+          debugPrint("DEBUG: Focus requested on OTP field");
         }
       });
     } catch (e) {
@@ -295,7 +295,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                     border: Border.all(color: AppColors.divider),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -522,7 +522,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                   boxShadow: _passwordFocus.hasFocus
                       ? [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.12),
+                            color: AppColors.primary.withValues(alpha: 0.12),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -704,7 +704,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isFilled
-                  ? AppColors.primary.withOpacity(0.5)
+                  ? AppColors.primary.withValues(alpha: 0.5)
                   : isActive
                   ? AppColors.primary
                   : AppColors.divider,
@@ -742,7 +742,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         border: Border(top: BorderSide(color: AppColors.divider)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -771,7 +771,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                   boxShadow: _isNextEnabled
                       ? [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.35),
+                            color: AppColors.primary.withValues(alpha: 0.35),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
                           ),
@@ -866,7 +866,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             boxShadow: focusNode.hasFocus
                 ? [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.12),
+                      color: AppColors.primary.withValues(alpha: 0.12),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

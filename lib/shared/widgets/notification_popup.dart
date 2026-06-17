@@ -183,16 +183,16 @@ class NotificationPopup {
     switch (type.toUpperCase()) {
       case 'ORDER':
       case 'ORDER_STATUS':
-        return AppColors.primary.withOpacity(0.1);
+        return AppColors.primary.withValues(alpha: 0.1);
       case 'STOCK':
       case 'INVENTORY':
-        return AppColors.success.withOpacity(0.1);
+        return AppColors.success.withValues(alpha: 0.1);
       case 'SYSTEM':
-        return AppColors.warning.withOpacity(0.1);
+        return AppColors.warning.withValues(alpha: 0.1);
       case 'PROMO':
-        return AppColors.accentPurple.withOpacity(0.1);
+        return AppColors.accentPurple.withValues(alpha: 0.1);
       default:
-        return AppColors.info.withOpacity(0.1);
+        return AppColors.info.withValues(alpha: 0.1);
     }
   }
 

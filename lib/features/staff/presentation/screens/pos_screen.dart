@@ -132,7 +132,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               size: 20,
             ),
             style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.15),
+              backgroundColor: Colors.white.withValues(alpha: 0.15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -155,7 +155,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 Text(
                   pharmacyName,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -173,9 +173,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.success.withOpacity(0.2),
+        color: AppColors.success.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
@@ -206,7 +206,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -237,7 +237,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (_, i) => _buildCategoryChip(categories[i]),
             ),
           ),
@@ -290,8 +290,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       ),
       itemCount: filtered.length + (isLoadingNextPage ? 2 : 0),
       itemBuilder: (_, i) {
-        if (i >= filtered.length)
+        if (i >= filtered.length) {
           return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+        }
         final med = filtered[i];
         return PosProductCard(
           medicine: med,
@@ -312,7 +313,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           Icon(
             Icons.inventory_2_outlined,
             size: 64,
-            color: AppColors.textSubtle.withOpacity(0.5),
+            color: AppColors.textSubtle.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -345,7 +346,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -657,7 +658,7 @@ class _CartSheet extends StatelessWidget {
               child: ListView.separated(
                 padding: const EdgeInsets.all(24),
                 itemCount: cart.length,
-                separatorBuilder: (_, __) => const Divider(height: 32),
+                separatorBuilder: (_, _) => const Divider(height: 32),
                 itemBuilder: (_, i) => _buildCartRow(cart[i]),
               ),
             ),
@@ -676,9 +677,9 @@ class _CartSheet extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.primaryLight.withOpacity(0.4),
+          color: AppColors.primaryLight.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -709,7 +710,7 @@ class _CartSheet extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: 'Tulis instruksi penggunaan...',
                 hintStyle: TextStyle(
-                  color: AppColors.textLight.withOpacity(0.7),
+                  color: AppColors.textLight.withValues(alpha: 0.7),
                   fontSize: 13,
                 ),
                 fillColor: Colors.white,

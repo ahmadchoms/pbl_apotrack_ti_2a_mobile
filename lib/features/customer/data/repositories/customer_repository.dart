@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 
@@ -55,41 +56,41 @@ class CustomerRepository {
       _dio.post('/user/addresses', data: data);
 
   Future<Response> updateAddress(String id, Map<String, dynamic> data) async {
-    print('[Repository] updateAddress PATCH /user/addresses/$id');
-    print('[Repository] payload: $data');
+    debugPrint('[Repository] updateAddress PATCH /user/addresses/$id');
+    debugPrint('[Repository] payload: $data');
     try {
       final response = await _dio.patch('/user/addresses/$id', data: data);
-      print('[Repository] updateAddress success: ${response.statusCode}');
+      debugPrint('[Repository] updateAddress success: ${response.statusCode}');
       return response;
     } on DioException catch (e) {
-      print('[Repository] updateAddress error: ${e.response?.statusCode}');
-      print('[Repository] error body: ${e.response?.data}');
+      debugPrint('[Repository] updateAddress error: ${e.response?.statusCode}');
+      debugPrint('[Repository] error body: ${e.response?.data}');
       rethrow;
     }
   }
 
   Future<Response> setPrimaryAddress(String id) async {
-    print('[Repository] setPrimaryAddress PATCH /user/addresses/$id');
+    debugPrint('[Repository] setPrimaryAddress PATCH /user/addresses/$id');
     try {
       final response = await _dio.patch('/user/addresses/$id', data: {'is_primary': true});
-      print('[Repository] setPrimaryAddress success: ${response.statusCode}');
+      debugPrint('[Repository] setPrimaryAddress success: ${response.statusCode}');
       return response;
     } on DioException catch (e) {
-      print('[Repository] setPrimaryAddress error: ${e.response?.statusCode}');
-      print('[Repository] error body: ${e.response?.data}');
+      debugPrint('[Repository] setPrimaryAddress error: ${e.response?.statusCode}');
+      debugPrint('[Repository] error body: ${e.response?.data}');
       rethrow;
     }
   }
 
   Future<Response> deleteAddress(String id) async {
-    print('[Repository] deleteAddress DELETE /user/addresses/$id');
+    debugPrint('[Repository] deleteAddress DELETE /user/addresses/$id');
     try {
       final response = await _dio.delete('/user/addresses/$id');
-      print('[Repository] deleteAddress success: ${response.statusCode}');
+      debugPrint('[Repository] deleteAddress success: ${response.statusCode}');
       return response;
     } on DioException catch (e) {
-      print('[Repository] deleteAddress error: ${e.response?.statusCode}');
-      print('[Repository] error body: ${e.response?.data}');
+      debugPrint('[Repository] deleteAddress error: ${e.response?.statusCode}');
+      debugPrint('[Repository] error body: ${e.response?.data}');
       rethrow;
     }
   }

@@ -103,7 +103,7 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
       final type = (data['type'] ?? '').toString().toUpperCase();
       final referenceId = data['reference_id'];
       final navContext = AppRouter.navigatorKey.currentContext;
-      if (navContext != null) {
+      if (navContext != null && navContext.mounted) {
         NotificationPopup.show(
           context: navContext,
           title: title,
@@ -134,7 +134,8 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
     final message = await FirebaseMessaging.instance.getInitialMessage();
     if (message != null) {
       await Future.delayed(const Duration(milliseconds: 500));
-      if (mounted) _navigateToScreen(message);
+      if (!context.mounted) return;
+      _navigateToScreen(message);
     }
   }
 

@@ -68,7 +68,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
           Icon(
             Icons.history_rounded,
             size: 80,
-            color: AppColors.textLight.withOpacity(0.2),
+            color: AppColors.textLight.withValues(alpha: 0.2),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -228,12 +228,12 @@ class LogItemCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.06),
+                color: color.withValues(alpha: 0.06),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
             ],
-            border: Border.all(color: color.withOpacity(0.1), width: 1.5),
+            border: Border.all(color: color.withValues(alpha: 0.1), width: 1.5),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +241,7 @@ class LogItemCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -292,7 +292,7 @@ class LogItemCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textLight.withOpacity(0.7),
+                        color: AppColors.textLight.withValues(alpha: 0.7),
                       ),
                     ),
                   ],

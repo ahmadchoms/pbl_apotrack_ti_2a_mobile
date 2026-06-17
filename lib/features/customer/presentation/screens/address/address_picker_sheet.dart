@@ -155,7 +155,7 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
         decoration: BoxDecoration(
           border: Border.all(
             color: isDestructive
-                ? const Color(0xFFEF4444).withOpacity(0.2)
+                ? const Color(0xFFEF4444).withValues(alpha: 0.2)
                 : Colors.grey.shade200,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -345,7 +345,7 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.08),
+                              color: AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -458,7 +458,7 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -470,7 +470,7 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
@@ -714,7 +714,7 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
         decoration: BoxDecoration(
           border: Border.all(
             color: isDestructive
-                ? const Color(0xFFEF4444).withOpacity(0.2)
+                ? const Color(0xFFEF4444).withValues(alpha: 0.2)
                 : Colors.grey.shade200,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -795,7 +795,7 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                       children: [
                         Icon(Icons.bookmark_border_rounded,
                             size: 48,
-                            color: AppColors.textLight.withOpacity(0.4)),
+                            color: AppColors.textLight.withValues(alpha: 0.4)),
                         const SizedBox(height: 12),
                         const Text(
                           'Belum ada alamat favorit',
@@ -821,7 +821,7 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                 : ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: _filtered.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, _) =>
                         const SizedBox(height: 12),
                     itemBuilder: (_, i) =>
                         _addressCard(_filtered[i]),
@@ -883,7 +883,7 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
         border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -901,7 +901,7 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.08),
+                    color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.bookmark_rounded,

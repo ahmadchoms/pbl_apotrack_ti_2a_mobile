@@ -1,5 +1,5 @@
-/// Shared formatting utilities used across the application.
-/// Centralizes common formatters to avoid code duplication.
+// Shared formatting utilities used across the application.
+// Centralizes common formatters to avoid code duplication.
 
 /// Formats a numeric value into Indonesian Rupiah currency string.
 /// Example: 50000 → 'Rp 50.000'

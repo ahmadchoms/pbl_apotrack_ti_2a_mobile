@@ -191,7 +191,7 @@ class _VerifikasiPengambilanScreenState
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 4),
           ),
@@ -365,7 +365,7 @@ class _VerifikasiPengambilanScreenState
           color: enabled ? AppColors.primary : Colors.grey.shade300,
           borderRadius: BorderRadius.circular(16),
           boxShadow: enabled
-              ? [BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8))]
+              ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8))]
               : [],
         ),
         child: ElevatedButton.icon(

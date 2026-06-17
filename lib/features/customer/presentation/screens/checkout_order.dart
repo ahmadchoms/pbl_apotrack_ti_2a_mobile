@@ -21,8 +21,7 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   // ── State ────────────────────────────────────────────────────────
   String _deliveryMethod = 'kirim'; // 'kirim' | 'ambil'
-  String _paymentMethod = 'cash';   // 'cash' | 'qris'
-  String _courierCode = 'jne';
+  String _paymentMethod = 'cod';
   File? _prescriptionFile;
   final TextEditingController _noteController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
@@ -38,8 +37,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   int _selectedCourierPrice = 0;
   bool _isLoadingRates = false;
   bool _ratesError = false;
-  double _distanceKm = 0;
-
   // Dummy item (in real app, comes from CartState)
   final List<CartItem> _cartItems = CartState().items;
 
@@ -95,7 +92,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final List<dynamic> pricing = result['pricing'] ?? [];
       setState(() {
         _courierRates = pricing.cast<Map<String, dynamic>>();
-        _distanceKm = (result['distance_km'] as num?)?.toDouble() ?? 0;
         _isLoadingRates = false;
       });
 
@@ -104,6 +100,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         _selectCourier(_courierRates.first);
       }
     } catch (e) {
+      debugPrint('ShippingRates error: $e');
       setState(() {
         _isLoadingRates = false;
         _ratesError = true;
@@ -251,11 +248,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               // ── Alamat & Kurir muncul hanya saat pilih "kirim" ────
               if (_deliveryMethod == 'kirim') ...[
                 _buildDivider(),
-                _buildCourierSelection(),
-                _buildDivider(),
                 _buildAddressSection(),
                 _buildDivider(),
-                _buildCourierSection(),
+                _buildCourierRateTrigger(),
               ],
               _buildDivider(),
               _buildNoteField(),
@@ -294,12 +289,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       width: 56,
                       height: 56,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         width: 56,
                         height: 56,
                         color: AppColors.background,
                         child: Icon(Icons.medication_rounded,
-                            color: AppColors.primary.withOpacity(0.3)),
+                            color: AppColors.primary.withValues(alpha: 0.3)),
                       ),
                     ),
                   ),
@@ -340,7 +335,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.08),
+                      color: AppColors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -415,7 +410,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   )
@@ -439,55 +434,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // ── Section: Pilihan Kurir ───────────────────────────────────────
-  Widget _buildCourierSelection() {
-    const couriers = [
-      {'code': 'jne', 'name': 'JNE Express'},
-      {'code': 'jnt', 'name': 'J&T Express'},
-      {'code': 'sicepat', 'name': 'SiCepat'},
-      {'code': 'grab', 'name': 'GrabExpress'},
-      {'code': 'gojek', 'name': 'GoSend'},
-      {'code': 'anteraja', 'name': 'AnterAja'},
-      {'code': 'tiki', 'name': 'TIKI'},
-      {'code': 'pos', 'name': 'POS Indonesia'},
-    ];
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionLabel('PILIH KURIR'),
-          const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _courierCode,
-                isExpanded: true,
-                items: couriers.map((c) {
-                  return DropdownMenuItem(
-                    value: c['code'],
-                    child: Text(c['name'] as String,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (v) {
-                  if (v != null) setState(() => _courierCode = v);
-                },
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -534,12 +480,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: selected == null
-                      ? Colors.orange.withOpacity(0.4)
+                      ? Colors.orange.withValues(alpha: 0.4)
                       : Colors.grey.shade200,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -555,7 +501,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.1),
+                              color: Colors.orange.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(Icons.location_off_rounded,
@@ -598,7 +544,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(Icons.location_on_rounded,
@@ -683,10 +629,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.08),
+                  color: Colors.orange.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: Colors.orange.withOpacity(0.2)),
+                      color: Colors.orange.withValues(alpha: 0.2)),
                 ),
                 child: const Row(
                   children: [
@@ -708,32 +654,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
             ],
 
-            // ── Jarak pengiriman ──────────────────────────────────
-            if (selected != null && _distanceKm > 0) ...[
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.15)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.straighten_rounded, size: 16, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Jarak: ${_distanceKm.toStringAsFixed(1)} km dari apotek',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+
           ],
         ),
       ),
@@ -778,175 +699,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   // ── Section: Pilih Kurir ─────────────────────────────────────────
-  Widget _buildCourierSection() {
-    // Fetch rates otomatis saat alamat berubah
+  // ── Courier Rate Trigger (auto-fetch, no UI) ──────────────────
+  Widget _buildCourierRateTrigger() {
     if (_courierRates.isEmpty && !_isLoadingRates && !_ratesError) {
       final address = _addressProvider.selectedAddress;
       if (address != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _fetchRates());
       }
     }
-
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _sectionLabel('PILIH KURIR'),
-              const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'REQUIRED',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (_isLoadingRates)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else if (_ratesError)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.withOpacity(0.2)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Gagal memuat tarif pengiriman. Pastikan alamat sudah benar.',
-                      style: TextStyle(fontSize: 12, color: Colors.orange.shade800, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else if (_courierRates.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.info_outline_rounded, color: AppColors.textLight, size: 20),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Tidak ada kurir tersedia untuk alamat ini.',
-                      style: TextStyle(fontSize: 12, color: AppColors.textLight, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else
-            ...(_courierRates.asMap().entries.map((entry) {
-              final index = entry.key;
-              final rate = entry.value;
-              final code = rate['courier_code'] as String? ?? '';
-              final service = rate['courier_service'] as String? ?? '';
-              final price = (rate['price'] as num?)?.toInt() ?? 0;
-              final etd = rate['etd'] as String? ?? '-';
-              final company = rate['company'] as String? ?? code.toUpperCase();
-              final isSelected = _selectedCourierCode == code && _selectedCourierService == service;
-
-              return Padding(
-                padding: EdgeInsets.only(bottom: index < _courierRates.length - 1 ? 8 : 0),
-                child: GestureDetector(
-                  onTap: () => _selectCourier(rate),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary.withOpacity(0.05) : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected ? AppColors.primary : Colors.grey.shade200,
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Radio<String>(
-                          value: '$code|$service',
-                          groupValue: isSelected ? '$code|$service' : null,
-                          onChanged: (_) => _selectCourier(rate),
-                          activeColor: AppColors.primary,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                company,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                  color: AppColors.textDark,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                service,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textLight,
-                                ),
-                              ),
-                              if (etd != '-')
-                                Text(
-                                  'Estimasi: $etd',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.textSubtle,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          'Rp ${_formatPrice(price)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
-                            color: isSelected ? AppColors.primary : AppColors.textDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            })),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   // ── Section: Note ────────────────────────────────────────────────
@@ -1052,7 +813,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -1064,7 +825,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: AppColors.primary, size: 20),
@@ -1158,13 +919,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
                 children: [
                   Icon(Icons.upload_file_rounded,
-                      color: AppColors.primary.withOpacity(0.5), size: 36),
+                      color: AppColors.primary.withValues(alpha: 0.5), size: 36),
                   const SizedBox(height: 8),
                   const Text(
                     'Unggah foto resep Anda',
@@ -1230,7 +991,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                 ] else ...[
                   Icon(Icons.insert_drive_file_outlined,
-                      color: AppColors.textLight.withOpacity(0.5),
+                      color: AppColors.textLight.withValues(alpha: 0.5),
                       size: 20),
                   const SizedBox(width: 10),
                   const Text(
@@ -1348,8 +1109,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     String? errorMsg;
     if (_deliveryMethod == 'kirim') {
-      if (!hasAddress) errorMsg = 'Pilih alamat pengiriman terlebih dahulu';
-      else if (!hasCourier) errorMsg = 'Pilih kurir pengiriman terlebih dahulu';
+      if (!hasAddress) {
+        errorMsg = 'Pilih alamat pengiriman terlebih dahulu';
+      } else if (!hasCourier) {
+        errorMsg = 'Pilih kurir pengiriman terlebih dahulu';
+      }
     }
 
     return Container(
@@ -1359,7 +1123,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -1378,7 +1142,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         cartItems: _cartItems,
                         deliveryMethod: _deliveryMethod,
                         paymentMethod: _paymentMethod,
-                        courierCode: _deliveryMethod == 'kirim' ? _selectedCourierCode ?? _courierCode : null,
+                        courierCode: _deliveryMethod == 'kirim' ? _selectedCourierCode : null,
                         courierService: _selectedCourierService,
                         total: _total,
                         shippingCost: _shippingCost,

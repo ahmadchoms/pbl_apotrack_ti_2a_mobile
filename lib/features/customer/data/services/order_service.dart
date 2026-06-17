@@ -36,9 +36,12 @@ class OrderService {
       'service_type': serviceType,
       'payment_method': paymentMethod,
       'shipping_cost': shippingCost.toInt(),
+      // ignore: use_null_aware_elements
       if (addressId != null) 'address_id': addressId,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
+      // ignore: use_null_aware_elements
       if (courierCode != null) 'courier_code': courierCode,
+      // ignore: use_null_aware_elements
       if (courierService != null) 'courier_service': courierService,
     });
     return OrderModel.fromJson(response.data['data'] as Map<String, dynamic>);
@@ -104,6 +107,7 @@ class OrderService {
     final response = await _dio.post('/reviews', data: {
       'medicine_id': medicineId,
       'rating': rating,
+      // ignore: use_null_aware_elements
       if (comment != null) 'comment': comment,
     });
     return response.data['data'] as Map<String, dynamic>;

@@ -137,7 +137,7 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.black.withOpacity(0.12),
+                              color: AppColors.black.withValues(alpha: 0.12),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
@@ -184,7 +184,7 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                             vertical: 7,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.black.withOpacity(0.55),
+                            color: AppColors.black.withValues(alpha: 0.55),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text(

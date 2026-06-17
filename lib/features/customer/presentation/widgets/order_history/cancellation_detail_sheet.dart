@@ -149,7 +149,7 @@ class CancellationDetailSheet extends StatelessWidget {
                   color: AppColors.dangerLight,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: AppColors.danger.withOpacity(0.2)),
+                      color: AppColors.danger.withValues(alpha: 0.2)),
                 ),
                 child: Text(
                   order.notes ?? 'Tidak ada alasan',

@@ -157,7 +157,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                       Text(
                         'Lokasi Anda',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -244,7 +244,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
+          color: Colors.white.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: Colors.white, size: 20),
@@ -282,7 +282,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 3)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 3)),
                 ],
               ),
               child: const TextField(
@@ -318,7 +318,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1D70F5).withOpacity(0.35),
+                color: const Color(0xFF1D70F5).withValues(alpha: 0.35),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -332,7 +332,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 child: Icon(
                   Icons.local_pharmacy_rounded,
                   size: 100,
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                 ),
               ),
               Row(
@@ -341,7 +341,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     width: 52,
                     height: 52,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(
@@ -379,7 +379,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -459,7 +459,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -472,10 +472,10 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 imageUrl,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   color: AppColors.background,
                   child: Center(
-                    child: Icon(Icons.medication_rounded, size: 48, color: AppColors.primary.withOpacity(0.3)),
+                    child: Icon(Icons.medication_rounded, size: 48, color: AppColors.primary.withValues(alpha: 0.3)),
                   ),
                 ),
               ),

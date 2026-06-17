@@ -105,10 +105,10 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
             width: 56,
             height: 56,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               width: 56, height: 56,
               decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-              child: Icon(Icons.local_pharmacy_rounded, color: AppColors.primary.withOpacity(0.3)),
+              child: Icon(Icons.local_pharmacy_rounded, color: AppColors.primary.withValues(alpha: 0.3)),
             ),
           ),
         ),

@@ -154,7 +154,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               width: isFocused ? 2 : 1.5,
             ),
             boxShadow: isFocused
-                ? [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 16, offset: const Offset(0, 4))]
+                ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, 4))]
                 : [],
           ),
           child: TextField(
@@ -195,7 +195,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               width: isFocused ? 2 : 1.5,
             ),
             boxShadow: isFocused
-                ? [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 16, offset: const Offset(0, 4))]
+                ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, 4))]
                 : [],
           ),
           child: TextField(
@@ -259,7 +259,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8)),
+            BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8)),
           ],
         ),
         child: ElevatedButton(
@@ -327,16 +327,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         password: password,
       );
 
-      if (!mounted) return;
+      if (!context.mounted) return;
 
       if (!kIsWeb) {
         final dio = ref.read(dioProvider);
         await PushNotificationService.updateDeviceToken(dio, user.id);
       }
 
+      if (!context.mounted) return;
+
       if (user.isStaff || email.toLowerCase().contains('@apotek')) {
+        // ignore: use_build_context_synchronously
         context.go(AppRouter.staffHome);
       } else {
+        // ignore: use_build_context_synchronously
         context.go(AppRouter.customerHome);
       }
     } catch (e) {

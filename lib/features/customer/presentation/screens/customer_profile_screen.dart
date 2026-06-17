@@ -35,10 +35,10 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
       // 2. Invalidate auth provider agar trigger GoRouter redirect logic
       ref.invalidate(authNotifierProvider);
 
-      print('✅ Logout complete, redirecting to login...');
+      debugPrint('✅ Logout complete, redirecting to login...');
     } catch (e) {
       // Tetap lanjut redirect meski ada error
-      print('⚠️ Logout error: $e');
+      debugPrint('⚠️ Logout error: $e');
     } finally {
       // 3. Direct redirect ke login (failsafe jika GoRouter redirect tidak trigger)
       if (mounted) {

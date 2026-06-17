@@ -188,7 +188,7 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
-                    BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8)),
+                    BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8)),
                   ],
                 ),
                 child: ElevatedButton(
@@ -246,7 +246,7 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -310,7 +310,7 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -378,7 +378,7 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -441,7 +441,7 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -469,7 +469,7 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
                 width: isFocused ? 2 : 1.5,
               ),
               boxShadow: isFocused
-                  ? [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 16, offset: const Offset(0, 4))]
+                  ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, 4))]
                   : [],
             ),
             child: TextField(
@@ -498,10 +498,10 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
       height: 56,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: _sending ? AppColors.primary.withOpacity(0.6) : AppColors.primary,
+          color: _sending ? AppColors.primary.withValues(alpha: 0.6) : AppColors.primary,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8)),
+            BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8)),
           ],
         ),
         child: ElevatedButton(

@@ -186,8 +186,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                           icon: Icons.local_shipping_outlined,
                         ),
                         DeliveryInfoCard(order: _order),
-                        if (_order.tracking != null &&
-                            _order.tracking!.status != 'PENDING_BITESHIP') ...[
+                        if (_order.tracking != null) ...[
                           const SizedBox(height: 16),
                           _SimulateTrackingCard(
                             orderStatus: _order.orderStatus,
@@ -268,7 +267,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 Text(
                   'Detail Pesanan',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.95),
+                    color: Colors.white.withValues(alpha: 0.95),
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
@@ -286,7 +285,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   Widget _buildHeaderAction(IconData icon, VoidCallback onTap) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
       ),
       child: IconButton(
@@ -304,7 +303,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       decoration: BoxDecoration(
         color: AppColors.dangerLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.danger.withOpacity(0.2)),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -341,7 +340,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -597,7 +596,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.08),
+            color: AppColors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -662,7 +661,7 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.primary.withOpacity(0.7)),
+          Icon(icon, size: 18, color: AppColors.primary.withValues(alpha: 0.7)),
           const SizedBox(width: 8),
           Text(
             title.toUpperCase(),
@@ -703,7 +702,7 @@ class _MetadataCard extends StatelessWidget {
                 color: AppColors.warningLight,
                 borderRadius: BorderRadius.circular(12),
                 border:
-                    Border.all(color: AppColors.warning.withOpacity(0.2)),
+                    Border.all(color: AppColors.warning.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
@@ -904,9 +903,9 @@ class _SimulateTrackingCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.amber.withOpacity(0.06),
+        color: Colors.amber.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.amber.withOpacity(0.2)),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -929,6 +928,7 @@ class _SimulateTrackingCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
+            // ignore: deprecated_member_use
             value: selectedStatus,
             isExpanded: true,
             decoration: InputDecoration(
@@ -993,7 +993,7 @@ class _VerificationCodeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.successLight,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.success.withOpacity(0.1)),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [

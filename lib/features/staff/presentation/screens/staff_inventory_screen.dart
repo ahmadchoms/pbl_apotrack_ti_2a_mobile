@@ -110,7 +110,7 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
               Text(
                 'Inventori Produk',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.95),
+                  color: Colors.white.withValues(alpha: 0.95),
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5,
@@ -135,7 +135,7 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
       onPressed: onTap,
       icon: Icon(icon, color: Colors.white, size: 22),
       style: IconButton.styleFrom(
-        backgroundColor: Colors.white.withOpacity(0.12),
+        backgroundColor: Colors.white.withValues(alpha: 0.12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
@@ -198,7 +198,7 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.06),
+            color: color.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -221,7 +221,7 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
                   ),
                 ),
               ),
-              Icon(icon, color: color.withOpacity(0.3), size: 20),
+              Icon(icon, color: color.withValues(alpha: 0.3), size: 20),
             ],
           ),
           const Spacer(),
@@ -249,7 +249,7 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -591,7 +591,7 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 tileColor: isSelected
-                    ? AppColors.primary.withOpacity(0.05)
+                    ? AppColors.primary.withValues(alpha: 0.05)
                     : null,
               );
             }),

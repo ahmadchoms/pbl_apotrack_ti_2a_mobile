@@ -50,7 +50,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             top: 60,
             left: 20,
             child: CircleAvatar(
-              backgroundColor: AppColors.white.withOpacity(0.2),
+              backgroundColor: AppColors.white.withValues(alpha: 0.2),
               child: IconButton(
                 icon: const Icon(Icons.close, color: AppColors.white),
                 onPressed: () => Navigator.pop(context),

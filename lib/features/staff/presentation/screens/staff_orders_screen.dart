@@ -110,7 +110,7 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
                 Text(
                   'Pesanan Pelanggan',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.95),
+                    color: Colors.white.withValues(alpha: 0.95),
                     fontSize:
                         22, // Ukuran sedikit disesuaikan agar proporsional
                     fontWeight: FontWeight.w900,
@@ -129,7 +129,7 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
   Widget _buildHeaderAction(IconData icon, VoidCallback onTap) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
       ),
       child: IconButton(
@@ -145,7 +145,7 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Stack(
@@ -244,7 +244,7 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
                         decoration: BoxDecoration(
                           color: t['status'] == 'PENDING'
                               ? AppColors.danger
-                              : AppColors.primary.withOpacity(0.1),
+                              : AppColors.primary.withValues(alpha: 0.1),
 
                           borderRadius: BorderRadius.circular(6),
                         ),

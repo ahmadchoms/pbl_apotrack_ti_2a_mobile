@@ -29,9 +29,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 setState(() => _isScanCompleted = true);
 
                 Future.delayed(const Duration(milliseconds: 500), () {
-                  if (mounted) {
-                    Navigator.pop(context, code);
-                  }
+                  if (!context.mounted) return;
+                  Navigator.pop(context, code);
                 });
               }
             },
@@ -70,7 +69,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             top: 60,
             left: 20,
             child: CircleAvatar(
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
               child: IconButton(
                 icon: const Icon(Icons.close, color: Colors.white, size: 20),
                 onPressed: () => Navigator.pop(context),
@@ -154,7 +153,7 @@ class QrScannerOverlayShape extends ShapeBorder {
   final double borderRadius;
   final double cutOutSize;
 
-  QrScannerOverlayShape({
+  const QrScannerOverlayShape({
     this.borderColor = Colors.white,
     this.borderWidth = 1.0,
     this.borderLength = 40,
@@ -181,7 +180,7 @@ class QrScannerOverlayShape extends ShapeBorder {
       height: cutOutSize,
     );
 
-    final paint = Paint()..color = Colors.black.withOpacity(0.5);
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.5);
     canvas.drawPath(
       Path.combine(
         PathOperation.difference,

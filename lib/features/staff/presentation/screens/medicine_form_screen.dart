@@ -334,7 +334,7 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
         child: Container(
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
+            color: Colors.white.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(
@@ -349,7 +349,7 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
           Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: IconButton(
@@ -384,13 +384,13 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       isEdit ? 'EDIT DATA OBAT' : 'TAMBAH OBAT BARU',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.0,
@@ -437,7 +437,7 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
             color: AppColors.background,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppColors.primary.withOpacity(0.2),
+              color: AppColors.primary.withValues(alpha: 0.2),
               width: 1.5,
             ),
             image: _pickedFile != null
@@ -447,7 +447,7 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
                         : FileImage(File(_pickedFile!.path)) as ImageProvider,
                     fit: BoxFit.cover,
                     colorFilter: ColorFilter.mode(
-                      Colors.black.withOpacity(0.3),
+                      Colors.black.withValues(alpha: 0.3),
                       BlendMode.darken,
                     ),
                   )
@@ -456,7 +456,7 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
                         image: NetworkImage(widget.medicine!.imageUrl!),
                         fit: BoxFit.cover,
                         colorFilter: ColorFilter.mode(
-                          Colors.black.withOpacity(0.3),
+                          Colors.black.withValues(alpha: 0.3),
                           BlendMode.darken,
                         ),
                       )
@@ -470,7 +470,7 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
                 height: 56,
                 decoration: BoxDecoration(
                   color: (_pickedFile != null || (isEdit && widget.medicine?.imageUrl != null))
-                      ? Colors.white.withOpacity(0.2)
+                      ? Colors.white.withValues(alpha: 0.2)
                       : AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),
@@ -516,7 +516,7 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
   Widget _metaBadge(String label, {bool inverted = false}) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
     decoration: BoxDecoration(
-      color: inverted ? Colors.white.withOpacity(0.2) : AppColors.primaryLight,
+      color: inverted ? Colors.white.withValues(alpha: 0.2) : AppColors.primaryLight,
       borderRadius: BorderRadius.circular(5),
     ),
     child: Text(
@@ -630,7 +630,7 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
             onChanged: (v) => setState(() => _requiresPrescription = v),
             icon: Icons.description_outlined,
             activeColor: AppColors.accentOrange,
-            activeBg: AppColors.accentOrange.withOpacity(0.1),
+            activeBg: AppColors.accentOrange.withValues(alpha: 0.1),
           ),
           MedicineFormSwitch(
             title: 'Status Aktif',
@@ -734,7 +734,7 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
         color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 24,
             offset: const Offset(0, -6),
           ),

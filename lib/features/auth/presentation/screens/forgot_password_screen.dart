@@ -72,14 +72,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
             top: -40, right: -40,
             child: Container(
               width: 140, height: 140,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.06)),
+              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.06)),
             ),
           ),
           Positioned(
             top: 50, right: 50,
             child: Container(
               width: 50, height: 50,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.09)),
+              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.09)),
             ),
           ),
 
@@ -99,7 +99,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
                             child: Container(
                               width: 40, height: 40,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
+                                color: Colors.white.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
@@ -123,7 +123,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(28),
                           boxShadow: [
-                            BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 32, offset: const Offset(0, 8)),
+                            BoxShadow(color: AppColors.primary.withValues(alpha: 0.08), blurRadius: 32, offset: const Offset(0, 8)),
                           ],
                         ),
                         // Animasi switch antara form dan success state
@@ -224,7 +224,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
             decoration: BoxDecoration(
               gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryDark]),
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))],
+              boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
             ),
             child: const Icon(Icons.lock_reset_rounded, color: Colors.white, size: 30),
           ),
@@ -271,7 +271,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
               decoration: BoxDecoration(
                 gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryDark]),
                 borderRadius: BorderRadius.circular(14),
-                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 16, offset: const Offset(0, 6))],
+                boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 6))],
               ),
               child: ElevatedButton(
                 onPressed: isLoading ? null : _handleSubmit,

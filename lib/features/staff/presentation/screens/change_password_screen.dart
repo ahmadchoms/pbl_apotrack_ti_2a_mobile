@@ -151,10 +151,10 @@ class _ChangePasswordScreenState
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(24),
                 border:
-                    Border.all(color: AppColors.primary.withOpacity(0.1)),
+                    Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
               ),
               child: Row(
                 children: [

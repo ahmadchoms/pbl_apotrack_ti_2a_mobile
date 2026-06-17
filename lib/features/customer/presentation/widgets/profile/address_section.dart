@@ -159,7 +159,7 @@ class AddressSection extends ConsumerWidget {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.black.withOpacity(0.04),
+                  color: AppColors.black.withValues(alpha: 0.04),
                   blurRadius: 15,
                   offset: const Offset(0, 4),
                 ),

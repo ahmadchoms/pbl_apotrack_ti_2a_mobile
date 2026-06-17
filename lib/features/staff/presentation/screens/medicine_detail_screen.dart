@@ -106,7 +106,7 @@ class _MedicineHeroAppBar extends StatelessWidget {
       leading: Padding(
         padding: const EdgeInsets.all(8.0),
         child: CircleAvatar(
-          backgroundColor: Colors.black.withOpacity(0.2),
+          backgroundColor: Colors.black.withValues(alpha: 0.2),
           child: IconButton(
             icon: const Icon(
               Icons.arrow_back_ios_new_rounded,
@@ -121,7 +121,7 @@ class _MedicineHeroAppBar extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: CircleAvatar(
-            backgroundColor: Colors.black.withOpacity(0.2),
+            backgroundColor: Colors.black.withValues(alpha: 0.2),
             child: IconButton(
               icon: const Icon(
                 Icons.edit_rounded,
@@ -146,7 +146,7 @@ class _MedicineHeroAppBar extends StatelessWidget {
                 color: AppColors.primary,
                 child: Icon(
                   medicine.icon,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                   size: 100,
                 ),
               ),
@@ -224,7 +224,7 @@ class _MedicinePrimaryInfo extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+            border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -327,8 +327,8 @@ class _InventoryInsightCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
           color: isLow
-              ? AppColors.danger.withOpacity(0.1)
-              : AppColors.primary.withOpacity(0.1),
+              ? AppColors.danger.withValues(alpha: 0.1)
+              : AppColors.primary.withValues(alpha: 0.1),
         ),
       ),
       child: Row(
@@ -394,7 +394,7 @@ class _InventoryInsightCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textDark.withOpacity(0.2),
+            color: AppColors.textDark.withValues(alpha: 0.2),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -507,7 +507,7 @@ class _PersistentActionFooter extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, -10),
           ),
@@ -579,21 +579,23 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
         'quantity': stock,
       });
       await _refresh();
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Batch berhasil ditambahkan!'),
             backgroundColor: AppColors.success,
           ),
         );
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal: $e'),
             backgroundColor: AppColors.danger,
           ),
         );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -608,21 +610,23 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
         'new_stock': newStock,
       });
       await _refresh();
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Stok disesuaikan!'),
             backgroundColor: AppColors.success,
           ),
         );
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal: $e'),
             backgroundColor: AppColors.danger,
           ),
         );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -696,7 +700,7 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
                 ),
                 if (_isLoading)
                   Container(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                     child: const Center(child: CircularProgressIndicator()),
                   ),
               ],
@@ -711,9 +715,9 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.primaryLight.withOpacity(0.4),
+        color: AppColors.primaryLight.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
@@ -829,10 +833,11 @@ class _BatchManagementSheetState extends ConsumerState<_BatchManagementSheet> {
                         child: child!,
                       ),
                     );
-                    if (date != null)
+                    if (date != null) {
                       setDialogState(
                         () => exp = date.toString().split(' ').first,
                       );
+                    }
                   },
                   initialValue: exp,
                   onChanged: (v) => exp = v,
@@ -930,7 +935,7 @@ class _BatchItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isExpiring
-              ? AppColors.danger.withOpacity(0.2)
+              ? AppColors.danger.withValues(alpha: 0.2)
               : AppColors.divider,
         ),
       ),

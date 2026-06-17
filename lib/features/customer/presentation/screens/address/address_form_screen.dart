@@ -111,6 +111,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 
     await widget.onSaved?.call(address, _isEdit);
     if (!context.mounted) return;
+    // ignore: use_build_context_synchronously
     Navigator.pop(context, true);
   }
 
@@ -243,7 +244,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.4),
+                          color: AppColors.primary.withValues(alpha: 0.4),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -266,28 +267,6 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     );
   }
 
-  Widget _mapBtn(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.12),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(icon, size: 18, color: AppColors.textDark),
-      ),
-    );
-  }
-
   // ── Alamat terdeteksi ────────────────────────────────────────────
   Widget _buildDetectedAddress() {
     return Container(
@@ -298,7 +277,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -438,7 +417,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),

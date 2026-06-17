@@ -37,8 +37,8 @@ class PosProductCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: isInCart
-                ? AppColors.primary.withOpacity(0.12)
-                : Colors.black.withOpacity(0.05),
+                ? AppColors.primary.withValues(alpha: 0.12)
+                : Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -59,7 +59,7 @@ class PosProductCard extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      categoryColor.withOpacity(0.05),
+                      categoryColor.withValues(alpha: 0.05),
                       AppColors.background,
                     ],
                   ),
@@ -73,7 +73,7 @@ class PosProductCard extends StatelessWidget {
                           ? Image.network(
                               medicine.imageUrl!,
                               fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) =>
+                              errorBuilder: (_, _, _) =>
                                   _buildPlaceholder(categoryColor),
                             )
                           : _buildPlaceholder(categoryColor),
@@ -164,7 +164,7 @@ class PosProductCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.2),
+                color: AppColors.primary.withValues(alpha: 0.2),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -225,14 +225,14 @@ class PosProductCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholder(Color color) {
-    return Icon(medicine.icon, color: color.withOpacity(0.3), size: 48);
+    return Icon(medicine.icon, color: color.withValues(alpha: 0.3), size: 48);
   }
 
   Widget _buildPrescriptionBadge() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.warning.withOpacity(0.9),
+        color: AppColors.warning.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Row(
@@ -257,7 +257,7 @@ class PosProductCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -273,10 +273,11 @@ class PosProductCard extends StatelessWidget {
 
   Widget _buildStockIndicator(int stock, bool isCritical, bool isLow) {
     Color color = AppColors.success;
-    if (isCritical)
+    if (isCritical) {
       color = AppColors.danger;
-    else if (isLow)
+    } else if (isLow) {
       color = AppColors.warning;
+    }
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -307,7 +308,7 @@ class PosProductCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.4),
+            color: AppColors.primary.withValues(alpha: 0.4),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

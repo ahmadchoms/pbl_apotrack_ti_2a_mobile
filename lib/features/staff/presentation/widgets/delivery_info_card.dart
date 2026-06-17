@@ -247,7 +247,7 @@ class _InfoTile extends StatelessWidget {
         color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
         border: highlight
-            ? Border.all(color: highlightColor.withOpacity(0.2))
+            ? Border.all(color: highlightColor.withValues(alpha: 0.2))
             : null,
       ),
       child: Row(
@@ -287,7 +287,7 @@ class _InfoTile extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) trailing!,
+          ?trailing,
         ],
       ),
     );

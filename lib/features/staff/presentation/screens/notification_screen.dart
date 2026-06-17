@@ -102,7 +102,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Material(
@@ -219,13 +219,13 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   Color _getIconBgColor(String type) {
     switch (type) {
       case 'ORDER':
-        return AppColors.primary.withOpacity(0.1);
+        return AppColors.primary.withValues(alpha: 0.1);
       case 'SYSTEM':
-        return Colors.orange.withOpacity(0.1);
+        return Colors.orange.withValues(alpha: 0.1);
       case 'PROMO':
-        return Colors.purple.withOpacity(0.1);
+        return Colors.purple.withValues(alpha: 0.1);
       default:
-        return Colors.blue.withOpacity(0.1);
+        return Colors.blue.withValues(alpha: 0.1);
     }
   }
 

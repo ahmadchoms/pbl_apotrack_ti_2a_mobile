@@ -45,7 +45,7 @@ final storageBackendProvider = Provider<StorageBackend>((ref) {
     return getWebStorage();
   }
   final storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    aOptions: AndroidOptions(),
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
   return NativeStorageBackend(storage);

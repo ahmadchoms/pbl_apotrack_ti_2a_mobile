@@ -260,7 +260,7 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 4),
           ),
@@ -349,7 +349,7 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -442,10 +442,10 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       height: 56,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: _paying ? AppColors.primary.withOpacity(0.6) : AppColors.primary,
+          color: _paying ? AppColors.primary.withValues(alpha: 0.6) : AppColors.primary,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 8)),
+            BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8)),
           ],
         ),
         child: ElevatedButton(

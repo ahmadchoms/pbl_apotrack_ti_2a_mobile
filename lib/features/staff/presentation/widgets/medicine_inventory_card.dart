@@ -30,7 +30,7 @@ class MedicineInventoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textDark.withOpacity(0.03),
+            color: AppColors.textDark.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -126,7 +126,7 @@ class MedicineInventoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: statusColor.withOpacity(0.1), width: 2),
+        border: Border.all(color: statusColor.withValues(alpha: 0.1), width: 2),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
@@ -144,7 +144,7 @@ class MedicineInventoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4)],
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 4)],
       ),
     );
   }

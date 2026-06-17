@@ -7,7 +7,7 @@ class QrScannerOverlayShape extends ShapeBorder {
   final double borderRadius;
   final double cutOutSize;
 
-  QrScannerOverlayShape({
+  const QrScannerOverlayShape({
     this.borderColor = Colors.white,
     this.borderWidth = 1.0,
     this.borderLength = 40,
@@ -36,7 +36,7 @@ class QrScannerOverlayShape extends ShapeBorder {
     );
 
     final paint = Paint()
-      ..color = Colors.black.withOpacity(0.5);
+      ..color = Colors.black.withValues(alpha: 0.5);
 
     canvas.drawPath(
       Path.combine(

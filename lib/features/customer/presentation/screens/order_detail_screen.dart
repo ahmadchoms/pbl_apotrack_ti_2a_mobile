@@ -326,7 +326,7 @@ class _CustomerOrderDetailScreenState
     final pharmacyName = detail.pharmacy['name']?.toString() ?? '—';
     final total = detail.grandTotal;
 
-    String _rupiah(num amount) => 'Rp ${amount.toStringAsFixed(0).replaceAllMapped(
+    String rupiah(num amount) => 'Rp ${amount.toStringAsFixed(0).replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (m) => '${m[1]}.',
     )}';
@@ -338,7 +338,7 @@ class _CustomerOrderDetailScreenState
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 4),
           ),
@@ -445,7 +445,7 @@ class _CustomerOrderDetailScreenState
                       child: _InfoRow(
                         icon: Icons.inventory_2_outlined,
                         label: 'Total',
-                        value: _rupiah(total),
+                        value: rupiah(total),
                         valueColor: AppColors.primary,
                       ),
                     ),
@@ -739,7 +739,7 @@ class _CustomerOrderDetailScreenState
                 color: AppColors.dangerLight,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                    color: AppColors.danger.withOpacity(0.2)),
+                    color: AppColors.danger.withValues(alpha: 0.2)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -805,7 +805,7 @@ class _CustomerOrderDetailScreenState
         borderRadius: BorderRadius.circular(20),
         boxShadow: [ 
           BoxShadow(
-            color: AppColors.black.withOpacity(0.03),
+            color: AppColors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

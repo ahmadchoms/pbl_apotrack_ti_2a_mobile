@@ -282,7 +282,7 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.divider, width: 1.5),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4)),
           ],
         ),
         child: TextField(
@@ -399,7 +399,7 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
-                    BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6)),
+                    BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6)),
                   ],
                 ),
                 child: ElevatedButton(
@@ -455,7 +455,7 @@ class _PharmacyCard extends StatelessWidget {
           ),
         );
       },
-      errorBuilder: (_, __, ___) => Container(
+      errorBuilder: (_, _, _) => Container(
         width: 72, height: 72,
         color: AppColors.primaryLight,
         child: const Icon(Icons.local_pharmacy_rounded, color: AppColors.primary, size: 36),
@@ -479,7 +479,7 @@ class _PharmacyCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 20,
                 offset: const Offset(0, 4),
               ),
@@ -514,7 +514,7 @@ class _PharmacyCard extends StatelessWidget {
                       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 3),
-                        color: Colors.black.withOpacity(0.45),
+                        color: Colors.black.withValues(alpha: 0.45),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [

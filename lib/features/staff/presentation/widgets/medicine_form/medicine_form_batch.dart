@@ -38,7 +38,7 @@ class MedicineFormBatchCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.warningLight,
                     borderRadius: BorderRadius.circular(7),
-                    border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+                    border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -215,10 +215,10 @@ class _MedicineFormBatchFieldState extends State<MedicineFormBatchField> {
           duration: const Duration(milliseconds: 150),
           height: 40,
           decoration: BoxDecoration(
-            color: _focused ? AppColors.primaryLight.withOpacity(0.6) : AppColors.surface,
+            color: _focused ? AppColors.primaryLight.withValues(alpha: 0.6) : AppColors.surface,
             borderRadius: BorderRadius.circular(9),
             border: Border.all(
-              color: _focused ? AppColors.primary.withOpacity(0.4) : AppColors.divider,
+              color: _focused ? AppColors.primary.withValues(alpha: 0.4) : AppColors.divider,
               width: 1.5,
             ),
           ),
