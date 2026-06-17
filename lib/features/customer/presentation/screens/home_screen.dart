@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/models/notification_model.dart';
 import '../../../../routes/app_router.dart';
+import '../../../../core/utils/location_helper.dart';
 import '../../data/models/cart.dart';
 import '../../data/services/notification_service.dart';
 import '../providers/customer_profile_provider.dart';
@@ -29,6 +30,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     super.initState();
     _loadData();
     _loadNotifCount();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initCurrentLocation();
+    });
   }
 
   Future<void> _loadNotifCount() async {
@@ -40,6 +44,28 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         setState(() => _notifCount = models.where((n) => !n.isRead).length);
       }
     } catch (_) {}
+  }
+
+  Future<void> _initCurrentLocation() async {
+    try {
+      final position = await LocationHelper.determinePosition(context);
+      if (position == null) return;
+
+      final addressText = await LocationHelper.getAddressFromLatLng(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (mounted) {
+        ref.read(customerProfileProvider.notifier).updateCurrentGpsLocation(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          addressDetail: addressText,
+        );
+      }
+    } catch (e) {
+      debugPrint('Gagal mendapatkan lokasi GPS: $e');
+    }
   }
 
   Future<void> _loadData() async {
@@ -136,8 +162,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
 
   Widget _buildHeader() {
     final state = ref.watch(customerProfileProvider);
-    final primaryAddr = state.addresses.where((a) => a.isPrimary).firstOrNull;
-    final locationName = primaryAddr?.displayAddress ?? 'Atur Alamat';
+    final activeAddr = state.tempGpsAddress ?? state.addresses.where((a) => a.isPrimary).firstOrNull;
+    final locationName = activeAddr?.displayAddress ?? 'Atur Alamat';
     return Material(
       color: Colors.transparent,
       child: Container(

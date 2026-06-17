@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/network/customer_api_service.dart';
 import '../models/pharmacy_model.dart';
+import '../../presentation/providers/customer_profile_provider.dart';
 
 class PharmacyService {
   PharmacyService({required CustomerApiService api}) : _api = api;
@@ -61,7 +62,29 @@ final pharmacyServiceProvider = Provider<PharmacyService>((ref) {
 });
 
 final activePharmaciesProvider = FutureProvider.family<List<PharmacyModel>, String?>((ref, categoryId) {
-  return ref.watch(pharmacyServiceProvider).getActivePharmacies(categoryId: categoryId);
+  final profileState = ref.watch(customerProfileProvider);
+  final activeAddr = profileState.tempGpsAddress ?? profileState.addresses.where((a) => a.isPrimary).firstOrNull;
+
+  Position? position;
+  if (activeAddr != null) {
+    position = Position(
+      latitude: activeAddr.latitude,
+      longitude: activeAddr.longitude,
+      timestamp: DateTime.now(),
+      accuracy: 0.0,
+      altitude: 0.0,
+      altitudeAccuracy: 0.0,
+      heading: 0.0,
+      headingAccuracy: 0.0,
+      speed: 0.0,
+      speedAccuracy: 0.0,
+    );
+  }
+
+  return ref.watch(pharmacyServiceProvider).getActivePharmacies(
+    userPosition: position,
+    categoryId: categoryId,
+  );
 });
 
 final pharmacyDetailProvider =
