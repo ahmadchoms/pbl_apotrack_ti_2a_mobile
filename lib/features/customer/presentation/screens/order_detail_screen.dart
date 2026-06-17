@@ -97,9 +97,11 @@ import '../../data/services/customer_order_service.dart';
 //   Widget _buildErrorState(String error, {VoidCallback? onRetry}) {
 
 class CustomerOrderDetailScreen extends ConsumerStatefulWidget {
-  final Order order;
+  final Order? order;
+  final String? orderId;
 
-  const CustomerOrderDetailScreen({super.key, required this.order});
+  const CustomerOrderDetailScreen({super.key, this.order, this.orderId})
+      : assert(order != null || orderId != null, 'Either order or orderId must be provided');
 
   @override
   ConsumerState<CustomerOrderDetailScreen> createState() =>
@@ -108,19 +110,43 @@ class CustomerOrderDetailScreen extends ConsumerStatefulWidget {
 
 class _CustomerOrderDetailScreenState
     extends ConsumerState<CustomerOrderDetailScreen> {
-  late Order _order;
+  Order? _order;
+  bool _isLoading = false;
   late CustomerOrderService _orderService;
 
   @override
   void initState() {
     super.initState();
-    _order = widget.order;
     _orderService = ref.read(customerOrderServiceProvider);
+    if (widget.order != null) {
+      _order = widget.order;
+    } else {
+      _isLoading = true;
+      _loadOrder();
+    }
+  }
+
+  Future<void> _loadOrder() async {
+    try {
+      final fresh = await _orderService.getOrderDetail(widget.orderId!);
+      if (mounted) {
+        setState(() {
+          _order = fresh;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _refresh() async {
+    final id = _order?.id ?? widget.orderId;
+    if (id == null) return;
     try {
-      final fresh = await _orderService.getOrderDetail(widget.order.id);
+      final fresh = await _orderService.getOrderDetail(id);
       if (!mounted) return;
       setState(() => _order = fresh);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -148,6 +174,56 @@ class _CustomerOrderDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppColors.textDark, size: 20),
+            onPressed: () => context.pop(),
+          ),
+          title: const Text(
+            'Detail Pesanan',
+            style: TextStyle(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w900,
+              fontSize: 17,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_order == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppColors.textDark, size: 20),
+            onPressed: () => context.pop(),
+          ),
+          title: const Text(
+            'Detail Pesanan',
+            style: TextStyle(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w900,
+              fontSize: 17,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: const Center(child: Text('Pesanan tidak ditemukan')),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -179,7 +255,7 @@ class _CustomerOrderDetailScreenState
   }
 
   Widget _buildContent(BuildContext context) {
-    final order = _order;
+    final order = _order!;
     final pData = order.prescription;
     final parsedPrescription = pData != null
         ? CustomerPrescription(

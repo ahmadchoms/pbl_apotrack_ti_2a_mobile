@@ -170,8 +170,22 @@ class AppRouter {
             if (extra is Order) {
               return customer_order.CustomerOrderDetailScreen(order: extra);
             }
-            return customer_order.CustomerOrderDetailScreen(
-              order: Order.fromJson(extra as Map<String, dynamic>),
+            if (extra is String) {
+              return customer_order.CustomerOrderDetailScreen(orderId: extra);
+            }
+            final queryId = state.uri.queryParameters['id'];
+            if (queryId != null) {
+              return customer_order.CustomerOrderDetailScreen(orderId: queryId);
+            }
+            if (extra is Map<String, dynamic>) {
+              return customer_order.CustomerOrderDetailScreen(
+                order: Order.fromJson(extra),
+              );
+            }
+            return const Scaffold(
+              body: Center(
+                child: Text('Pesanan tidak ditemukan'),
+              ),
             );
           },
         ),

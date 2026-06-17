@@ -10,7 +10,7 @@ import 'core/network/api_client.dart';
 import 'core/services/push_notification_service.dart';
 import 'routes/app_router.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
-import 'features/customer/presentation/screens/order_datail.dart';
+import 'features/customer/presentation/screens/order_detail_screen.dart';
 import 'features/staff/presentation/screens/staff_orders_screen.dart';
 import 'features/staff/presentation/screens/staff_inventory_screen.dart';
 import 'shared/widgets/notification_popup.dart';
@@ -155,7 +155,7 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
           if (referenceId != null && referenceId.isNotEmpty) {
             navigator.push(
               MaterialPageRoute(
-                builder: (_) => OrderDetailScreen(orderId: referenceId),
+                builder: (_) => CustomerOrderDetailScreen(orderId: referenceId),
               ),
             );
           }
