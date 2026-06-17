@@ -4,7 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/models/notification_model.dart';
 import '../../data/services/notification_service.dart';
-import 'order_datail.dart';
+import 'order_detail_screen.dart';
 import 'order_history_screen.dart';
 
 class NotificationScreen extends ConsumerStatefulWidget {
@@ -195,7 +195,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       );
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => OrderDetailScreen(orderId: notif.referenceId!)),
+        MaterialPageRoute(builder: (_) => CustomerOrderDetailScreen(orderId: notif.referenceId!)),
       );
     }
   }

@@ -8,7 +8,10 @@ import 'package:mobile/features/customer/data/services/pharmacy_service.dart';
 import 'medicine_list_screen.dart';
 
 class PharmaScanMapScreen extends ConsumerStatefulWidget {
-  const PharmaScanMapScreen({super.key});
+  final String? categoryId;
+  final String? categoryName;
+
+  const PharmaScanMapScreen({super.key, this.categoryId, this.categoryName});
 
   @override
   ConsumerState<PharmaScanMapScreen> createState() =>
@@ -62,7 +65,8 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
       if (permission == LocationPermission.deniedForever) {
         setState(() {
           _locationLoading = false;
-          _locationError = 'Izin lokasi ditolak permanen. Aktifkan di pengaturan.';
+          _locationError =
+              'Izin lokasi ditolak permanen. Aktifkan di pengaturan.';
         });
         return;
       }
@@ -95,7 +99,8 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
           _userPosition!.longitude,
           p.latitude,
           p.longitude,
-        ) / 1000;
+        ) /
+        1000;
   }
 
   String _formatJarak(double km) {
@@ -108,7 +113,8 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
 
   List<PharmacyModel> _filtered(List<PharmacyModel> pharmacies) {
     var filtered = pharmacies.where((p) {
-      final matchSearch = _search.isEmpty ||
+      final matchSearch =
+          _search.isEmpty ||
           p.name.toLowerCase().contains(_search.toLowerCase()) ||
           p.address.toLowerCase().contains(_search.toLowerCase());
 
@@ -123,7 +129,6 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
       return matchSearch && matchFilter;
     }).toList();
 
-    // Filter radius maksimal 20 km
     if (_userPosition != null) {
       filtered.removeWhere((p) => _hitungJarak(p) > _maxRadiusKm);
     }
@@ -148,6 +153,7 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
           pharmacyDistance: _formatJarak(jarak),
           pharmacyArea: p.address,
           isOpen: p.isOpen,
+          categoryId: widget.categoryId,
         ),
       ),
     );
@@ -155,7 +161,9 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pharmaciesAsync = ref.watch(activePharmaciesProvider);
+    final pharmaciesAsync = ref.watch(
+      activePharmaciesProvider(widget.categoryId),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -187,90 +195,171 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           GestureDetector(
-            onTap: () => context.pop(),
+            onTap: () => context.go("/customer"),
             child: Container(
-              margin: const EdgeInsets.only(right: 12),
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.divider, width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: AppColors.primary, size: 18),
+              child: const Center(
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.textDark,
+                  size: 16,
+                ),
+              ),
             ),
           ),
+          const SizedBox(width: 16),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(30),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.local_pharmacy_rounded, color: AppColors.primary, size: 14),
-                      SizedBox(width: 6),
-                      Text(
-                        'ApoTrack',
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.local_pharmacy_rounded,
+                          color: AppColors.white,
+                          size: 10,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'APOTRACK',
                         style: TextStyle(
                           color: AppColors.primary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.3,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.8,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 const Text(
                   'Cari Apotek',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 26,
                     fontWeight: FontWeight.w900,
                     color: AppColors.textDark,
-                    letterSpacing: -0.8,
-                    height: 1.2,
+                    letterSpacing: -0.5,
+                    height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Dalam radius ${_maxRadiusKm.toInt()} km dari lokasimu',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSubtle,
-                    fontWeight: FontWeight.w400,
-                  ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.fmd_good_rounded,
+                      color: AppColors.primary,
+                      size: 12,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'Radius ${_maxRadiusKm.toInt()} km dari lokasimu',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSlate,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          if (_locationLoading)
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-            )
-          else if (_locationError != null)
-            GestureDetector(
-              onTap: _getUserLocation,
-              child: const Icon(Icons.location_off, color: AppColors.danger, size: 22),
-            )
-          else
-            const Icon(Icons.my_location, color: AppColors.primary, size: 22),
+          const SizedBox(width: 16),
+
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: _locationError != null
+                  ? AppColors.dangerLight
+                  : AppColors.surfaceLight,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: _locationError != null
+                    ? AppColors.danger.withOpacity(0.2)
+                    : AppColors.divider,
+                width: 1,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: _locationLoading ? null : _getUserLocation,
+                child: Center(child: _buildLocationIndicator()),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Widget _buildLocationIndicator() {
+    if (_locationLoading) {
+      return const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: AppColors.primary,
+        ),
+      );
+    } else if (_locationError != null) {
+      return const Icon(
+        Icons.location_off_rounded,
+        color: AppColors.danger,
+        size: 20,
+      );
+    } else {
+      return const Icon(
+        Icons.my_location_rounded,
+        color: AppColors.primary,
+        size: 20,
+      );
+    }
   }
 
   Widget _buildSearchBar() {
@@ -282,17 +371,32 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.divider, width: 1.5),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: TextField(
           onChanged: (v) => setState(() => _search = v),
           decoration: InputDecoration(
             hintText: 'Cari Apotek...',
-            hintStyle: const TextStyle(color: AppColors.textSubtle, fontWeight: FontWeight.w400, fontSize: 14),
-            prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textLight, size: 20),
+            hintStyle: const TextStyle(
+              color: AppColors.textSubtle,
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
+            ),
+            prefixIcon: const Icon(
+              Icons.search_rounded,
+              color: AppColors.textLight,
+              size: 20,
+            ),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 14,
+              horizontal: 16,
+            ),
           ),
         ),
       ),
@@ -302,36 +406,84 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
   Widget _buildFilterChips() {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 14),
-      child: Row(
-        children: _filters.map((f) {
-          final isActive = _activeFilters.contains(f);
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => setState(() =>
-                  isActive ? _activeFilters.remove(f) : _activeFilters.add(f)),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  color: isActive ? AppColors.primary : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isActive ? AppColors.primary : AppColors.divider,
-                  ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            if (widget.categoryName != null &&
+                widget.categoryName!.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
                 ),
-                child: Text(
-                  f,
-                  style: TextStyle(
-                    color: isActive ? Colors.white : AppColors.textMid,
-                    fontSize: 12,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                  ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.local_pharmacy_rounded,
+                      color: AppColors.primary,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.categoryName!,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          );
-        }).toList(),
+              const SizedBox(width: 8),
+            ],
+            ..._filters.map((f) {
+              final isActive = _activeFilters.contains(f);
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => setState(
+                    () => isActive
+                        ? _activeFilters.remove(f)
+                        : _activeFilters.add(f),
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isActive ? AppColors.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isActive ? AppColors.primary : AppColors.divider,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      f,
+                      style: TextStyle(
+                        color: isActive ? Colors.white : AppColors.textMid,
+                        fontSize: 12,
+                        fontWeight: isActive
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ],
+        ),
       ),
     );
   }
@@ -353,20 +505,44 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
   }
 
   Widget _buildEmptyState() {
-    final radiusInfo = _userPosition != null
+    String message = 'Apotek tidak ditemukan';
+    String detail = _userPosition != null
         ? 'Tidak ada apotek dalam radius ${_maxRadiusKm.toInt()} km'
         : 'Coba ubah kata kunci pencarian';
+
+    if (widget.categoryName != null && widget.categoryName!.isNotEmpty) {
+      message = 'Jenis Obat Tidak Tersedia';
+      detail =
+          'Tidak ada apotek di daerah sekitar Anda yang menjual jenis obat "${widget.categoryName}"';
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.search_off_rounded, size: 56, color: AppColors.textSubtle),
-          SizedBox(height: 16),
-          Text('Apotek tidak ditemukan',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textLight)),
-          SizedBox(height: 4),
-          Text(radiusInfo,
-              style: TextStyle(fontSize: 13, color: AppColors.textSubtle)),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textLight,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              detail,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSubtle,
+                height: 1.4,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -379,11 +555,19 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.wifi_off_rounded, size: 56, color: AppColors.textSubtle),
+            const Icon(
+              Icons.wifi_off_rounded,
+              size: 56,
+              color: AppColors.textSubtle,
+            ),
             const SizedBox(height: 16),
             Text(
               'Gagal memuat data',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textLight),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textLight,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -399,17 +583,31 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
-                    BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6)),
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
                   ],
                 ),
                 child: ElevatedButton(
-                  onPressed: () => ref.invalidate(activePharmaciesProvider),
+                  onPressed: () => ref.invalidate(
+                    activePharmaciesProvider(widget.categoryId),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
-                  child: const Text('Coba Lagi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                  child: const Text(
+                    'Coba Lagi',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -436,7 +634,11 @@ class _PharmacyCard extends StatelessWidget {
       return Container(
         color: AppColors.primaryLight,
         child: const Center(
-          child: Icon(Icons.local_pharmacy_rounded, color: AppColors.primary, size: 36),
+          child: Icon(
+            Icons.local_pharmacy_rounded,
+            color: AppColors.primary,
+            size: 36,
+          ),
         ),
       );
     }
@@ -448,17 +650,26 @@ class _PharmacyCard extends StatelessWidget {
       loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
         return Container(
-          width: 72, height: 72,
+          width: 72,
+          height: 72,
           color: AppColors.primaryLight,
           child: const Center(
-            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primary,
+            ),
           ),
         );
       },
-      errorBuilder: (_, _, _) => Container(
-        width: 72, height: 72,
+      errorBuilder: (_, __, ___) => Container(
+        width: 72,
+        height: 72,
         color: AppColors.primaryLight,
-        child: const Icon(Icons.local_pharmacy_rounded, color: AppColors.primary, size: 36),
+        child: const Icon(
+          Icons.local_pharmacy_rounded,
+          color: AppColors.primary,
+          size: 36,
+        ),
       ),
     );
   }
@@ -495,12 +706,31 @@ class _PharmacyCard extends StatelessWidget {
                     child: ColorFiltered(
                       colorFilter: !isOpen
                           ? const ColorFilter.matrix([
-                              0.2126, 0.7152, 0.0722, 0, 0,
-                              0.2126, 0.7152, 0.0722, 0, 0,
-                              0.2126, 0.7152, 0.0722, 0, 0,
-                              0, 0, 0, 1, 0,
+                              0.2126,
+                              0.7152,
+                              0.0722,
+                              0,
+                              0,
+                              0.2126,
+                              0.7152,
+                              0.0722,
+                              0,
+                              0,
+                              0.2126,
+                              0.7152,
+                              0.0722,
+                              0,
+                              0,
+                              0,
+                              0,
+                              0,
+                              1,
+                              0,
                             ])
-                          : ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                          : ColorFilter.mode(
+                              Colors.transparent,
+                              BlendMode.multiply,
+                            ),
                       child: SizedBox(
                         width: 72,
                         height: 72,
@@ -509,17 +739,24 @@ class _PharmacyCard extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    bottom: 0, left: 0, right: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
                     child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(14),
+                      ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 3),
                         color: Colors.black.withValues(alpha: 0.45),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.star_rounded,
-                                color: isOpen ? Colors.amber : Colors.grey, size: 10),
+                            Icon(
+                              Icons.star_rounded,
+                              color: isOpen ? Colors.amber : Colors.grey,
+                              size: 10,
+                            ),
                             const SizedBox(width: 2),
                             Text(
                               p.rating.toStringAsFixed(1),
@@ -552,21 +789,30 @@ class _PharmacyCard extends StatelessWidget {
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 14,
-                                color: isOpen ? AppColors.textDark : AppColors.textLight,
+                                color: isOpen
+                                    ? AppColors.textDark
+                                    : AppColors.textLight,
                               ),
                             ),
                           ),
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
-                              color: isOpen ? AppColors.successLight : AppColors.divider,
+                              color: isOpen
+                                  ? AppColors.successLight
+                                  : AppColors.divider,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               isOpen ? 'BUKA' : 'TUTUP',
                               style: TextStyle(
-                                color: isOpen ? AppColors.success : AppColors.textLight,
+                                color: isOpen
+                                    ? AppColors.success
+                                    : AppColors.textLight,
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -577,7 +823,11 @@ class _PharmacyCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.star_rounded, color: isOpen ? Colors.amber : Colors.grey, size: 14),
+                          Icon(
+                            Icons.star_rounded,
+                            color: isOpen ? Colors.amber : Colors.grey,
+                            size: 14,
+                          ),
                           const SizedBox(width: 2),
                           Text(
                             '${p.rating.toStringAsFixed(1)} (${p.totalReviews})',
@@ -587,8 +837,11 @@ class _PharmacyCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          Icon(Icons.location_on_rounded,
-                              color: isOpen ? AppColors.primary : Colors.grey, size: 14),
+                          Icon(
+                            Icons.location_on_rounded,
+                            color: isOpen ? AppColors.primary : Colors.grey,
+                            size: 14,
+                          ),
                           const SizedBox(width: 2),
                           Text(
                             jarakText,
@@ -605,7 +858,9 @@ class _PharmacyCard extends StatelessWidget {
                         p.address,
                         style: TextStyle(
                           fontSize: 10,
-                          color: isOpen ? AppColors.textSubtle : Colors.grey.shade300,
+                          color: isOpen
+                              ? AppColors.textSubtle
+                              : Colors.grey.shade300,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -615,8 +870,11 @@ class _PharmacyCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              Icon(Icons.chevron_right_rounded,
-                  color: isOpen ? AppColors.divider : Colors.grey.shade300, size: 20),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: isOpen ? AppColors.divider : Colors.grey.shade300,
+                size: 20,
+              ),
             ],
           ),
         ),

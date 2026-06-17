@@ -170,8 +170,22 @@ class AppRouter {
             if (extra is Order) {
               return customer_order.CustomerOrderDetailScreen(order: extra);
             }
-            return customer_order.CustomerOrderDetailScreen(
-              order: Order.fromJson(extra as Map<String, dynamic>),
+            if (extra is String) {
+              return customer_order.CustomerOrderDetailScreen(orderId: extra);
+            }
+            final queryId = state.uri.queryParameters['id'];
+            if (queryId != null) {
+              return customer_order.CustomerOrderDetailScreen(orderId: queryId);
+            }
+            if (extra is Map<String, dynamic>) {
+              return customer_order.CustomerOrderDetailScreen(
+                order: Order.fromJson(extra),
+              );
+            }
+            return const Scaffold(
+              body: Center(
+                child: Text('Pesanan tidak ditemukan'),
+              ),
             );
           },
         ),
@@ -187,7 +201,13 @@ class AppRouter {
         ),
         GoRoute(
           path: customerPharmacySearch,
-          builder: (context, state) => const PharmaScanMapScreen(),
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return PharmaScanMapScreen(
+              categoryId: extra?['categoryId'] as String?,
+              categoryName: extra?['categoryName'] as String?,
+            );
+          },
         ),
         GoRoute(
           path: customerMedicineList,
@@ -200,6 +220,7 @@ class AppRouter {
                   (extra['pharmacyRating'] as num?)?.toDouble() ?? 4.5,
               pharmacyDistance: extra['pharmacyDistance'] as String? ?? '-',
               pharmacyArea: extra['pharmacyArea'] as String? ?? '-',
+              categoryId: extra['categoryId'] as String?,
             );
           },
         ),

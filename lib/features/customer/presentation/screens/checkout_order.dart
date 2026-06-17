@@ -332,19 +332,64 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppColors.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.15)),
                     ),
-                    child: Text(
-                      'Qty: ${item.quantity}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            if (item.quantity > 1) {
+                              setState(() {
+                                item.quantity--;
+                              });
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            child: Icon(
+                              Icons.remove_rounded,
+                              size: 16,
+                              color: item.quantity > 1 ? AppColors.primary : AppColors.textLight,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${item.quantity}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            if (item.quantity < item.stock) {
+                              setState(() {
+                                item.quantity++;
+                              });
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Stok tidak mencukupi (Maks. ${item.stock})'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            child: Icon(
+                              Icons.add_rounded,
+                              size: 16,
+                              color: item.quantity < item.stock ? AppColors.primary : AppColors.textLight,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

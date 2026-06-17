@@ -97,9 +97,11 @@ import '../../data/services/customer_order_service.dart';
 //   Widget _buildErrorState(String error, {VoidCallback? onRetry}) {
 
 class CustomerOrderDetailScreen extends ConsumerStatefulWidget {
-  final Order order;
+  final Order? order;
+  final String? orderId;
 
-  const CustomerOrderDetailScreen({super.key, required this.order});
+  const CustomerOrderDetailScreen({super.key, this.order, this.orderId})
+      : assert(order != null || orderId != null, 'Either order or orderId must be provided');
 
   @override
   ConsumerState<CustomerOrderDetailScreen> createState() =>
@@ -108,19 +110,43 @@ class CustomerOrderDetailScreen extends ConsumerStatefulWidget {
 
 class _CustomerOrderDetailScreenState
     extends ConsumerState<CustomerOrderDetailScreen> {
-  late Order _order;
+  Order? _order;
+  bool _isLoading = false;
   late CustomerOrderService _orderService;
 
   @override
   void initState() {
     super.initState();
-    _order = widget.order;
     _orderService = ref.read(customerOrderServiceProvider);
+    if (widget.order != null) {
+      _order = widget.order;
+    } else {
+      _isLoading = true;
+      _loadOrder();
+    }
+  }
+
+  Future<void> _loadOrder() async {
+    try {
+      final fresh = await _orderService.getOrderDetail(widget.orderId!);
+      if (mounted) {
+        setState(() {
+          _order = fresh;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _refresh() async {
+    final id = _order?.id ?? widget.orderId;
+    if (id == null) return;
     try {
-      final fresh = await _orderService.getOrderDetail(widget.order.id);
+      final fresh = await _orderService.getOrderDetail(id);
       if (!mounted) return;
       setState(() => _order = fresh);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -148,6 +174,56 @@ class _CustomerOrderDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppColors.textDark, size: 20),
+            onPressed: () => context.pop(),
+          ),
+          title: const Text(
+            'Detail Pesanan',
+            style: TextStyle(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w900,
+              fontSize: 17,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_order == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppColors.textDark, size: 20),
+            onPressed: () => context.pop(),
+          ),
+          title: const Text(
+            'Detail Pesanan',
+            style: TextStyle(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w900,
+              fontSize: 17,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: const Center(child: Text('Pesanan tidak ditemukan')),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -179,7 +255,7 @@ class _CustomerOrderDetailScreenState
   }
 
   Widget _buildContent(BuildContext context) {
-    final order = _order;
+    final order = _order!;
     final pData = order.prescription;
     final parsedPrescription = pData != null
         ? CustomerPrescription(
@@ -196,7 +272,16 @@ class _CustomerOrderDetailScreenState
         const SizedBox(height: 12),
         _buildPharmacyCard(order),
         const SizedBox(height: 12),
-        if (order.serviceType == 'PICK_UP' && order.verificationCode != null && order.verificationCode!.isNotEmpty) ...[
+        if (order.serviceType == 'DELIVERY') ...[
+          _buildDeliveryAddressCard(order),
+          const SizedBox(height: 12),
+        ],
+        if (order.serviceType == 'PICK_UP' &&
+            order.verificationCode != null &&
+            order.verificationCode!.isNotEmpty &&
+            order.orderStatus != 'COMPLETED' &&
+            order.orderStatus != 'REVIEWED' &&
+            order.orderStatus != 'CANCELLED') ...[
           _buildQrCard(context, order),
           const SizedBox(height: 12),
         ],
@@ -504,29 +589,127 @@ class _CustomerOrderDetailScreenState
   }
 
   Widget _buildTransactionTimeCard(Order detail) {
+    final isPickup = detail.serviceType == 'PICK_UP';
+    final serviceLabel = isPickup ? 'Ambil di Tempat' : 'Dikirim (Kurir)';
+    final serviceIcon = isPickup ? Icons.storefront_rounded : Icons.local_shipping_rounded;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(color: AppColors.primaryLight),
+      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'WAKTU TRANSAKSI',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-              color: AppColors.textMuted,
-              letterSpacing: 0.8,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'TIPE LAYANAN',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(serviceIcon, color: AppColors.textPrimary, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          serviceLabel,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 40,
+                color: AppColors.divider,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'WAKTU TRANSAKSI',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textMuted,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      detail.createdAt,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeliveryAddressCard(Order detail) {
+    final addressData = detail.address;
+    if (addressData == null) return const SizedBox.shrink();
+
+    final deliveryAddress = addressData['address_detail']?.toString() ??
+        addressData['complete_address']?.toString() ??
+        '—';
+    final deliveryLabel = addressData['label']?.toString() ?? 'Alamat Pengiriman';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.location_on_rounded,
+                  size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'ALAMAT PENGIRIMAN (${deliveryLabel.toUpperCase()})',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primary,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
           Text(
-            detail.createdAt,
+            deliveryAddress,
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              fontSize: 13,
+              color: AppColors.textSlate,
+              height: 1.4,
             ),
           ),
         ],

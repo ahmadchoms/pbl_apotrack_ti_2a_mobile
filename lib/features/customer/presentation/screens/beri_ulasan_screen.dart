@@ -86,7 +86,7 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
         comment: _controller.text.trim(),
       );
 
-      ref.invalidate(activePharmaciesProvider);
+      ref.invalidate(activePharmaciesProvider(null));
       ref.invalidate(myOrdersProvider);
       ref.invalidate(activeOrdersProvider);
 

@@ -245,18 +245,21 @@ class ProfileState {
   const ProfileState({
     this.profile,
     this.addresses = const [],
+    this.tempGpsAddress,
     this.isLoading = false,
     this.error,
   });
 
   final UserModel? profile;
   final List<CustomerAddress> addresses;
+  final CustomerAddress? tempGpsAddress;
   final bool isLoading;
   final String? error;
 
   ProfileState copyWith({
     UserModel? profile,
     List<CustomerAddress>? addresses,
+    CustomerAddress? tempGpsAddress,
     bool? isLoading,
     String? error,
     bool clearError = false,
@@ -264,6 +267,7 @@ class ProfileState {
     return ProfileState(
       profile: profile ?? this.profile,
       addresses: addresses ?? this.addresses,
+      tempGpsAddress: tempGpsAddress ?? this.tempGpsAddress,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : error ?? this.error,
     );
@@ -275,6 +279,23 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
 
   final StaffService _service;
   final SecureStorageService _storage;
+
+  void updateCurrentGpsLocation({
+    required double latitude,
+    required double longitude,
+    required String addressDetail,
+  }) {
+    final gpsAddress = CustomerAddress(
+      id: 'gps_session',
+      label: 'Lokasi Sekarang',
+      addressDetail: addressDetail,
+      completeAddress: addressDetail,
+      latitude: latitude,
+      longitude: longitude,
+      isPrimary: false,
+    );
+    state = state.copyWith(tempGpsAddress: gpsAddress);
+  }
 
   Future<void> loadAll() async {
     state = state.copyWith(isLoading: true, clearError: true);

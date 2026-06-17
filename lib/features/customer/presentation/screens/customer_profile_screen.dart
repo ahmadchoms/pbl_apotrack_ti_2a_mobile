@@ -11,6 +11,7 @@ import '../widgets/profile/menu_section.dart';
 import '../widgets/profile/confirm_dialog.dart';
 import '../widgets/profile/delete_account_password_dialog.dart';
 import '../widgets/profile/scan_qr_invitation_card.dart';
+
 class AccountHubScreen extends ConsumerStatefulWidget {
   const AccountHubScreen({super.key});
 
@@ -113,20 +114,19 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
                         MenuItemTile(
                           icon: Icons.person_outline_rounded,
                           title: 'Edit Profil',
-                          onTap: () => context.push(
-                            AppRouter.customerEditProfile,
-                          ).then(
-                            (_) => ref
-                                .read(customerProfileProvider.notifier)
-                                .loadAll(),
-                          ),
+                          onTap: () => context
+                              .push(AppRouter.customerEditProfile)
+                              .then(
+                                (_) => ref
+                                    .read(customerProfileProvider.notifier)
+                                    .loadAll(),
+                              ),
                         ),
                         MenuItemTile(
                           icon: Icons.lock_outline_rounded,
                           title: 'Ubah Password',
-                          onTap: () => context.push(
-                            AppRouter.customerChangePassword,
-                          ),
+                          onTap: () =>
+                              context.push(AppRouter.customerChangePassword),
                         ),
                       ],
                     ),
@@ -178,14 +178,14 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
                           onTap: () => ConfirmDialog.show(
                             context,
                             icon: Icons.logout_rounded,
-                            iconColor: AppColors.warning,
-                            iconBgColor: AppColors.warningLight,
+                            iconColor: AppColors.danger,
+                            iconBgColor: AppColors.dangerLight,
                             title: 'Keluar Akun?',
                             message:
                                 'Kamu akan keluar dari akunmu. '
                                 'Kamu bisa login kembali kapan saja.',
                             confirmLabel: 'Ya, Keluar',
-                            confirmColor: AppColors.warning,
+                            confirmColor: AppColors.danger,
                             onConfirm: () {
                               Navigator.pop(context);
                               _handleLogout();

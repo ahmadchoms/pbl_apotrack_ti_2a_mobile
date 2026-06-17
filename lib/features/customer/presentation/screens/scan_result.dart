@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'order_datail.dart';
+import 'order_detail_screen.dart';
 
 // ─── Model item hasil scan ────────────────────────────────────────
 class ScannedItem {
@@ -305,7 +305,7 @@ class ScanResultScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => OrderDetailScreen(orderId: scanCode!),
+                        builder: (_) => CustomerOrderDetailScreen(orderId: scanCode!),
                       ),
                     );
                   },

@@ -15,6 +15,7 @@ class MedicineModel {
   final double weightInGrams;
   final String? imageUrl;
   final bool isActive;
+  final int totalActiveStock;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -41,6 +42,7 @@ class MedicineModel {
     required this.weightInGrams,
     this.imageUrl,
     required this.isActive,
+    this.totalActiveStock = 0,
     required this.createdAt,
     required this.updatedAt,
     this.categoryName,
@@ -68,6 +70,7 @@ class MedicineModel {
           double.parse((json['weight_in_grams'] ?? 0).toString()),
       imageUrl: json['image_url'] as String?,
       isActive: json['is_active'] as bool? ?? true,
+      totalActiveStock: (json['total_active_stock'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? '') ?? DateTime.now(),
       // Dari join (Supabase) atau langsung (Laravel API)
@@ -104,6 +107,7 @@ class Medicine {
   final double weightInGrams;
   final String? imageUrl;
   final bool isActive;
+  final int totalActiveStock;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -130,6 +134,7 @@ class Medicine {
     required this.weightInGrams,
     this.imageUrl,
     required this.isActive,
+    this.totalActiveStock = 0,
     required this.createdAt,
     required this.updatedAt,
     this.categoryName,
@@ -156,6 +161,7 @@ class Medicine {
       weightInGrams: double.tryParse((json['weight_in_grams'] ?? 0).toString()) ?? 0.0,
       imageUrl: json['image_url'] as String?,
       isActive: json['is_active'] as bool? ?? true,
+      totalActiveStock: (json['total_active_stock'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? '') ?? DateTime.now(),
       categoryName: json['medicine_categories'] != null
@@ -191,6 +197,7 @@ class Medicine {
       'weight_in_grams': weightInGrams,
       'image_url': imageUrl,
       'is_active': isActive,
+      'total_active_stock': totalActiveStock,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'category': categoryName,

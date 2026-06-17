@@ -12,12 +12,12 @@ class CustomerApiService {
   CustomerApiService({required Dio dio}) : _dio = dio;
   final Dio _dio;
 
-  // ── Pharmacies ────────────────────────────────────────────────
   Future<List<Pharmacy>> getPharmacies({
     String? search,
     double? latitude,
     double? longitude,
     double? radius,
+    String? categoryId,
   }) async {
     try {
       final response = await _dio.get(
@@ -27,6 +27,7 @@ class CustomerApiService {
           if (latitude != null) 'latitude': latitude.toString(),
           if (longitude != null) 'longitude': longitude.toString(),
           if (radius != null) 'radius': radius.toString(),
+          if (categoryId != null && categoryId.isNotEmpty) 'category_id': categoryId,
         },
       );
       final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
@@ -69,10 +70,19 @@ class CustomerApiService {
     }
   }
 
-  // ── Categories ────────────────────────────────────────────────
   Future<List<MedicineCategoryModel>> getCategories() async {
     try {
       final response = await _dio.get('/categories');
+      final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+      return rawList.map((e) => MedicineCategoryModel.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioException(e);
+    }
+  }
+
+  Future<List<MedicineCategoryModel>> getPopularCategories() async {
+    try {
+      final response = await _dio.get('/categories/popular');
       final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
       return rawList.map((e) => MedicineCategoryModel.fromJson(e as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
