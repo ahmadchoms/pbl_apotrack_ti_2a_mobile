@@ -7,7 +7,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 class PushNotificationService {
   static bool get _isSupported {
     if (kIsWeb) return false;
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) return false;
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS)
+      return false;
     return true;
   }
 
@@ -32,11 +33,7 @@ class PushNotificationService {
     final deviceType = Platform.isAndroid ? 'android' : 'ios';
     await dio.post(
       '/devices/token',
-      data: {
-        'user_id': userId,
-        'fcm_token': token,
-        'device_type': deviceType,
-      },
+      data: {'user_id': userId, 'fcm_token': token, 'device_type': deviceType},
     );
     debugPrint('[FCM] Token registered: $token');
   }

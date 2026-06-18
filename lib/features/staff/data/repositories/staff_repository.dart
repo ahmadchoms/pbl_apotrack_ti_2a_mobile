@@ -10,21 +10,20 @@ class StaffRepository {
   Future<Response> getOrders(Map<String, dynamic>? queryParams) =>
       _dio.get('/staff/orders', queryParameters: queryParams);
 
-  Future<Response> getOrderDetail(String id) =>
-      _dio.get('/staff/orders/$id');
+  Future<Response> getOrderDetail(String id) => _dio.get('/staff/orders/$id');
 
   Future<Response> updateOrderStatus(String id, String status) =>
       _dio.patch('/staff/orders/$id/status', data: {'status': status});
 
-  Future<Response> shipOrder(String id) =>
-    _dio.post('/staff/orders/$id/ship');
+  Future<Response> shipOrder(String id) => _dio.post('/staff/orders/$id/ship');
 
   Future<Response> simulateTracking(String id, String status) =>
       _dio.post('/staff/orders/$id/simulate-tracking/$status');
 
-  Future<Response> verifyOrderByCode(String verificationCode) =>
-      _dio.post('/staff/orders/verify', data: {'verification_code': verificationCode});
-
+  Future<Response> verifyOrderByCode(String verificationCode) => _dio.post(
+    '/staff/orders/verify',
+    data: {'verification_code': verificationCode},
+  );
 
   // --- INVENTARIS (MEDICINES) ---
   Future<Response> getMedicines(Map<String, dynamic>? queryParams) =>
@@ -90,7 +89,10 @@ class StaffRepository {
 
   Future<Response> setPrimaryAddress(String id) async {
     try {
-      return await _dio.patch('/user/addresses/$id', data: {'is_primary': true});
+      return await _dio.patch(
+        '/user/addresses/$id',
+        data: {'is_primary': true},
+      );
     } on DioException {
       rethrow;
     }

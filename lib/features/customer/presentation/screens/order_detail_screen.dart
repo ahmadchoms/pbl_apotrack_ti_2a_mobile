@@ -12,7 +12,6 @@ import '../widgets/order_history/order_detail_timeline_card.dart';
 import '../../data/models/customer_order_extra.dart';
 import '../../data/services/customer_order_service.dart';
 
-
 // OLD CODE (ConsumerWidget with orderDetailProvider) — commented out
 // class CustomerOrderDetailScreen extends ConsumerWidget {
 //   final Order order;
@@ -101,7 +100,10 @@ class CustomerOrderDetailScreen extends ConsumerStatefulWidget {
   final String? orderId;
 
   const CustomerOrderDetailScreen({super.key, this.order, this.orderId})
-      : assert(order != null || orderId != null, 'Either order or orderId must be provided');
+    : assert(
+        order != null || orderId != null,
+        'Either order or orderId must be provided',
+      );
 
   @override
   ConsumerState<CustomerOrderDetailScreen> createState() =>
@@ -155,7 +157,9 @@ class _CustomerOrderDetailScreenState
           duration: Duration(seconds: 1),
           behavior: SnackBarBehavior.floating,
           margin: EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
         ),
       );
     } catch (_) {
@@ -166,7 +170,9 @@ class _CustomerOrderDetailScreenState
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
           margin: EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
         ),
       );
     }
@@ -181,8 +187,11 @@ class _CustomerOrderDetailScreenState
           backgroundColor: AppColors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: AppColors.textDark, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textDark,
+              size: 20,
+            ),
             onPressed: () => context.pop(),
           ),
           title: const Text(
@@ -206,8 +215,11 @@ class _CustomerOrderDetailScreenState
           backgroundColor: AppColors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: AppColors.textDark, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textDark,
+              size: 20,
+            ),
             onPressed: () => context.pop(),
           ),
           title: const Text(
@@ -230,8 +242,11 @@ class _CustomerOrderDetailScreenState
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textDark, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textDark,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: const Text(
@@ -355,10 +370,8 @@ class _CustomerOrderDetailScreenState
   // }
 
   Widget _buildPharmacyCard(Order detail) {
-    final pharmacyName =
-        detail.pharmacy['name']?.toString() ?? '—';
-    final pharmacyAddress =
-        detail.pharmacy['address']?.toString() ?? '—';
+    final pharmacyName = detail.pharmacy['name']?.toString() ?? '—';
+    final pharmacyAddress = detail.pharmacy['address']?.toString() ?? '—';
 
     return Container(
       width: double.infinity,
@@ -369,8 +382,7 @@ class _CustomerOrderDetailScreenState
         children: [
           const Row(
             children: [
-              Icon(Icons.store_rounded,
-                  size: 14, color: AppColors.primary),
+              Icon(Icons.store_rounded, size: 14, color: AppColors.primary),
               SizedBox(width: 6),
               Text(
                 'INFORMASI TOKO',
@@ -411,10 +423,8 @@ class _CustomerOrderDetailScreenState
     final pharmacyName = detail.pharmacy['name']?.toString() ?? '—';
     final total = detail.grandTotal;
 
-    String rupiah(num amount) => 'Rp ${amount.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
-    )}';
+    String rupiah(num amount) =>
+        'Rp ${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
 
     return Container(
       width: double.infinity,
@@ -436,7 +446,9 @@ class _CustomerOrderDetailScreenState
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
             child: const Center(
               child: Text(
@@ -476,7 +488,9 @@ class _CustomerOrderDetailScreenState
                   duration: Duration(seconds: 1),
                   behavior: SnackBarBehavior.floating,
                   margin: EdgeInsets.all(16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
                 ),
               );
             },
@@ -501,7 +515,11 @@ class _CustomerOrderDetailScreenState
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Icon(Icons.copy_rounded, size: 16, color: AppColors.textLight),
+                  const Icon(
+                    Icons.copy_rounded,
+                    size: 16,
+                    color: AppColors.textLight,
+                  ),
                 ],
               ),
             ),
@@ -549,7 +567,10 @@ class _CustomerOrderDetailScreenState
                     children: [
                       const Text(
                         'Obat yang dipesan:',
-                        style: TextStyle(fontSize: 12, color: AppColors.textLight),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textLight,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       ...detail.items.map(
@@ -558,7 +579,8 @@ class _CustomerOrderDetailScreenState
                           child: Row(
                             children: [
                               Container(
-                                width: 4, height: 4,
+                                width: 4,
+                                height: 4,
                                 decoration: const BoxDecoration(
                                   color: AppColors.textMid,
                                   shape: BoxShape.circle,
@@ -569,7 +591,8 @@ class _CustomerOrderDetailScreenState
                                 child: Text(
                                   '${item.medicineName} x${item.quantity}',
                                   style: const TextStyle(
-                                    fontSize: 13, color: AppColors.textMid,
+                                    fontSize: 13,
+                                    color: AppColors.textMid,
                                   ),
                                 ),
                               ),
@@ -591,7 +614,9 @@ class _CustomerOrderDetailScreenState
   Widget _buildTransactionTimeCard(Order detail) {
     final isPickup = detail.serviceType == 'PICK_UP';
     final serviceLabel = isPickup ? 'Ambil di Tempat' : 'Dikirim (Kurir)';
-    final serviceIcon = isPickup ? Icons.storefront_rounded : Icons.local_shipping_rounded;
+    final serviceIcon = isPickup
+        ? Icons.storefront_rounded
+        : Icons.local_shipping_rounded;
 
     return Container(
       width: double.infinity,
@@ -618,7 +643,11 @@ class _CustomerOrderDetailScreenState
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(serviceIcon, color: AppColors.textPrimary, size: 18),
+                        Icon(
+                          serviceIcon,
+                          color: AppColors.textPrimary,
+                          size: 18,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           serviceLabel,
@@ -675,10 +704,12 @@ class _CustomerOrderDetailScreenState
     final addressData = detail.address;
     if (addressData == null) return const SizedBox.shrink();
 
-    final deliveryAddress = addressData['address_detail']?.toString() ??
+    final deliveryAddress =
+        addressData['address_detail']?.toString() ??
         addressData['complete_address']?.toString() ??
         '—';
-    final deliveryLabel = addressData['label']?.toString() ?? 'Alamat Pengiriman';
+    final deliveryLabel =
+        addressData['label']?.toString() ?? 'Alamat Pengiriman';
 
     return Container(
       width: double.infinity,
@@ -689,8 +720,11 @@ class _CustomerOrderDetailScreenState
         children: [
           Row(
             children: [
-              const Icon(Icons.location_on_rounded,
-                  size: 14, color: AppColors.primary),
+              const Icon(
+                Icons.location_on_rounded,
+                size: 14,
+                color: AppColors.primary,
+              ),
               const SizedBox(width: 6),
               Text(
                 'ALAMAT PENGIRIMAN (${deliveryLabel.toUpperCase()})',
@@ -725,13 +759,13 @@ class _CustomerOrderDetailScreenState
     final paymentIcon = isCash
         ? Icons.payments_outlined
         : isQris
-            ? Icons.qr_code_rounded
-            : Icons.account_balance_rounded;
+        ? Icons.qr_code_rounded
+        : Icons.account_balance_rounded;
     final paymentLabel = isCash
         ? 'Tunai'
         : isQris
-            ? 'QRIS'
-            : 'Transfer';
+        ? 'QRIS'
+        : 'Transfer';
 
     return Container(
       width: double.infinity,
@@ -750,16 +784,14 @@ class _CustomerOrderDetailScreenState
           ),
           const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.divider),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                Icon(paymentIcon,
-                    color: AppColors.textPrimary, size: 20),
+                Icon(paymentIcon, color: AppColors.textPrimary, size: 20),
                 const SizedBox(width: 10),
                 Text(
                   paymentLabel,
@@ -772,7 +804,9 @@ class _CustomerOrderDetailScreenState
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: isPaid
                         ? AppColors.successLight
@@ -784,9 +818,7 @@ class _CustomerOrderDetailScreenState
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: isPaid
-                          ? AppColors.success
-                          : AppColors.warning,
+                      color: isPaid ? AppColors.success : AppColors.warning,
                     ),
                   ),
                 ),
@@ -797,9 +829,7 @@ class _CustomerOrderDetailScreenState
           Row(
             children: [
               Icon(
-                isQris
-                    ? Icons.verified_outlined
-                    : Icons.info_outline_rounded,
+                isQris ? Icons.verified_outlined : Icons.info_outline_rounded,
                 size: 13,
                 color: AppColors.textMuted,
               ),
@@ -808,8 +838,8 @@ class _CustomerOrderDetailScreenState
                 isCash
                     ? 'PEMBAYARAN DILAKUKAN DI APOTEK'
                     : isQris
-                        ? 'PEMBAYARAN TERVERIFIKASI OTOMATIS'
-                        : 'PEMBAYARAN VIA TRANSFER BANK',
+                    ? 'PEMBAYARAN TERVERIFIKASI OTOMATIS'
+                    : 'PEMBAYARAN VIA TRANSFER BANK',
                 style: const TextStyle(
                   fontSize: 10,
                   color: AppColors.textMuted,
@@ -861,7 +891,9 @@ class _CustomerOrderDetailScreenState
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: statusBg,
                   borderRadius: BorderRadius.circular(8),
@@ -889,8 +921,11 @@ class _CustomerOrderDetailScreenState
                 height: 160,
                 color: AppColors.background,
                 child: const Center(
-                  child: Icon(Icons.image_not_supported_rounded,
-                      color: AppColors.textLight, size: 32),
+                  child: Icon(
+                    Icons.image_not_supported_rounded,
+                    color: AppColors.textLight,
+                    size: 32,
+                  ),
                 ),
               ),
             ),
@@ -899,8 +934,11 @@ class _CustomerOrderDetailScreenState
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(Icons.person_outline_rounded,
-                    size: 15, color: AppColors.textMuted),
+                const Icon(
+                  Icons.person_outline_rounded,
+                  size: 15,
+                  color: AppColors.textMuted,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'Dr. ${prescription.doctorName}',
@@ -922,13 +960,17 @@ class _CustomerOrderDetailScreenState
                 color: AppColors.dangerLight,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                    color: AppColors.danger.withValues(alpha: 0.2)),
+                  color: AppColors.danger.withValues(alpha: 0.2),
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline_rounded,
-                      color: AppColors.danger, size: 16),
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: AppColors.danger,
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -984,16 +1026,16 @@ class _CustomerOrderDetailScreenState
   // }
 
   BoxDecoration _cardDecoration({Color? color}) => BoxDecoration(
-        color: color ?? AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [ 
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      );
+    color: color ?? AppColors.white,
+    borderRadius: BorderRadius.circular(20),
+    boxShadow: [
+      BoxShadow(
+        color: AppColors.black.withValues(alpha: 0.03),
+        blurRadius: 10,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  );
 }
 
 class _InfoRow extends StatelessWidget {
@@ -1020,8 +1062,14 @@ class _InfoRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label,
-                  style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontWeight: FontWeight.w600)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textLight,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 2),
               Text(
                 value,

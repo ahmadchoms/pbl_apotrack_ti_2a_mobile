@@ -75,7 +75,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   // ─────────────────────────────────────────────
   void _animateToStep(int nextStep) {
     debugPrint("DEBUG: Mencoba berpindah ke Step Index $nextStep...");
-    
+
     // 1. Update state
     if (mounted) {
       setState(() => _currentStep = nextStep);
@@ -91,13 +91,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
       // 3. Pindah halaman dengan animasi halus
       if (_pageController.hasClients) {
-        _pageController.animateToPage(
-          nextStep,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-        ).then((_) {
-          debugPrint("DEBUG: Berhasil berpindah ke halaman $nextStep");
-        });
+        _pageController
+            .animateToPage(
+              nextStep,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+            )
+            .then((_) {
+              debugPrint("DEBUG: Berhasil berpindah ke halaman $nextStep");
+            });
       } else {
         debugPrint("DEBUG ERROR: PageController tidak memiliki client!");
       }
@@ -165,20 +167,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   // ─────────────────────────────────────────────
   Future<void> _handleRequestOtp() async {
     try {
-      debugPrint("DEBUG: Memulai Request OTP untuk ${ _emailCtrl.text.trim()}");
-      await ref.read(authNotifierProvider.notifier).requestOtp(
+      debugPrint("DEBUG: Memulai Request OTP untuk ${_emailCtrl.text.trim()}");
+      await ref
+          .read(authNotifierProvider.notifier)
+          .requestOtp(
             name: _nameCtrl.text.trim(),
             email: _emailCtrl.text.trim(),
             phone: _phoneCtrl.text.trim(),
             password: _passwordCtrl.text,
           );
-      
+
       debugPrint("DEBUG: Request OTP Berhasil, Berpindah ke Step 2 (OTP)");
       if (!mounted) return;
-      
+
       // Sukses → animasi ke step OTP
       _animateToStep(2);
-      
+
       // Beri sedikit delay sebelum request focus agar widget sempat render
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && _currentStep == 2) {

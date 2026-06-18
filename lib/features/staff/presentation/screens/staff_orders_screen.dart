@@ -153,7 +153,11 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
         children: [
           IconButton(
             onPressed: () => context.push('/staff/notifications'),
-            icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
+            icon: const Icon(
+              Icons.notifications_none_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
           if (unreadCount > 0)
             Positioned(

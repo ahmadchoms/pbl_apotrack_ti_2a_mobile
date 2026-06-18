@@ -210,9 +210,7 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                 ),
                 decoration: const BoxDecoration(
                   color: AppColors.white,
-                  border: Border(
-                    top: BorderSide(color: AppColors.divider),
-                  ),
+                  border: Border(top: BorderSide(color: AppColors.divider)),
                 ),
                 child: Row(
                   children: [
@@ -239,10 +237,7 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          widget.onLocationSelected(
-                            _selectedLat,
-                            _selectedLng,
-                          );
+                          widget.onLocationSelected(_selectedLat, _selectedLng);
                           Navigator.of(context).pop();
                         },
                         style: ElevatedButton.styleFrom(

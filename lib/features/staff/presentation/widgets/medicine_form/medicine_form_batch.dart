@@ -34,11 +34,16 @@ class MedicineFormBatchCard extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.warningLight,
                     borderRadius: BorderRadius.circular(7),
-                    border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: AppColors.warning.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -108,9 +113,13 @@ class MedicineFormBatchCard extends StatelessWidget {
                         onTap: () async {
                           final date = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now().add(const Duration(days: 365)),
+                            initialDate: DateTime.now().add(
+                              const Duration(days: 365),
+                            ),
                             firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(const Duration(days: 3650)),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 3650),
+                            ),
                           );
                           if (date != null) {
                             onChanged('exp', date.toString().split(' ').first);
@@ -184,7 +193,7 @@ class _MedicineFormBatchFieldState extends State<MedicineFormBatchField> {
   @override
   void didUpdateWidget(MedicineFormBatchField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialValue != oldWidget.initialValue && 
+    if (widget.initialValue != oldWidget.initialValue &&
         widget.initialValue != _controller.text) {
       _controller.text = widget.initialValue;
     }
@@ -215,10 +224,14 @@ class _MedicineFormBatchFieldState extends State<MedicineFormBatchField> {
           duration: const Duration(milliseconds: 150),
           height: 40,
           decoration: BoxDecoration(
-            color: _focused ? AppColors.primaryLight.withValues(alpha: 0.6) : AppColors.surface,
+            color: _focused
+                ? AppColors.primaryLight.withValues(alpha: 0.6)
+                : AppColors.surface,
             borderRadius: BorderRadius.circular(9),
             border: Border.all(
-              color: _focused ? AppColors.primary.withValues(alpha: 0.4) : AppColors.divider,
+              color: _focused
+                  ? AppColors.primary.withValues(alpha: 0.4)
+                  : AppColors.divider,
               width: 1.5,
             ),
           ),
@@ -239,19 +252,27 @@ class _MedicineFormBatchFieldState extends State<MedicineFormBatchField> {
             ),
             decoration: InputDecoration(
               hintText: widget.hint,
-              hintStyle: const TextStyle(color: AppColors.textLight, fontSize: 12),
+              hintStyle: const TextStyle(
+                color: AppColors.textLight,
+                fontSize: 12,
+              ),
               prefixIcon: widget.icon != null
                   ? Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: Icon(
                         widget.icon,
                         size: 16,
-                        color: _focused ? AppColors.primary : AppColors.textLight,
+                        color: _focused
+                            ? AppColors.primary
+                            : AppColors.textLight,
                       ),
                     )
                   : null,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
         ),

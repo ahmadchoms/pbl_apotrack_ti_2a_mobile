@@ -133,18 +133,25 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     switch (order.orderStatus) {
       case 'COMPLETED':
         return () {
-          context.push(AppRouter.customerUlasan, extra: {
-            'orderNumber': order.orderNumber,
-            'pharmacyId': order.pharmacy['id']?.toString() ?? '',
-            'pharmacyName': order.pharmacy['name']?.toString() ?? '',
-            'items': order.items.map((item) => {
-              'id': item.id,
-              'medicine_id': item.medicine['id']?.toString() ?? item.id,
-              'medicine_name': item.medicineName,
-              'quantity': item.quantity,
-              'price': item.price,
-            }).toList(),
-          });
+          context.push(
+            AppRouter.customerUlasan,
+            extra: {
+              'orderNumber': order.orderNumber,
+              'pharmacyId': order.pharmacy['id']?.toString() ?? '',
+              'pharmacyName': order.pharmacy['name']?.toString() ?? '',
+              'items': order.items
+                  .map(
+                    (item) => {
+                      'id': item.id,
+                      'medicine_id': item.medicine['id']?.toString() ?? item.id,
+                      'medicine_name': item.medicineName,
+                      'quantity': item.quantity,
+                      'price': item.price,
+                    },
+                  )
+                  .toList(),
+            },
+          );
         };
       case 'CANCELLED':
         return () => CancellationDetailSheet.show(context, order);

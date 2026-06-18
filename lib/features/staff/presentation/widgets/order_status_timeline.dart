@@ -4,22 +4,42 @@ import '../../../../core/theme/app_colors.dart';
 class OrderStatusTimeline extends StatelessWidget {
   final String currentStatus;
 
-  const OrderStatusTimeline({
-    super.key,
-    required this.currentStatus,
-  });
+  const OrderStatusTimeline({super.key, required this.currentStatus});
 
   @override
   Widget build(BuildContext context) {
     final steps = [
       {'status': 'PENDING', 'label': 'Diterima', 'icon': Icons.inbox_rounded},
-      {'status': 'PROCESSING', 'label': 'Diproses', 'icon': Icons.autorenew_rounded},
-      {'status': 'READY_FOR_PICKUP', 'label': 'Siap', 'icon': Icons.check_circle_outline_rounded},
-      {'status': 'SHIPPED', 'label': 'Dikirim', 'icon': Icons.local_shipping_rounded},
-      {'status': 'COMPLETED', 'label': 'Selesai', 'icon': Icons.done_all_rounded},
+      {
+        'status': 'PROCESSING',
+        'label': 'Diproses',
+        'icon': Icons.autorenew_rounded,
+      },
+      {
+        'status': 'READY_FOR_PICKUP',
+        'label': 'Siap',
+        'icon': Icons.check_circle_outline_rounded,
+      },
+      {
+        'status': 'SHIPPED',
+        'label': 'Dikirim',
+        'icon': Icons.local_shipping_rounded,
+      },
+      {
+        'status': 'COMPLETED',
+        'label': 'Selesai',
+        'icon': Icons.done_all_rounded,
+      },
     ];
 
-    final statusOrder = ['PENDING', 'PROCESSING', 'READY_FOR_PICKUP', 'SHIPPED', 'COMPLETED', 'DELIVERED'];
+    final statusOrder = [
+      'PENDING',
+      'PROCESSING',
+      'READY_FOR_PICKUP',
+      'SHIPPED',
+      'COMPLETED',
+      'DELIVERED',
+    ];
     final currentIdx = statusOrder.indexOf(currentStatus);
 
     return Container(
@@ -67,7 +87,9 @@ class OrderStatusTimeline extends StatelessWidget {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: isDone || isCurrent ? AppColors.primary : AppColors.background,
+                      color: isDone || isCurrent
+                          ? AppColors.primary
+                          : AppColors.background,
                       shape: BoxShape.circle,
                       border: isCurrent
                           ? Border.all(color: AppColors.primary, width: 2.5)
@@ -78,14 +100,16 @@ class OrderStatusTimeline extends StatelessWidget {
                                 color: AppColors.primary.withValues(alpha: 0.3),
                                 blurRadius: 10,
                                 offset: const Offset(0, 3),
-                              )
+                              ),
                             ]
                           : [],
                     ),
                     child: Icon(
                       step['icon'] as IconData,
                       size: 17,
-                      color: isDone || isCurrent ? Colors.white : AppColors.textLight,
+                      color: isDone || isCurrent
+                          ? Colors.white
+                          : AppColors.textLight,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -94,7 +118,9 @@ class OrderStatusTimeline extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: isCurrent ? FontWeight.w900 : FontWeight.w600,
-                      color: isCurrent ? AppColors.primary : AppColors.textLight,
+                      color: isCurrent
+                          ? AppColors.primary
+                          : AppColors.textLight,
                     ),
                   ),
                 ],

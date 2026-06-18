@@ -91,11 +91,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.white),
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                     child: const Text(
                       'Input Kode Manual',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -113,7 +118,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Input Kode Manual', style: TextStyle(fontWeight: FontWeight.w900)),
+        title: const Text(
+          'Input Kode Manual',
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.text,
@@ -121,19 +129,30 @@ class _ScannerScreenState extends State<ScannerScreen> {
             hintText: 'Masukkan 8 digit kode...',
             filled: true,
             fillColor: const Color(0xFFF1F5F9),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
             onPressed: () {
               final code = controller.text;
               Navigator.pop(ctx);
               Navigator.pop(this.context, code);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1D70F5)),
-            child: const Text('Verifikasi', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1D70F5),
+            ),
+            child: const Text(
+              'Verifikasi',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),

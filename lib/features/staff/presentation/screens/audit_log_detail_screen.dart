@@ -102,9 +102,13 @@ class AuditLogDetailScreen extends StatelessWidget {
                             const SizedBox(height: 16),
                             // Action Name
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
                               child: Text(
-                                activity.action.replaceAll('_', ' ').toUpperCase(),
+                                activity.action
+                                    .replaceAll('_', ' ')
+                                    .toUpperCase(),
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontSize: 22,
@@ -122,15 +126,22 @@ class AuditLogDetailScreen extends StatelessWidget {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: activity.status.toUpperCase() == 'SUCCESS'
+                                color:
+                                    activity.status.toUpperCase() == 'SUCCESS'
                                     ? AppColors.success.withValues(alpha: 0.9)
                                     : AppColors.danger.withValues(alpha: 0.9),
                                 borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: activity.status.toUpperCase() == 'SUCCESS'
-                                        ? AppColors.success.withValues(alpha: 0.6)
-                                        : AppColors.danger.withValues(alpha: 0.6),
+                                    color:
+                                        activity.status.toUpperCase() ==
+                                            'SUCCESS'
+                                        ? AppColors.success.withValues(
+                                            alpha: 0.6,
+                                          )
+                                        : AppColors.danger.withValues(
+                                            alpha: 0.6,
+                                          ),
                                     blurRadius: 12,
                                     spreadRadius: 2,
                                   ),
@@ -220,9 +231,14 @@ class AuditLogDetailScreen extends StatelessWidget {
                         ),
                         if (activity.relativeTime.isNotEmpty)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppColors.textLight.withValues(alpha: 0.15),
+                              color: AppColors.textLight.withValues(
+                                alpha: 0.15,
+                              ),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Text(
@@ -271,7 +287,8 @@ class AuditLogDetailScreen extends StatelessWidget {
                           _buildDetailRow(
                             icon: Icons.person_pin_rounded,
                             label: 'Otoritas Pengguna',
-                            value: activity.username ?? 'Staff Apotek / Apoteker',
+                            value:
+                                activity.username ?? 'Staff Apotek / Apoteker',
                             color: color,
                           ),
                         ],
@@ -279,7 +296,8 @@ class AuditLogDetailScreen extends StatelessWidget {
                     ),
 
                     // --- DYNAMIC METADATA CARD ---
-                    if (activity.metadata != null && activity.metadata!.isNotEmpty) ...[
+                    if (activity.metadata != null &&
+                        activity.metadata!.isNotEmpty) ...[
                       const SizedBox(height: 36),
                       const Text(
                         'METADATA TAMBAHAN (TERSTRUKTUR)',
@@ -295,7 +313,8 @@ class AuditLogDetailScreen extends StatelessWidget {
                         color: color,
                         child: Column(
                           children: activity.metadata!.entries.map((e) {
-                            final isLast = e.key == activity.metadata!.keys.last;
+                            final isLast =
+                                e.key == activity.metadata!.keys.last;
                             return Column(
                               children: [
                                 _buildMetadataRow(
@@ -401,10 +420,7 @@ class AuditLogDetailScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: child,
-          ),
+          child: Padding(padding: const EdgeInsets.all(28), child: child),
         ),
       ),
     );
@@ -509,7 +525,10 @@ class AuditLogDetailScreen extends StatelessWidget {
   Widget _buildDivider() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Divider(height: 1, color: AppColors.divider.withValues(alpha: 0.6)),
+      child: Divider(
+        height: 1,
+        color: AppColors.divider.withValues(alpha: 0.6),
+      ),
     );
   }
 
@@ -550,7 +569,10 @@ class AuditLogDetailScreen extends StatelessWidget {
         return key
             .replaceAll('_', ' ')
             .split(' ')
-            .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+            .map(
+              (w) =>
+                  w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '',
+            )
             .join(' ');
     }
   }
@@ -596,7 +618,11 @@ class AuditLogDetailScreen extends StatelessWidget {
   String _getCategory(String action) {
     final act = action.toUpperCase();
     if (act.contains('MEDICINE') || act.contains('STOCK')) return 'Inventori';
-    if (act.contains('ORDER') || act.contains('POS') || act.contains('SHIP') || act.contains('VERIFY')) return 'Transaksi';
+    if (act.contains('ORDER') ||
+        act.contains('POS') ||
+        act.contains('SHIP') ||
+        act.contains('VERIFY'))
+      return 'Transaksi';
     if (act.contains('PROFILE') || act.contains('PASSWORD')) return 'Akun';
     if (act.contains('LOGIN') || act.contains('LOGOUT')) return 'Sistem';
     return 'Umum';

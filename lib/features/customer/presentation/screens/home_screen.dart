@@ -57,11 +57,13 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       );
 
       if (mounted) {
-        ref.read(customerProfileProvider.notifier).updateCurrentGpsLocation(
-          latitude: position.latitude,
-          longitude: position.longitude,
-          addressDetail: addressText,
-        );
+        ref
+            .read(customerProfileProvider.notifier)
+            .updateCurrentGpsLocation(
+              latitude: position.latitude,
+              longitude: position.longitude,
+              addressDetail: addressText,
+            );
       }
     } catch (e) {
       debugPrint('Gagal mendapatkan lokasi GPS: $e');
@@ -162,7 +164,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
 
   Widget _buildHeader() {
     final state = ref.watch(customerProfileProvider);
-    final activeAddr = state.tempGpsAddress ?? state.addresses.where((a) => a.isPrimary).firstOrNull;
+    final activeAddr =
+        state.tempGpsAddress ??
+        state.addresses.where((a) => a.isPrimary).firstOrNull;
     final locationName = activeAddr?.displayAddress ?? 'Atur Alamat';
     return Material(
       color: Colors.transparent,
@@ -192,7 +196,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
-                        ),
                         ),
                         Row(
                           children: [

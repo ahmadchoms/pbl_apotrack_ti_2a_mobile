@@ -11,8 +11,8 @@ import 'verifikasi_pengambilan_screen.dart';
 
 class OrderConfirmationScreen extends ConsumerStatefulWidget {
   final List<CartItem> cartItems;
-  final String deliveryMethod;  // 'kirim' | 'ambil'
-  final String paymentMethod;   // 'cash' | 'qris'
+  final String deliveryMethod; // 'kirim' | 'ambil'
+  final String paymentMethod; // 'cash' | 'qris'
   final String? courierCode;
   final int total;
   final int shippingCost;
@@ -47,17 +47,18 @@ class _OrderConfirmationScreenState
   // ── Helpers ──────────────────────────────────────────────────────
   String _formatPrice(int price) {
     return price.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]}.',
-        );
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
   }
 
   String get _paymentLabel => widget.paymentMethod == 'cash'
       ? 'Bayar di Tempat (Cash)'
       : 'QRIS (Scan Pembayaran)';
 
-  String get _deliveryLabel =>
-      widget.deliveryMethod == 'kirim' ? 'Dikirim ke Alamat' : 'Ambil ke Apotek';
+  String get _deliveryLabel => widget.deliveryMethod == 'kirim'
+      ? 'Dikirim ke Alamat'
+      : 'Ambil ke Apotek';
 
   String get _deliveryAddress {
     if (widget.deliveryMethod == 'kirim' && widget.deliveryAddress != null) {
@@ -86,15 +87,17 @@ class _OrderConfirmationScreenState
             ? widget.cartItems.first.pharmacyName
             : 'Apotek';
         final items = widget.cartItems
-            .map((item) => {
-                  'medicine_id': item.id,
-                  'medicine_name': item.name,
-                  'unit_name': item.unit,
-                  'requires_prescription': false,
-                  'quantity': item.quantity,
-                  'price': item.price,
-                  'subtotal': item.price * item.quantity,
-                })
+            .map(
+              (item) => {
+                'medicine_id': item.id,
+                'medicine_name': item.name,
+                'unit_name': item.unit,
+                'requires_prescription': false,
+                'quantity': item.quantity,
+                'price': item.price,
+                'subtotal': item.price * item.quantity,
+              },
+            )
             .toList();
         CartState().clear();
         if (!mounted) return;
@@ -102,7 +105,7 @@ class _OrderConfirmationScreenState
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (_) => QrisPaymentScreen(
+            builder: (_) => QrisPaymentScreen(
               pharmacyId: widget.pharmacyId,
               pharmacyName: pharmacyName,
               deliveryMethod: widget.deliveryMethod,
@@ -122,15 +125,17 @@ class _OrderConfirmationScreenState
       // Cash: buat order langsung
       final service = ref.read(orderServiceProvider);
       final cartItemModels = widget.cartItems
-          .map((item) => CartItemModel(
-                medicineId: item.id,
-                medicineName: item.name,
-                unitName: item.unit,
-                requiresPrescription: false,
-                quantity: item.quantity,
-                price: item.price,
-                subtotal: item.price * item.quantity,
-              ))
+          .map(
+            (item) => CartItemModel(
+              medicineId: item.id,
+              medicineName: item.name,
+              unitName: item.unit,
+              requiresPrescription: false,
+              quantity: item.quantity,
+              price: item.price,
+              subtotal: item.price * item.quantity,
+            ),
+          )
           .toList();
 
       final order = await service.createOrder(
@@ -148,13 +153,17 @@ class _OrderConfirmationScreenState
 
       if (!mounted) return;
 
-      final itemsForNext = order.items.map((item) => {
-        'medicine_name': item.medicineName,
-        'medicine_id': item.medicineId,
-        'quantity': item.quantity,
-        'price': item.price.toInt(),
-        'subtotal': item.subtotal.toInt(),
-      }).toList();
+      final itemsForNext = order.items
+          .map(
+            (item) => {
+              'medicine_name': item.medicineName,
+              'medicine_id': item.medicineId,
+              'quantity': item.quantity,
+              'price': item.price.toInt(),
+              'subtotal': item.subtotal.toInt(),
+            },
+          )
+          .toList();
 
       if (isDelivery) {
         // Cash + Delivery: go home with success
@@ -165,7 +174,8 @@ class _OrderConfirmationScreenState
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
         Navigator.of(context).popUntil((route) => route.isFirst);
@@ -196,7 +206,8 @@ class _OrderConfirmationScreenState
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     } finally {
@@ -212,8 +223,11 @@ class _OrderConfirmationScreenState
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              size: 18, color: AppColors.textDark),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: AppColors.textDark,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -250,16 +264,18 @@ class _OrderConfirmationScreenState
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
           children: [
-            const Icon(Icons.access_time_rounded,
-                color: Colors.white, size: 18),
+            const Icon(
+              Icons.access_time_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
             const SizedBox(width: 10),
             Text(
               widget.deliveryMethod == 'kirim'
@@ -343,8 +359,11 @@ class _OrderConfirmationScreenState
                     ],
                   ),
                 ),
-                const Icon(Icons.check_circle_rounded,
-                    color: AppColors.primary, size: 22),
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
               ],
             ),
           ),
@@ -367,8 +386,11 @@ class _OrderConfirmationScreenState
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.info_outline_rounded,
-                size: 16, color: Color(0xFFD97706)),
+            const Icon(
+              Icons.info_outline_rounded,
+              size: 16,
+              color: Color(0xFFD97706),
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -450,7 +472,11 @@ class _OrderConfirmationScreenState
                   ),
                 ),
                 Divider(
-                    height: 1, color: Colors.grey.shade100, indent: 16, endIndent: 16),
+                  height: 1,
+                  color: Colors.grey.shade100,
+                  indent: 16,
+                  endIndent: 16,
+                ),
 
                 // Items
                 _summaryBlock(
@@ -506,14 +532,17 @@ class _OrderConfirmationScreenState
                             const Text(
                               'Biaya Pengiriman',
                               style: TextStyle(
-                                  fontSize: 13, color: AppColors.textLight),
+                                fontSize: 13,
+                                color: AppColors.textLight,
+                              ),
                             ),
                             Text(
                               'Rp ${_formatPrice(widget.shippingCost)}',
                               style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textDark),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textDark,
+                              ),
                             ),
                           ],
                         ),
@@ -522,9 +551,13 @@ class _OrderConfirmationScreenState
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                                color: const Color(
+                                  0xFF10B981,
+                                ).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
@@ -567,10 +600,11 @@ class _OrderConfirmationScreenState
                   ),
                 ),
                 Divider(
-                    height: 1,
-                    color: Colors.grey.shade100,
-                    indent: 16,
-                    endIndent: 16),
+                  height: 1,
+                  color: Colors.grey.shade100,
+                  indent: 16,
+                  endIndent: 16,
+                ),
               ],
             ),
           ),
@@ -640,13 +674,17 @@ class _OrderConfirmationScreenState
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.image_rounded, size: 14, color: AppColors.primary),
+                    const Icon(
+                      Icons.image_rounded,
+                      size: 14,
+                      color: AppColors.primary,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       widget.prescriptionFile != null
                           ? widget.prescriptionFile!.path.endsWith('.pdf')
-                              ? 'File PDF Resep'
-                              : 'Gambar Resep'
+                                ? 'File PDF Resep'
+                                : 'Gambar Resep'
                           : 'Tidak ada resep',
                       style: const TextStyle(
                         fontSize: 13,
@@ -656,7 +694,10 @@ class _OrderConfirmationScreenState
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.warningLight,
                         borderRadius: BorderRadius.circular(6),
@@ -688,9 +729,19 @@ class _OrderConfirmationScreenState
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.picture_as_pdf_rounded, size: 32, color: AppColors.textLight),
+                              Icon(
+                                Icons.picture_as_pdf_rounded,
+                                size: 32,
+                                color: AppColors.textLight,
+                              ),
                               SizedBox(height: 4),
-                              Text('File Resep (PDF)', style: TextStyle(fontSize: 12, color: AppColors.textLight)),
+                              Text(
+                                'File Resep (PDF)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textLight,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -705,8 +756,6 @@ class _OrderConfirmationScreenState
     );
   }
 
-
- 
   // ── Total Tagihan ────────────────────────────────────────────────
   Widget _buildTotalTagihan() {
     return Padding(
@@ -739,7 +788,11 @@ class _OrderConfirmationScreenState
   Widget _buildBottomBar(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-          20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
+        20,
+        16,
+        20,
+        MediaQuery.of(context).padding.bottom + 16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -753,50 +806,52 @@ class _OrderConfirmationScreenState
       child: SizedBox(
         width: double.infinity,
         height: 52,
-          child: ElevatedButton(
-            onPressed: _isSubmitting ? null : _confirmOrder,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+        child: ElevatedButton(
+          onPressed: _isSubmitting ? null : _confirmOrder,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: _isSubmitting
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text(
-                        'Konfirmasi Pesanan',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 15),
-                      ),
-                      SizedBox(width: 6),
-                      Icon(Icons.arrow_forward_ios_rounded, size: 14),
-                    ],
-                  ),
           ),
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Text(
+                      'Konfirmasi Pesanan',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    SizedBox(width: 6),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                  ],
+                ),
+        ),
       ),
     );
   }
 
   // ── Helpers ──────────────────────────────────────────────────────
   Widget _sectionLabel(String text) => Text(
-        text,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textLight,
-          letterSpacing: 0.8,
-        ),
-      );
+    text,
+    style: const TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textLight,
+      letterSpacing: 0.8,
+    ),
+  );
 }

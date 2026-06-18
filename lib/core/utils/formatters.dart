@@ -23,8 +23,18 @@ String formatDateTime(String raw) {
     final minute = dt.minute.toString().padLeft(2, '0');
     final day = dt.day.toString().padLeft(2, '0');
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     final month = months[dt.month - 1];
     return '$hour:$minute · $day $month ${dt.year}';

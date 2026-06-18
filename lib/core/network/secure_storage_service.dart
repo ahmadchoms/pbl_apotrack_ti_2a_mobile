@@ -38,7 +38,6 @@ class NativeStorageBackend implements StorageBackend {
   Future<void> deleteAll() => _storage.deleteAll();
 }
 
-
 /// Riverpod Provider untuk StorageBackend (auto-switch based on platform).
 final storageBackendProvider = Provider<StorageBackend>((ref) {
   if (kIsWeb) {
@@ -70,8 +69,7 @@ class SecureStorageService {
       _backend.write(StorageKeys.userData, data);
 
   Future<String?> getUserId() => _backend.read(StorageKeys.userId);
-  Future<void> saveUserId(String id) =>
-      _backend.write(StorageKeys.userId, id);
+  Future<void> saveUserId(String id) => _backend.write(StorageKeys.userId, id);
 
   Future<void> clearAll() => _backend.deleteAll();
 }

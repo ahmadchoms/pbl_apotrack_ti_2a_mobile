@@ -46,7 +46,7 @@ class _DeleteAccountPasswordDialogState
     });
 
     try {
-        await (ref.read(customerProfileProvider.notifier) as dynamic)
+      await (ref.read(customerProfileProvider.notifier) as dynamic)
           .deleteAccount(password);
       if (mounted) {
         Navigator.pop(context);
@@ -159,8 +159,7 @@ class _DeleteAccountPasswordDialogState
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed:
-                        _isLoading ? null : () => Navigator.pop(context),
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       side: const BorderSide(color: AppColors.divider),

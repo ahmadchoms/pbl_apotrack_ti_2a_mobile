@@ -337,8 +337,18 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
         final med = medicines[i];
         return MedicineInventoryCard(
           medicine: med,
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MedicineDetailScreen(medicine: med))),
-          onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MedicineFormScreen(medicine: med))),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MedicineDetailScreen(medicine: med),
+            ),
+          ),
+          onEdit: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MedicineFormScreen(medicine: med),
+            ),
+          ),
           formatRupiah: (val) {
             final str = val.toStringAsFixed(0);
             final buf = StringBuffer();
@@ -358,7 +368,10 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
       height: 48,
       margin: const EdgeInsets.only(bottom: 10),
       child: FloatingActionButton.extended(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MedicineFormScreen())),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MedicineFormScreen()),
+        ),
         backgroundColor: AppColors.primary,
         elevation: 6,
         highlightElevation: 0,

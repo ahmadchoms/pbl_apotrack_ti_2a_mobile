@@ -23,7 +23,8 @@ class _CartScreenState extends State<CartScreen> {
     return map;
   }
 
-  int get _grandTotal => _items.fold(0, (sum, e) => sum + (e.price * e.quantity));
+  int get _grandTotal =>
+      _items.fold(0, (sum, e) => sum + (e.price * e.quantity));
 
   void _increment(CartItem item) => setState(() => item.quantity++);
 
@@ -69,7 +70,11 @@ class _CartScreenState extends State<CartScreen> {
             color: AppColors.background,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: AppColors.textDark),
+          child: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 16,
+            color: AppColors.textDark,
+          ),
         ),
       ),
       title: Column(
@@ -77,11 +82,19 @@ class _CartScreenState extends State<CartScreen> {
         children: [
           const Text(
             'Keranjang Belanja',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textDark),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textDark,
+            ),
           ),
           Text(
             '${_items.fold(0, (s, e) => s + e.quantity)} item',
-            style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textLight,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -93,7 +106,11 @@ class _CartScreenState extends State<CartScreen> {
             },
             child: const Text(
               'Hapus Semua',
-              style: TextStyle(fontSize: 12, color: Color(0xFFEF4444), fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFFEF4444),
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
       ],
@@ -117,12 +134,20 @@ class _CartScreenState extends State<CartScreen> {
               color: AppColors.primary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.shopping_cart_outlined, size: 48, color: AppColors.primary.withValues(alpha: 0.5)),
+            child: Icon(
+              Icons.shopping_cart_outlined,
+              size: 48,
+              color: AppColors.primary.withValues(alpha: 0.5),
+            ),
           ),
           const SizedBox(height: 20),
           const Text(
             'Keranjang Kosong',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textDark),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textDark,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -135,9 +160,17 @@ class _CartScreenState extends State<CartScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
-            child: const Text('Cari Obat', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white)),
+            child: const Text(
+              'Cari Obat',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
@@ -164,7 +197,11 @@ class _CartScreenState extends State<CartScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -175,7 +212,9 @@ class _CartScreenState extends State<CartScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.06),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: Row(
               children: [
@@ -185,18 +224,30 @@ class _CartScreenState extends State<CartScreen> {
                     color: AppColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.local_pharmacy_rounded, size: 16, color: AppColors.primary),
+                  child: Icon(
+                    Icons.local_pharmacy_rounded,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     pharmacyName,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.textDark),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      color: AppColors.textDark,
+                    ),
                   ),
                 ),
                 Text(
                   '${items.fold(0, (s, e) => s + e.quantity)} item',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textLight,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -209,18 +260,28 @@ class _CartScreenState extends State<CartScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: Color(0xFFF3F4F6), width: 1)),
+              border: Border(
+                top: BorderSide(color: Color(0xFFF3F4F6), width: 1),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
                   'Subtotal',
-                  style: TextStyle(fontSize: 13, color: AppColors.textLight, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textLight,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 Text(
                   'Rp ${_formatPrice(subtotal)}',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.primary),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary,
+                  ),
                 ),
               ],
             ),
@@ -252,7 +313,11 @@ class _CartScreenState extends State<CartScreen> {
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.medication_rounded, size: 28, color: AppColors.primary.withValues(alpha: 0.3)),
+                child: Icon(
+                  Icons.medication_rounded,
+                  size: 28,
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                ),
               ),
             ),
           ),
@@ -264,19 +329,30 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 Text(
                   item.name,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textDark),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AppColors.textDark,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   item.unit,
-                  style: const TextStyle(fontSize: 11, color: AppColors.textLight),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textLight,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Rp ${_formatPrice(item.price)}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                  ),
                 ),
               ],
             ),
@@ -292,8 +368,12 @@ class _CartScreenState extends State<CartScreen> {
     return Row(
       children: [
         _qtyButton(
-          icon: item.quantity == 1 ? Icons.delete_outline_rounded : Icons.remove_rounded,
-          color: item.quantity == 1 ? const Color(0xFFEF4444) : AppColors.primary,
+          icon: item.quantity == 1
+              ? Icons.delete_outline_rounded
+              : Icons.remove_rounded,
+          color: item.quantity == 1
+              ? const Color(0xFFEF4444)
+              : AppColors.primary,
           onTap: () => _decrement(item),
         ),
         Container(
@@ -301,7 +381,11 @@ class _CartScreenState extends State<CartScreen> {
           alignment: Alignment.center,
           child: Text(
             '${item.quantity}',
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppColors.textDark),
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+              color: AppColors.textDark,
+            ),
           ),
         ),
         _qtyButton(
@@ -313,7 +397,11 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _qtyButton({required IconData icon, required Color color, required VoidCallback onTap}) {
+  Widget _qtyButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -335,7 +423,11 @@ class _CartScreenState extends State<CartScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, -4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
         ],
       ),
       child: Column(
@@ -347,11 +439,19 @@ class _CartScreenState extends State<CartScreen> {
             children: [
               const Text(
                 'Total Pembayaran',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
               ),
               Text(
                 'Rp ${_formatPrice(_grandTotal)}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.primary),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primary,
+                ),
               ),
             ],
           ),
@@ -369,17 +469,27 @@ class _CartScreenState extends State<CartScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 elevation: 0,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 18),
+                  const Icon(
+                    Icons.shopping_bag_outlined,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   const Text(
                     'Lanjut ke Checkout',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),

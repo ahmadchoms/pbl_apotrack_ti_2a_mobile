@@ -6,9 +6,10 @@ class StaffNotificationService {
   StaffNotificationService(this._dio);
 
   Future<List<Map<String, dynamic>>> getNotifications() async {
-    final response = await _dio.get('/notifications', queryParameters: {
-      'per_page': 50,
-    });
+    final response = await _dio.get(
+      '/notifications',
+      queryParameters: {'per_page': 50},
+    );
     final list = response.data['data'] as List<dynamic>;
     return list.cast<Map<String, dynamic>>();
   }

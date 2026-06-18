@@ -7,8 +7,8 @@ class AppException implements Exception {
   const AppException(this.message, [this.statusCode]);
 
   AppException.fromDioException(DioException e)
-      : message = e.message ?? 'Terjadi kesalahan jaringan.',
-        statusCode = e.response?.statusCode;
+    : message = e.message ?? 'Terjadi kesalahan jaringan.',
+      statusCode = e.response?.statusCode;
 
   @override
   String toString() => message;

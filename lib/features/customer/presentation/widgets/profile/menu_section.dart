@@ -5,11 +5,7 @@ class MenuSection extends StatelessWidget {
   final String title;
   final List<Widget> items;
 
-  const MenuSection({
-    super.key,
-    required this.title,
-    required this.items,
-  });
+  const MenuSection({super.key, required this.title, required this.items});
 
   @override
   Widget build(BuildContext context) {
@@ -88,10 +84,8 @@ class MenuItemTile extends StatelessWidget {
             : AppColors.textSubtle,
       ),
       onTap: onTap,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
   }
 }

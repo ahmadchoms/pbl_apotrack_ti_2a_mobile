@@ -73,17 +73,30 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Waktu Habis',
-            style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.textDark)),
-        content: const Text('Waktu pembayaran sudah habis.',
-            style: TextStyle(color: AppColors.textMid)),
+        title: const Text(
+          'Waktu Habis',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: AppColors.textDark,
+          ),
+        ),
+        content: const Text(
+          'Waktu pembayaran sudah habis.',
+          style: TextStyle(color: AppColors.textMid),
+        ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: const Text('OK', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary)),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+              ),
+            ),
           ),
         ],
       ),
@@ -96,15 +109,18 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
 
     try {
       final cartItemModels = widget.items
-          .map((item) => CartItemModel(
-                medicineId: item['medicine_id'] as String,
-                medicineName: item['medicine_name'] as String,
-                unitName: item['unit_name'] as String? ?? 'Pcs',
-                requiresPrescription: item['requires_prescription'] as bool? ?? false,
-                quantity: item['quantity'] as int,
-                price: item['price'] as int,
-                subtotal: item['subtotal'] as int,
-              ))
+          .map(
+            (item) => CartItemModel(
+              medicineId: item['medicine_id'] as String,
+              medicineName: item['medicine_name'] as String,
+              unitName: item['unit_name'] as String? ?? 'Pcs',
+              requiresPrescription:
+                  item['requires_prescription'] as bool? ?? false,
+              quantity: item['quantity'] as int,
+              price: item['price'] as int,
+              subtotal: item['subtotal'] as int,
+            ),
+          )
           .toList();
 
       final isDelivery = widget.deliveryMethod == 'kirim';
@@ -127,7 +143,9 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       String verificationCode = order.verificationCode;
       try {
         final paymentResult = await _orderService.simulatePayment(order.id);
-        verificationCode = paymentResult['verification_code']?.toString() ?? order.verificationCode;
+        verificationCode =
+            paymentResult['verification_code']?.toString() ??
+            order.verificationCode;
       } catch (_) {
         // simulatePayment gagal (server error), tetap lanjut pakai kode dari order
       }
@@ -140,10 +158,14 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
         Navigator.of(context).popUntil((route) => route.isFirst);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Pesanan berhasil dibuat! Pembayaran sebesar ${_rupiah(widget.subtotal + widget.shippingCost)} telah dikonfirmasi.'),
+            content: Text(
+              'Pesanan berhasil dibuat! Pembayaran sebesar ${_rupiah(widget.subtotal + widget.shippingCost)} telah dikonfirmasi.',
+            ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       } else {
@@ -173,7 +195,9 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -192,15 +216,23 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
   }
 
   String _rupiah(int amount) =>
-      'Rp ${amount.toString().replaceAllMapped(
-            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-            (m) => '${m[1]}.',
-          )}';
+      'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
 
   String _bulan(int b) {
     const list = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agt',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     return list[b];
   }
@@ -220,8 +252,13 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 18),
-          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textDark,
+            size: 18,
+          ),
+          onPressed: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
         ),
       ),
       body: SingleChildScrollView(
@@ -241,7 +278,11 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
                   ? 'Pembayaran berhasil. Pesanan akan segera diproses dan dikirim.'
                   : 'Setelah konfirmasi, kamu akan mendapat QR Code\nuntuk pengambilan obat di apotek',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, color: AppColors.textSubtle, height: 1.5),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSubtle,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 24),
           ],
@@ -275,17 +316,31 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
               color: AppColors.primaryLight,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.local_pharmacy_rounded, color: AppColors.primary, size: 30),
+            child: const Icon(
+              Icons.local_pharmacy_rounded,
+              color: AppColors.primary,
+              size: 30,
+            ),
           ),
           const SizedBox(height: 12),
-          Text(widget.pharmacyName,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textDark)),
+          Text(
+            widget.pharmacyName,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              color: AppColors.textDark,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(_rupiah(total),
-              style: const TextStyle(
-                  fontWeight: FontWeight.w900, fontSize: 32, color: AppColors.textDark,
-                  letterSpacing: -0.5)),
+          Text(
+            _rupiah(total),
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 32,
+              color: AppColors.textDark,
+              letterSpacing: -0.5,
+            ),
+          ),
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -293,22 +348,35 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
               color: AppColors.warningLight,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text('Menunggu Pembayaran',
-                style: TextStyle(
-                    color: AppColors.warning, fontWeight: FontWeight.w700, fontSize: 13)),
+            child: const Text(
+              'Menunggu Pembayaran',
+              style: TextStyle(
+                color: AppColors.warning,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
           ),
           const SizedBox(height: 20),
-          const Text('BATAS WAKTU BAYAR',
-              style: TextStyle(
-                  fontSize: 11, color: AppColors.textLight, letterSpacing: 1, fontWeight: FontWeight.w700)),
+          const Text(
+            'BATAS WAKTU BAYAR',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textLight,
+              letterSpacing: 1,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text(_timerText,
-              style: TextStyle(
-                fontSize: 34,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 4,
-                color: _secondsLeft < 60 ? AppColors.danger : AppColors.textDark,
-              )),
+          Text(
+            _timerText,
+            style: TextStyle(
+              fontSize: 34,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 4,
+              color: _secondsLeft < 60 ? AppColors.danger : AppColors.textDark,
+            ),
+          ),
         ],
       ),
     );
@@ -325,14 +393,22 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
+          const Icon(
+            Icons.info_outline_rounded,
+            color: AppColors.primary,
+            size: 18,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               widget.deliveryMethod == 'kirim'
                   ? 'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Pesanan akan segera dikirim ke alamat tujuan.'
                   : 'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Kamu akan mendapat QR Code untuk pengambilan obat di apotek.',
-              style: const TextStyle(fontSize: 13, color: Color(0xFF1E3A5F), height: 1.4),
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF1E3A5F),
+                height: 1.4,
+              ),
             ),
           ),
         ],
@@ -358,9 +434,14 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Rincian Pesanan',
-              style: TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.textDark)),
+          const Text(
+            'Rincian Pesanan',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+              color: AppColors.textDark,
+            ),
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -368,13 +449,23 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('NO. PESANAN',
-                        style: TextStyle(fontSize: 11, color: AppColors.textLight, letterSpacing: 1, fontWeight: FontWeight.w700)),
+                    const Text(
+                      'NO. PESANAN',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textLight,
+                        letterSpacing: 1,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       _orderNumber.isEmpty ? 'Menunggu...' : _orderNumber,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.textDark),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        color: AppColors.textDark,
+                      ),
                     ),
                   ],
                 ),
@@ -386,13 +477,23 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('TANGGAL',
-                          style: TextStyle(fontSize: 11, color: AppColors.textLight, letterSpacing: 1, fontWeight: FontWeight.w700)),
+                      const Text(
+                        'TANGGAL',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textLight,
+                          letterSpacing: 1,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         '${now.day} ${_bulan(now.month)} ${now.year}',
                         style: const TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.textDark),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          color: AppColors.textDark,
+                        ),
                       ),
                     ],
                   ),
@@ -401,33 +502,51 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
             ],
           ),
           const Divider(height: 28),
-          ...widget.items.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${item['medicine_name']} x${item['quantity']}',
-                        style: const TextStyle(fontSize: 13, color: AppColors.textMid),
+          ...widget.items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${item['medicine_name']} x${item['quantity']}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textMid,
                       ),
                     ),
-                    Text(_rupiah(item['subtotal'] as int),
-                        style: const TextStyle(fontSize: 13, color: AppColors.textMid)),
-                  ],
-                ),
-              )),
+                  ),
+                  Text(
+                    _rupiah(item['subtotal'] as int),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textMid,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const Divider(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Total Bayar',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.textDark)),
+              const Text(
+                'Total Bayar',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  color: AppColors.textDark,
+                ),
+              ),
               Text(
                 _rupiah(widget.subtotal + widget.shippingCost),
                 style: const TextStyle(
-                    fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.primary),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                  color: AppColors.primary,
+                ),
               ),
             ],
           ),
@@ -442,10 +561,16 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       height: 56,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: _paying ? AppColors.primary.withValues(alpha: 0.6) : AppColors.primary,
+          color: _paying
+              ? AppColors.primary.withValues(alpha: 0.6)
+              : AppColors.primary,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8)),
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.35),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
           ],
         ),
         child: ElevatedButton(
@@ -454,21 +579,31 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
             disabledBackgroundColor: Colors.transparent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: _paying
                 ? const SizedBox(
                     key: ValueKey('loading'),
-                    width: 24, height: 24,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                    ),
                   )
                 : const Row(
                     key: ValueKey('label'),
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 22),
+                      Icon(
+                        Icons.check_circle_outline_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                       SizedBox(width: 10),
                       Text(
                         'Konfirmasi Bayar',

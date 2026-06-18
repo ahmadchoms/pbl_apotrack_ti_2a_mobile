@@ -144,7 +144,9 @@ class MedicineInventoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 4)],
+        boxShadow: [
+          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 4),
+        ],
       ),
     );
   }

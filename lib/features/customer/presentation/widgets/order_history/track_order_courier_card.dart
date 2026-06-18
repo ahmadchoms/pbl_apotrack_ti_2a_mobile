@@ -36,11 +36,15 @@ class TrackOrderCourierCard extends StatelessWidget {
               CircleAvatar(
                 radius: 28,
                 backgroundColor: AppColors.primaryLight,
-                backgroundImage:
-                    photoUrl != null ? NetworkImage(photoUrl) : null,
+                backgroundImage: photoUrl != null
+                    ? NetworkImage(photoUrl)
+                    : null,
                 child: photoUrl == null
-                    ? const Icon(Icons.person_rounded,
-                        color: AppColors.primary, size: 30)
+                    ? const Icon(
+                        Icons.person_rounded,
+                        color: AppColors.primary,
+                        size: 30,
+                      )
                     : null,
               ),
               Positioned(
@@ -85,8 +89,11 @@ class TrackOrderCourierCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.directions_car_rounded,
-                        size: 13, color: AppColors.textMuted),
+                    const Icon(
+                      Icons.directions_car_rounded,
+                      size: 13,
+                      color: AppColors.textMuted,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       plate,
@@ -102,8 +109,11 @@ class TrackOrderCourierCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.phone_rounded,
-                          size: 13, color: AppColors.textMuted),
+                      const Icon(
+                        Icons.phone_rounded,
+                        size: 13,
+                        color: AppColors.textMuted,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         phone,

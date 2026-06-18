@@ -34,7 +34,9 @@ class OrderDetailItemsCard extends StatelessWidget {
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(20),
@@ -58,10 +60,8 @@ class OrderDetailItemsCard extends StatelessWidget {
   }
 
   Widget _buildItemRow(OrderItem item) {
-    final medicineName =
-        item.medicine['name']?.toString() ?? 'Obat';
-    final unitName =
-        item.medicine['unit_name']?.toString() ?? '';
+    final medicineName = item.medicine['name']?.toString() ?? 'Obat';
+    final unitName = item.medicine['unit_name']?.toString() ?? '';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -117,21 +117,23 @@ class OrderDetailItemsCard extends StatelessWidget {
   }
 
   String _formatPrice(num price) {
-    return price.toStringAsFixed(0).replaceAllMapped(
+    return price
+        .toStringAsFixed(0)
+        .replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (m) => '${m[1]}.',
         );
   }
 
   BoxDecoration _cardDecoration({Color? color}) => BoxDecoration(
-        color: color ?? AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      );
+    color: color ?? AppColors.white,
+    borderRadius: BorderRadius.circular(20),
+    boxShadow: [
+      BoxShadow(
+        color: AppColors.black.withValues(alpha: 0.03),
+        blurRadius: 10,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  );
 }

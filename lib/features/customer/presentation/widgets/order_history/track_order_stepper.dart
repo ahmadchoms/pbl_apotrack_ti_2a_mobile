@@ -120,8 +120,8 @@ class TrackOrderStepper extends StatelessWidget {
                 color: isDone
                     ? AppColors.primary
                     : isActive
-                        ? AppColors.primaryLight
-                        : AppColors.stepInactiveBg,
+                    ? AppColors.primaryLight
+                    : AppColors.stepInactiveBg,
                 shape: BoxShape.circle,
                 border: isActive
                     ? Border.all(color: AppColors.primary, width: 2)
@@ -132,8 +132,8 @@ class TrackOrderStepper extends StatelessWidget {
                 color: isDone
                     ? AppColors.white
                     : isActive
-                        ? AppColors.primary
-                        : AppColors.stepInactive,
+                    ? AppColors.primary
+                    : AppColors.stepInactive,
                 size: isDone ? 18 : 16,
               ),
             ),
@@ -162,8 +162,8 @@ class TrackOrderStepper extends StatelessWidget {
                     color: isActive
                         ? AppColors.primary
                         : isDone
-                            ? AppColors.stepDone
-                            : AppColors.stepInactive,
+                        ? AppColors.stepDone
+                        : AppColors.stepInactive,
                   ),
                 ),
                 const SizedBox(height: 2),

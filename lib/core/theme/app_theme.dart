@@ -35,9 +35,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,
@@ -52,10 +50,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 15,
-          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
         ),
       ),
     );

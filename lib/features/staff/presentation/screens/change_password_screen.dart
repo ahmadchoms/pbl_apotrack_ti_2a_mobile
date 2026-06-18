@@ -12,16 +12,15 @@ class ChangePasswordScreen extends ConsumerStatefulWidget {
       _ChangePasswordScreenState();
 }
 
-class _ChangePasswordScreenState
-    extends ConsumerState<ChangePasswordScreen> {
-  final _oldPassController     = TextEditingController();
-  final _newPassController     = TextEditingController();
+class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
+  final _oldPassController = TextEditingController();
+  final _newPassController = TextEditingController();
   final _confirmPassController = TextEditingController();
 
-  bool _obscureOld     = true;
-  bool _obscureNew     = true;
+  bool _obscureOld = true;
+  bool _obscureNew = true;
   bool _obscureConfirm = true;
-  bool _isLoading      = false;
+  bool _isLoading = false;
 
   String? _oldPassError;
   String? _newPassError;
@@ -56,8 +55,7 @@ class _ChangePasswordScreenState
       _newPassError = null;
     }
 
-    if (_confirmPassController.text.trim() !=
-        _newPassController.text.trim()) {
+    if (_confirmPassController.text.trim() != _newPassController.text.trim()) {
       _confirmPassError = 'Kata Sandi tidak cocok';
       valid = false;
     } else {
@@ -73,7 +71,9 @@ class _ChangePasswordScreenState
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(profileProvider.notifier).changePassword(
+      await ref
+          .read(profileProvider.notifier)
+          .changePassword(
             currentPassword: _oldPassController.text.trim(),
             newPassword: _newPassController.text.trim(),
           );
@@ -115,8 +115,7 @@ class _ChangePasswordScreenState
         ),
         backgroundColor: isError ? AppColors.danger : AppColors.success,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.all(16),
       ),
     );
@@ -130,16 +129,20 @@ class _ChangePasswordScreenState
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textDark, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textDark,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: const Text(
           'Ubah Kata Sandi',
           style: TextStyle(
-              color: AppColors.textDark,
-              fontWeight: FontWeight.w900,
-              fontSize: 17),
+            color: AppColors.textDark,
+            fontWeight: FontWeight.w900,
+            fontSize: 17,
+          ),
         ),
         centerTitle: true,
       ),
@@ -153,37 +156,47 @@ class _ChangePasswordScreenState
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(24),
-                border:
-                    Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                ),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: const BoxDecoration(
-                        color: Colors.white, shape: BoxShape.circle),
-                    child: const Icon(Icons.shield_outlined,
-                        color: AppColors.primary, size: 24),
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.shield_outlined,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Keamanan Akun',
-                            style: TextStyle(
-                                color: AppColors.textDark,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 14)),
+                        Text(
+                          'Keamanan Akun',
+                          style: TextStyle(
+                            color: AppColors.textDark,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
                         SizedBox(height: 4),
                         Text(
                           'Gunakan minimal 8 karakter dengan kombinasi '
                           'huruf dan angka untuk keamanan maksimal.',
                           style: TextStyle(
-                              color: AppColors.textMid,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              height: 1.4),
+                            color: AppColors.textMid,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            height: 1.4,
+                          ),
                         ),
                       ],
                     ),
@@ -244,7 +257,8 @@ class _ChangePasswordScreenState
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
                 child: _isLoading
@@ -252,10 +266,17 @@ class _ChangePasswordScreenState
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Text('Perbarui Kata Sandi',
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Perbarui Kata Sandi',
                         style: TextStyle(
-                            fontWeight: FontWeight.w900, fontSize: 16)),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -282,9 +303,7 @@ class _ChangePasswordScreenState
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: errorText != null
-                  ? AppColors.danger
-                  : AppColors.textLight,
+              color: errorText != null ? AppColors.danger : AppColors.textLight,
             ),
           ),
         ),
@@ -293,9 +312,7 @@ class _ChangePasswordScreenState
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: errorText != null
-                  ? AppColors.danger
-                  : AppColors.divider,
+              color: errorText != null ? AppColors.danger : AppColors.divider,
               width: errorText != null ? 1.5 : 1,
             ),
           ),
@@ -304,12 +321,16 @@ class _ChangePasswordScreenState
             obscureText: obscure,
             onChanged: onChanged,
             style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDark),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.lock_outline_rounded,
-                  color: AppColors.textMid, size: 20),
+              prefixIcon: const Icon(
+                Icons.lock_outline_rounded,
+                color: AppColors.textMid,
+                size: 20,
+              ),
               suffixIcon: IconButton(
                 icon: Icon(
                   obscure
@@ -322,7 +343,9 @@ class _ChangePasswordScreenState
               ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 16),
+                horizontal: 16,
+                vertical: 16,
+              ),
             ),
           ),
         ),
@@ -332,15 +355,19 @@ class _ChangePasswordScreenState
             padding: const EdgeInsets.only(left: 4, top: 6),
             child: Row(
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    size: 13, color: AppColors.danger),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 13,
+                  color: AppColors.danger,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   errorText,
                   style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.danger,
-                      fontWeight: FontWeight.w600),
+                    fontSize: 11,
+                    color: AppColors.danger,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),

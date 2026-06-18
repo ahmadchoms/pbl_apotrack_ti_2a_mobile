@@ -3,10 +3,10 @@ import '../../../data/models/customer_address.dart';
 /// Model untuk satu alamat tersimpan
 class AddressModel {
   final String id;
-  final String name;       // nama label, mis. "Rumah", "Kantor"
+  final String name; // nama label, mis. "Rumah", "Kantor"
   final String fullAddress;
-  final String? landmark;  // patokan
-  final AddressType type;  // personal / bisnis
+  final String? landmark; // patokan
+  final AddressType type; // personal / bisnis
   final bool isPrimary;
   final double? latitude;
   final double? longitude;
@@ -57,4 +57,3 @@ class AddressModel {
 }
 
 enum AddressType { personal, bisnis }
-

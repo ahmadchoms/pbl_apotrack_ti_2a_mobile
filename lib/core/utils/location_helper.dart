@@ -66,9 +66,15 @@ class LocationHelper {
   }
 
   /// Konversi Lat/Lng menjadi Alamat Fisik (Reverse Geocoding)
-  static Future<String> getAddressFromLatLng(double latitude, double longitude) async {
+  static Future<String> getAddressFromLatLng(
+    double latitude,
+    double longitude,
+  ) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        latitude,
+        longitude,
+      );
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         // Susun alamat sederhana yang pas untuk Header Home Screen
@@ -76,15 +82,17 @@ class LocationHelper {
         final subLocality = place.subLocality ?? '';
         final locality = place.locality ?? '';
         final name = place.name ?? '';
-        
-        final list = [street, subLocality, locality]
-            .where((s) => s.isNotEmpty)
-            .toList();
-            
+
+        final list = [
+          street,
+          subLocality,
+          locality,
+        ].where((s) => s.isNotEmpty).toList();
+
         if (list.isEmpty && name.isNotEmpty) {
           list.add(name);
         }
-        
+
         return list.join(', ');
       }
     } catch (e) {

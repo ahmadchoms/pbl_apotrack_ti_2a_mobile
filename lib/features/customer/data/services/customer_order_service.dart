@@ -8,23 +8,21 @@ class CustomerOrderService {
   CustomerOrderService(this._repository);
 
   Future<List<Order>> getActiveOrders({int page = 1}) async {
-    final res = await _repository.getCustomerOrders(
-      {'page': page, 'per_page': 10},
-    );
+    final res = await _repository.getCustomerOrders({
+      'page': page,
+      'per_page': 10,
+    });
     final data = res.data['data'] as List<dynamic>? ?? [];
-    return data
-        .map((e) => Order.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return data.map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<List<Order>> getOrderHistory({int page = 1}) async {
-    final res = await _repository.getCustomerOrderHistory(
-      {'page': page, 'per_page': 15},
-    );
+    final res = await _repository.getCustomerOrderHistory({
+      'page': page,
+      'per_page': 15,
+    });
     final data = res.data['data'] as List<dynamic>? ?? [];
-    return data
-        .map((e) => Order.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return data.map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<Order> getOrderDetail(String id) async {
@@ -34,8 +32,7 @@ class CustomerOrderService {
 
   Future<DeliveryTracking> getOrderTracking(String id) async {
     final res = await _repository.getCustomerOrderTracking(id);
-    return DeliveryTracking.fromJson(
-        res.data['data'] as Map<String, dynamic>);
+    return DeliveryTracking.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
   Future<Order> simulatePayment(String id) async {

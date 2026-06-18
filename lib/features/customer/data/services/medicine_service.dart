@@ -7,12 +7,9 @@ class MedicineService {
   MedicineService({required CustomerApiService api}) : _api = api;
   final CustomerApiService _api;
 
-  Future<List<MedicineModel>> getMedicinesByPharmacy(
-      String pharmacyId) async {
+  Future<List<MedicineModel>> getMedicinesByPharmacy(String pharmacyId) async {
     final data = await _api.getMedicines(pharmacyId: pharmacyId);
-    return data
-        .map((e) => MedicineModel.fromJson(e.toJson()))
-        .toList();
+    return data.map((e) => MedicineModel.fromJson(e.toJson())).toList();
   }
 
   Future<List<MedicineModel>> getMedicinesByCategory({
@@ -20,21 +17,18 @@ class MedicineService {
     required String categoryId,
   }) async {
     final data = await _api.getMedicines(
-        pharmacyId: pharmacyId, categoryId: categoryId);
-    return data
-        .map((e) => MedicineModel.fromJson(e.toJson()))
-        .toList();
+      pharmacyId: pharmacyId,
+      categoryId: categoryId,
+    );
+    return data.map((e) => MedicineModel.fromJson(e.toJson())).toList();
   }
 
   Future<List<MedicineModel>> searchMedicines({
     required String pharmacyId,
     required String query,
   }) async {
-    final data =
-        await _api.getMedicines(pharmacyId: pharmacyId, search: query);
-    return data
-        .map((e) => MedicineModel.fromJson(e.toJson()))
-        .toList();
+    final data = await _api.getMedicines(pharmacyId: pharmacyId, search: query);
+    return data.map((e) => MedicineModel.fromJson(e.toJson())).toList();
   }
 
   Future<List<MedicineCategoryModel>> getCategories() async {
@@ -47,12 +41,15 @@ final medicineServiceProvider = Provider<MedicineService>((ref) {
   return MedicineService(api: ref.watch(customerApiServiceProvider));
 });
 
-final medicinesProvider =
-    FutureProvider.family<List<MedicineModel>, String>((ref, pharmacyId) {
+final medicinesProvider = FutureProvider.family<List<MedicineModel>, String>((
+  ref,
+  pharmacyId,
+) {
   return ref.watch(medicineServiceProvider).getMedicinesByPharmacy(pharmacyId);
 });
 
-final medicineCategoriesProvider =
-    FutureProvider<List<MedicineCategoryModel>>((ref) {
+final medicineCategoriesProvider = FutureProvider<List<MedicineCategoryModel>>((
+  ref,
+) {
   return ref.watch(medicineServiceProvider).getCategories();
 });

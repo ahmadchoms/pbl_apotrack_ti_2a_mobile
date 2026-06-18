@@ -5,10 +5,7 @@ import '../../../../staff/data/models/order.dart';
 class OrderDetailTimelineCard extends StatelessWidget {
   final List<OrderStatusLog> statusLogs;
 
-  const OrderDetailTimelineCard({
-    super.key,
-    required this.statusLogs,
-  });
+  const OrderDetailTimelineCard({super.key, required this.statusLogs});
 
   String _statusLabel(String status) {
     switch (status) {
@@ -86,8 +83,7 @@ class OrderDetailTimelineCard extends StatelessWidget {
     bool isLast = false,
     bool isCancelled = false,
   }) {
-    final color =
-        isCancelled ? AppColors.danger : AppColors.primary;
+    final color = isCancelled ? AppColors.danger : AppColors.primary;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,23 +93,19 @@ class OrderDetailTimelineCard extends StatelessWidget {
             Container(
               width: 28,
               height: 28,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               child: Icon(
-                isCancelled
-                    ? Icons.close_rounded
-                    : Icons.check_rounded,
+                isCancelled ? Icons.close_rounded : Icons.check_rounded,
                 color: AppColors.white,
                 size: 16,
               ),
             ),
             if (!isLast)
               Container(
-                  width: 2,
-                  height: description != null ? 44 : 36,
-                  color: AppColors.divider),
+                width: 2,
+                height: description != null ? 44 : 36,
+                color: AppColors.divider,
+              ),
           ],
         ),
         const SizedBox(width: 14),
@@ -127,9 +119,7 @@ class OrderDetailTimelineCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: isCancelled
-                      ? AppColors.danger
-                      : AppColors.textPrimary,
+                  color: isCancelled ? AppColors.danger : AppColors.textPrimary,
                 ),
               ),
               if (description != null && description.isNotEmpty)

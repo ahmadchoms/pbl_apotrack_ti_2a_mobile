@@ -41,8 +41,8 @@ class AuditLog {
       description: json['description'] ?? '',
       status: json['status'] ?? 'SUCCESS',
       metadata: meta,
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
           : DateTime.now(),
       relativeTime: json['relative_time'] ?? '',
       username: json['user']?['username'],

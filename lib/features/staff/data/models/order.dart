@@ -54,8 +54,7 @@ class DeliveryTracking {
       biteshipTrackingId: json['biteship_tracking_id']?.toString(),
       trackingNumber: json['tracking_number']?.toString(),
       trackingLink: json['tracking_link']?.toString(),
-      deliveryFee:
-          num.tryParse(json['delivery_fee']?.toString() ?? '0') ?? 0,
+      deliveryFee: num.tryParse(json['delivery_fee']?.toString() ?? '0') ?? 0,
       status: json['status']?.toString() ?? 'confirmed',
       courier: json['courier'] is Map
           ? Map<String, dynamic>.from(json['courier'] as Map)
@@ -71,18 +70,18 @@ class DeliveryTracking {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'biteship_order_id': biteshipOrderId,
-        'biteship_tracking_id': biteshipTrackingId,
-        'tracking_number': trackingNumber,
-        'tracking_link': trackingLink,
-        'delivery_fee': deliveryFee,
-        'status': status,
-        'courier': courier,
-        'origin': origin,
-        'destination': destination,
-        'history': history,
-      };
+    'id': id,
+    'biteship_order_id': biteshipOrderId,
+    'biteship_tracking_id': biteshipTrackingId,
+    'tracking_number': trackingNumber,
+    'tracking_link': trackingLink,
+    'delivery_fee': deliveryFee,
+    'status': status,
+    'courier': courier,
+    'origin': origin,
+    'destination': destination,
+    'history': history,
+  };
 }
 
 class OrderStatusLog {
@@ -113,11 +112,7 @@ class PrescriptionData {
   final String? imageUrl;
   final String status;
 
-  PrescriptionData({
-    required this.id,
-    this.imageUrl,
-    required this.status,
-  });
+  PrescriptionData({required this.id, this.imageUrl, required this.status});
 
   factory PrescriptionData.fromJson(Map<String, dynamic> json) {
     return PrescriptionData(
@@ -195,32 +190,27 @@ class Order {
       paymentStatus: json['payment_status']?.toString() ?? 'UNPAID',
       paymentMethod: json['payment_method']?.toString() ?? '',
       serviceType: json['service_type']?.toString() ?? 'PICK_UP',
-      grandTotal:
-          num.tryParse(json['grand_total']?.toString() ?? '0') ?? 0,
+      grandTotal: num.tryParse(json['grand_total']?.toString() ?? '0') ?? 0,
       subtotalAmount:
           num.tryParse(json['subtotal_amount']?.toString() ?? '0') ?? 0,
-      shippingCost:
-          num.tryParse(json['shipping_cost']?.toString() ?? '0') ?? 0,
+      shippingCost: num.tryParse(json['shipping_cost']?.toString() ?? '0') ?? 0,
       notes: json['notes']?.toString(),
-      requiresPrescription: json['requires_prescription'] == true ||
+      requiresPrescription:
+          json['requires_prescription'] == true ||
           json['requires_prescription'] == 1,
       createdAt: json['created_at']?.toString() ?? '-',
       buyer: buyerData is Map<String, dynamic>
           ? buyerData
           : {'username': 'Pembeli Umum'},
-      pharmacy: pharmacyData is Map<String, dynamic>
-          ? pharmacyData
-          : {},
+      pharmacy: pharmacyData is Map<String, dynamic> ? pharmacyData : {},
       items: (json['items'] as List? ?? [])
           .map((i) => OrderItem.fromJson(i as Map<String, dynamic>))
           .toList(),
       statusLogs: (json['status_logs'] as List<dynamic>? ?? [])
-          .map((e) =>
-              OrderStatusLog.fromJson(e as Map<String, dynamic>))
+          .map((e) => OrderStatusLog.fromJson(e as Map<String, dynamic>))
           .toList(),
       tracking: trackingData != null && trackingData is Map
-          ? DeliveryTracking.fromJson(
-              trackingData as Map<String, dynamic>)
+          ? DeliveryTracking.fromJson(trackingData as Map<String, dynamic>)
           : null,
       address: json['address'] is Map
           ? json['address'] as Map<String, dynamic>
@@ -228,15 +218,13 @@ class Order {
       verificationCode: json['verification_code']?.toString(),
       prescription: json['prescription'] is Map
           ? PrescriptionData.fromJson(
-              json['prescription'] as Map<String, dynamic>)
+              json['prescription'] as Map<String, dynamic>,
+            )
           : null,
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'order_number': orderNumber,
-      };
+  Map<String, dynamic> toJson() => {'id': id, 'order_number': orderNumber};
 }
 
 class OrderItem {
@@ -266,11 +254,10 @@ class OrderItem {
       medicineName: json['medicine_name']?.toString() ?? '',
       unitName: json['unit_name']?.toString() ?? '',
       price: num.tryParse(json['price']?.toString() ?? '0') ?? 0,
-      quantity:
-          int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
-      subtotal:
-          num.tryParse(json['subtotal']?.toString() ?? '0') ?? 0,
-      requiresPrescription: json['requires_prescription'] == true ||
+      quantity: int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
+      subtotal: num.tryParse(json['subtotal']?.toString() ?? '0') ?? 0,
+      requiresPrescription:
+          json['requires_prescription'] == true ||
           json['requires_prescription'] == 1,
       medicine: json['medicine'] is Map<String, dynamic>
           ? json['medicine'] as Map<String, dynamic>

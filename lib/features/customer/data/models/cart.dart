@@ -1,12 +1,12 @@
 // ─── Simple Cart State (gunakan Provider/Riverpod di production) ───
 class CartItem {
-  final String id;          // medicine UUID
+  final String id; // medicine UUID
   final String name;
   final int price;
   final String unit;
   final String imageUrl;
   final String pharmacyName;
-  final String pharmacyId;  // pharmacy UUID
+  final String pharmacyId; // pharmacy UUID
   int quantity;
   final int stock;
 
@@ -34,14 +34,15 @@ class CartState {
     final existing = items.firstWhere(
       (e) => e.id == newItem.id && e.pharmacyId == newItem.pharmacyId,
       orElse: () => CartItem(
-          id: '',
-          name: '',
-          price: 0,
-          unit: '',
-          imageUrl: '',
-          pharmacyName: '',
-          pharmacyId: '',
-          stock: 0),
+        id: '',
+        name: '',
+        price: 0,
+        unit: '',
+        imageUrl: '',
+        pharmacyName: '',
+        pharmacyId: '',
+        stock: 0,
+      ),
     );
     if (existing.id.isNotEmpty) {
       existing.quantity++;

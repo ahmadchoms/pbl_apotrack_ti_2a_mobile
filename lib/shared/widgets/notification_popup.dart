@@ -74,7 +74,9 @@ class NotificationPopup {
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                      border: Border(
+                        top: BorderSide(color: Colors.grey.shade200),
+                      ),
                     ),
                     child: Row(
                       children: [

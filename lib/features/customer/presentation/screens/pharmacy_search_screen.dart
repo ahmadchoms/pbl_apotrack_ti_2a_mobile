@@ -7,7 +7,8 @@ class PharmacySearchScreen extends ConsumerStatefulWidget {
   const PharmacySearchScreen({super.key});
 
   @override
-  ConsumerState<PharmacySearchScreen> createState() => _PharmacySearchScreenState();
+  ConsumerState<PharmacySearchScreen> createState() =>
+      _PharmacySearchScreenState();
 }
 
 class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
@@ -29,8 +30,14 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
 
   Future<void> _loadPharmacies() async {
     try {
-      final pharmacies = await ref.read(pharmacyServiceProvider).getPharmacies();
-      if (mounted) setState(() { _pharmacies = pharmacies; _isLoading = false; });
+      final pharmacies = await ref
+          .read(pharmacyServiceProvider)
+          .getPharmacies();
+      if (mounted)
+        setState(() {
+          _pharmacies = pharmacies;
+          _isLoading = false;
+        });
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -62,8 +69,14 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
               controller: _searchCtrl,
               decoration: InputDecoration(
                 hintText: 'Cari nama apotek...',
-                hintStyle: const TextStyle(color: AppColors.textLight, fontSize: 14),
-                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
+                hintStyle: const TextStyle(
+                  color: AppColors.textLight,
+                  fontSize: 14,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  color: AppColors.primary,
+                ),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -80,12 +93,12 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _pharmacies.isEmpty
-                    ? const Center(child: Text('Tidak ada apotek ditemukan'))
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _pharmacies.length,
-                        itemBuilder: (_, i) => _buildPharmacyCard(_pharmacies[i]),
-                      ),
+                ? const Center(child: Text('Tidak ada apotek ditemukan'))
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _pharmacies.length,
+                    itemBuilder: (_, i) => _buildPharmacyCard(_pharmacies[i]),
+                  ),
           ),
         ],
       ),
@@ -106,9 +119,16 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
             height: 56,
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => Container(
-              width: 56, height: 56,
-              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-              child: Icon(Icons.local_pharmacy_rounded, color: AppColors.primary.withValues(alpha: 0.3)),
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.local_pharmacy_rounded,
+                color: AppColors.primary.withValues(alpha: 0.3),
+              ),
             ),
           ),
         ),
@@ -123,22 +143,33 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
             Text(
               pharmacy['address'] as String? ?? '',
               style: const TextStyle(fontSize: 12, color: AppColors.textLight),
-              maxLines: 2, overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.star_rounded, size: 14, color: Color(0xFFFBBF24)),
+                const Icon(
+                  Icons.star_rounded,
+                  size: 14,
+                  color: Color(0xFFFBBF24),
+                ),
                 const SizedBox(width: 2),
                 Text(
                   '${pharmacy['rating'] ?? ''}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
           ],
         ),
-        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textLight),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: AppColors.textLight,
+        ),
       ),
     );
   }

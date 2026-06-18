@@ -9,8 +9,12 @@ class NotificationModel {
   final DateTime createdAt;
 
   NotificationModel({
-    required this.id, required this.title, required this.message,
-    required this.type, required this.isRead, this.referenceId,
+    required this.id,
+    required this.title,
+    required this.message,
+    required this.type,
+    required this.isRead,
+    this.referenceId,
     required this.createdAt,
   });
 

@@ -13,7 +13,12 @@ import '../../../customer/data/models/customer_address.dart';
 // ─────────────────────────────────────────────
 
 enum MedicineSortBy {
-  nameAsc, nameDesc, stockAsc, stockDesc, priceAsc, priceDesc,
+  nameAsc,
+  nameDesc,
+  stockAsc,
+  stockDesc,
+  priceAsc,
+  priceDesc,
 }
 
 class InventoryFilterState {
@@ -51,8 +56,8 @@ class InventoryFilterNotifier extends StateNotifier<InventoryFilterState> {
 
 final inventoryFilterProvider =
     StateNotifierProvider<InventoryFilterNotifier, InventoryFilterState>(
-  (ref) => InventoryFilterNotifier(),
-);
+      (ref) => InventoryFilterNotifier(),
+    );
 
 // ─────────────────────────────────────────────
 // Pagination
@@ -107,10 +112,13 @@ class StaffMedicinesNotifier extends StateNotifier<PaginationState<Medicine>> {
     try {
       final service = ref.read(staffServiceProvider);
       final newItems = await service.getMedicines(
-          queryParams: {'page': 1, 'per_page': _perPage});
+        queryParams: {'page': 1, 'per_page': _perPage},
+      );
       state = state.copyWith(
-        items: newItems, isLoading: false,
-        page: 1, hasMore: newItems.length >= _perPage,
+        items: newItems,
+        isLoading: false,
+        page: 1,
+        hasMore: newItems.length >= _perPage,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -124,7 +132,8 @@ class StaffMedicinesNotifier extends StateNotifier<PaginationState<Medicine>> {
       final nextPage = state.page + 1;
       final service = ref.read(staffServiceProvider);
       final newItems = await service.getMedicines(
-          queryParams: {'page': nextPage, 'per_page': _perPage});
+        queryParams: {'page': nextPage, 'per_page': _perPage},
+      );
       state = state.copyWith(
         items: [...state.items, ...newItems],
         isLoadingNextPage: false,
@@ -146,7 +155,8 @@ final staffOrdersProvider = FutureProvider<List<Order>>((ref) async {
 
 final staffMedicinesProvider =
     StateNotifierProvider<StaffMedicinesNotifier, PaginationState<Medicine>>(
-        (ref) => StaffMedicinesNotifier(ref));
+      (ref) => StaffMedicinesNotifier(ref),
+    );
 
 final filteredMedicinesProvider = Provider<List<Medicine>>((ref) {
   final medicinesState = ref.watch(staffMedicinesProvider);
@@ -167,14 +177,20 @@ final filteredMedicinesProvider = Provider<List<Medicine>>((ref) {
     };
   }).toList();
 
-  result.sort((a, b) => switch (filter.sortBy) {
-    MedicineSortBy.nameAsc  => a.name.compareTo(b.name),
-    MedicineSortBy.nameDesc => b.name.compareTo(a.name),
-    MedicineSortBy.stockAsc  => a.totalActiveStock.compareTo(b.totalActiveStock),
-    MedicineSortBy.stockDesc => b.totalActiveStock.compareTo(a.totalActiveStock),
-    MedicineSortBy.priceAsc  => a.price.compareTo(b.price),
-    MedicineSortBy.priceDesc => b.price.compareTo(a.price),
-  });
+  result.sort(
+    (a, b) => switch (filter.sortBy) {
+      MedicineSortBy.nameAsc => a.name.compareTo(b.name),
+      MedicineSortBy.nameDesc => b.name.compareTo(a.name),
+      MedicineSortBy.stockAsc => a.totalActiveStock.compareTo(
+        b.totalActiveStock,
+      ),
+      MedicineSortBy.stockDesc => b.totalActiveStock.compareTo(
+        a.totalActiveStock,
+      ),
+      MedicineSortBy.priceAsc => a.price.compareTo(b.price),
+      MedicineSortBy.priceDesc => b.price.compareTo(a.price),
+    },
+  );
 
   return result;
 });
@@ -201,10 +217,13 @@ class StaffAuditsNotifier extends StateNotifier<PaginationState<AuditLog>> {
     try {
       final service = ref.read(staffServiceProvider);
       final newItems = await service.fetchAuditLogs(
-          queryParams: {'page': 1, 'per_page': _perPage});
+        queryParams: {'page': 1, 'per_page': _perPage},
+      );
       state = state.copyWith(
-        items: newItems, isLoading: false,
-        page: 1, hasMore: newItems.length >= _perPage,
+        items: newItems,
+        isLoading: false,
+        page: 1,
+        hasMore: newItems.length >= _perPage,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -218,7 +237,8 @@ class StaffAuditsNotifier extends StateNotifier<PaginationState<AuditLog>> {
       final nextPage = state.page + 1;
       final service = ref.read(staffServiceProvider);
       final newItems = await service.fetchAuditLogs(
-          queryParams: {'page': nextPage, 'per_page': _perPage});
+        queryParams: {'page': nextPage, 'per_page': _perPage},
+      );
       state = state.copyWith(
         items: [...state.items, ...newItems],
         isLoadingNextPage: false,
@@ -235,7 +255,8 @@ class StaffAuditsNotifier extends StateNotifier<PaginationState<AuditLog>> {
 
 final staffAuditsProvider =
     StateNotifierProvider<StaffAuditsNotifier, PaginationState<AuditLog>>(
-        (ref) => StaffAuditsNotifier(ref));
+      (ref) => StaffAuditsNotifier(ref),
+    );
 
 // ─────────────────────────────────────────────
 // PROFILE STATE — bersama Customer & Staff
@@ -305,7 +326,9 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
           ? await _service.getAddresses()
           : <CustomerAddress>[];
       state = state.copyWith(
-        profile: profile, addresses: addresses, isLoading: false,
+        profile: profile,
+        addresses: addresses,
+        isLoading: false,
       );
     } catch (e, s) {
       debugPrint('[ProfileNotifier] loadAll error: $e\n$s');
@@ -337,8 +360,10 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     dynamic imageFile,
   }) async {
     final updated = await _service.updateProfile(
-      username: username, email: email,
-      phone: phone, imageFile: imageFile,
+      username: username,
+      email: email,
+      phone: phone,
+      imageFile: imageFile,
     );
     state = state.copyWith(profile: updated);
   }
@@ -361,15 +386,26 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     bool isPrimary = false,
   }) async {
     final newAddr = await _service.addAddress(
-      label: label, addressDetail: addressDetail,
-      latitude: latitude, longitude: longitude, isPrimary: isPrimary,
+      label: label,
+      addressDetail: addressDetail,
+      latitude: latitude,
+      longitude: longitude,
+      isPrimary: isPrimary,
     );
     final updated = isPrimary
-        ? state.addresses.map((a) => CustomerAddress(
-              id: a.id, label: a.label, addressDetail: a.addressDetail,
-              completeAddress: a.completeAddress, latitude: a.latitude,
-              longitude: a.longitude, isPrimary: false,
-            )).toList()
+        ? state.addresses
+              .map(
+                (a) => CustomerAddress(
+                  id: a.id,
+                  label: a.label,
+                  addressDetail: a.addressDetail,
+                  completeAddress: a.completeAddress,
+                  latitude: a.latitude,
+                  longitude: a.longitude,
+                  isPrimary: false,
+                ),
+              )
+              .toList()
         : List<CustomerAddress>.from(state.addresses);
     updated.add(newAddr);
     state = state.copyWith(addresses: updated);
@@ -386,17 +422,25 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   }) async {
     try {
       final updated = await _service.updateAddress(
-        id: id, label: label, addressDetail: addressDetail,
-        latitude: latitude, longitude: longitude, isPrimary: isPrimary,
+        id: id,
+        label: label,
+        addressDetail: addressDetail,
+        latitude: latitude,
+        longitude: longitude,
+        isPrimary: isPrimary,
       );
       state = state.copyWith(
         addresses: state.addresses.map((a) {
           if (a.id == id) return updated;
           if (isPrimary && a.isPrimary) {
             return CustomerAddress(
-              id: a.id, label: a.label, addressDetail: a.addressDetail,
-              completeAddress: a.completeAddress, latitude: a.latitude,
-              longitude: a.longitude, isPrimary: false,
+              id: a.id,
+              label: a.label,
+              addressDetail: a.addressDetail,
+              completeAddress: a.completeAddress,
+              latitude: a.latitude,
+              longitude: a.longitude,
+              isPrimary: false,
             );
           }
           return a;
@@ -413,15 +457,19 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     try {
       await _service.setPrimaryAddress(id);
       state = state.copyWith(
-        addresses: state.addresses.map((a) => CustomerAddress(
-          id: a.id,
-          label: a.label,
-          addressDetail: a.addressDetail,
-          completeAddress: a.completeAddress,
-          latitude: a.latitude,
-          longitude: a.longitude,
-          isPrimary: a.id == id,
-        )).toList(),
+        addresses: state.addresses
+            .map(
+              (a) => CustomerAddress(
+                id: a.id,
+                label: a.label,
+                addressDetail: a.addressDetail,
+                completeAddress: a.completeAddress,
+                latitude: a.latitude,
+                longitude: a.longitude,
+                isPrimary: a.id == id,
+              ),
+            )
+            .toList(),
       );
     } catch (e, s) {
       debugPrint('[ProfileNotifier] setPrimaryAddress error: $e\n$s');
@@ -461,8 +509,9 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   }
 }
 
-final profileProvider =
-    StateNotifierProvider<ProfileNotifier, ProfileState>((ref) {
+final profileProvider = StateNotifierProvider<ProfileNotifier, ProfileState>((
+  ref,
+) {
   final service = ref.watch(staffServiceProvider);
   final storage = ref.watch(secureStorageServiceProvider);
   return ProfileNotifier(service, storage);

@@ -269,11 +269,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (_) => const Center(child: CircularProgressIndicator()),
+                builder: (_) =>
+                    const Center(child: CircularProgressIndicator()),
               );
 
               try {
-                final order = await ref.read(staffServiceProvider).verifyOrderByCode(code);
+                final order = await ref
+                    .read(staffServiceProvider)
+                    .verifyOrderByCode(code);
                 if (!context.mounted) return;
                 Navigator.pop(context); // tutup loading
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -282,7 +285,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     backgroundColor: AppColors.success,
                     behavior: SnackBarBehavior.floating,
                     margin: EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
                   ),
                 );
                 context.push('/staff/order-detail', extra: order);
@@ -295,7 +300,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     backgroundColor: AppColors.danger,
                     behavior: SnackBarBehavior.floating,
                     margin: const EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
                   ),
                 );
               }
@@ -625,7 +632,6 @@ class _RecentOrderTile extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(String status) {
-
     final Map<String, ({String label, Color color, IconData icon})>
     statusConfig = {
       'PENDING': (
@@ -673,7 +679,10 @@ class _RecentOrderTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: config.color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: config.color.withValues(alpha: 0.2), width: 1),
+        border: Border.all(
+          color: config.color.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -49,7 +49,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, -4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -74,15 +80,28 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? primaryColor.withValues(alpha: 0.1) : Colors.transparent,
+          color: isActive
+              ? primaryColor.withValues(alpha: 0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: isActive ? primaryColor : Colors.grey[400], size: 22),
+            Icon(
+              icon,
+              color: isActive ? primaryColor : Colors.grey[400],
+              size: 22,
+            ),
             const SizedBox(height: 2),
-            Text(label, style: TextStyle(color: isActive ? primaryColor : Colors.grey[400], fontWeight: FontWeight.w700, fontSize: 10)),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? primaryColor : Colors.grey[400],
+                fontWeight: FontWeight.w700,
+                fontSize: 10,
+              ),
+            ),
           ],
         ),
       ),

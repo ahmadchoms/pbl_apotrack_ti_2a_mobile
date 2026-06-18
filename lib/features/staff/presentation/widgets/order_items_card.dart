@@ -49,7 +49,9 @@ class OrderItemsCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.primaryLight,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.1),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

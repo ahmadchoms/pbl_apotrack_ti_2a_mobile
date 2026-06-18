@@ -22,28 +22,33 @@ class OrderService {
     String? courierService,
   }) async {
     final apiItems = items
-        .map((item) => {
-              'id': item.medicineId,
-              'quantity': item.quantity,
-              'price': item.price.toDouble(),
-            })
+        .map(
+          (item) => {
+            'id': item.medicineId,
+            'quantity': item.quantity,
+            'price': item.price.toDouble(),
+          },
+        )
         .toList();
 
-    final response = await _dio.post('/orders', data: {
-      'pharmacy_id': pharmacyId,
-      'items': apiItems,
-      'subtotal_amount': subtotal.toInt(),
-      'service_type': serviceType,
-      'payment_method': paymentMethod,
-      'shipping_cost': shippingCost.toInt(),
-      // ignore: use_null_aware_elements
-      if (addressId != null) 'address_id': addressId,
-      if (notes != null && notes.isNotEmpty) 'notes': notes,
-      // ignore: use_null_aware_elements
-      if (courierCode != null) 'courier_code': courierCode,
-      // ignore: use_null_aware_elements
-      if (courierService != null) 'courier_service': courierService,
-    });
+    final response = await _dio.post(
+      '/orders',
+      data: {
+        'pharmacy_id': pharmacyId,
+        'items': apiItems,
+        'subtotal_amount': subtotal.toInt(),
+        'service_type': serviceType,
+        'payment_method': paymentMethod,
+        'shipping_cost': shippingCost.toInt(),
+        // ignore: use_null_aware_elements
+        if (addressId != null) 'address_id': addressId,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+        // ignore: use_null_aware_elements
+        if (courierCode != null) 'courier_code': courierCode,
+        // ignore: use_null_aware_elements
+        if (courierService != null) 'courier_service': courierService,
+      },
+    );
     return OrderModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
@@ -52,11 +57,14 @@ class OrderService {
     required String addressId,
     List<Map<String, dynamic>>? items,
   }) async {
-    final response = await _dio.post('/shipping/rates', data: {
-      'pharmacy_id': pharmacyId,
-      'address_id': addressId,
-      if (items != null && items.isNotEmpty) 'items': items,
-    });
+    final response = await _dio.post(
+      '/shipping/rates',
+      data: {
+        'pharmacy_id': pharmacyId,
+        'address_id': addressId,
+        if (items != null && items.isNotEmpty) 'items': items,
+      },
+    );
     return response.data['data'] as Map<String, dynamic>;
   }
 
@@ -76,11 +84,13 @@ class OrderService {
   Future<List<OrderModel>> getActiveOrders() async {
     final all = await getMyOrders();
     return all
-        .where((o) =>
-            o.orderStatus == 'PENDING' ||
-            o.orderStatus == 'PROCESSING' ||
-            o.orderStatus == 'SHIPPED' ||
-            o.orderStatus == 'READY_FOR_PICKUP')
+        .where(
+          (o) =>
+              o.orderStatus == 'PENDING' ||
+              o.orderStatus == 'PROCESSING' ||
+              o.orderStatus == 'SHIPPED' ||
+              o.orderStatus == 'READY_FOR_PICKUP',
+        )
         .toList();
   }
 
@@ -104,12 +114,15 @@ class OrderService {
     required int rating,
     String? comment,
   }) async {
-    final response = await _dio.post('/reviews', data: {
-      'medicine_id': medicineId,
-      'rating': rating,
-      // ignore: use_null_aware_elements
-      if (comment != null) 'comment': comment,
-    });
+    final response = await _dio.post(
+      '/reviews',
+      data: {
+        'medicine_id': medicineId,
+        'rating': rating,
+        // ignore: use_null_aware_elements
+        if (comment != null) 'comment': comment,
+      },
+    );
     return response.data['data'] as Map<String, dynamic>;
   }
 }
@@ -127,7 +140,9 @@ final activeOrdersProvider = FutureProvider<List<OrderModel>>((ref) {
   return ref.watch(orderServiceProvider).getActiveOrders();
 });
 
-final orderDetailProvider =
-    FutureProvider.family<OrderModel, String>((ref, orderId) {
+final orderDetailProvider = FutureProvider.family<OrderModel, String>((
+  ref,
+  orderId,
+) {
   return ref.watch(orderServiceProvider).getOrderById(orderId);
 });

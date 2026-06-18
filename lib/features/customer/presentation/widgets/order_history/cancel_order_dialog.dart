@@ -33,8 +33,7 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -121,16 +120,16 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
                 duration: const Duration(milliseconds: 150),
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 12),
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.primaryLight
                       : AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.divider,
+                    color: isSelected ? AppColors.primary : AppColors.divider,
                     width: isSelected ? 1.5 : 1,
                   ),
                 ),
@@ -169,13 +168,13 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed:
-                _isLoading ? null : () => Navigator.pop(context),
+            onPressed: _isLoading ? null : () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
               side: const BorderSide(color: AppColors.divider),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
             child: const Text(
               'Tidak',
@@ -193,8 +192,7 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
                 ? null
                 : () async {
                     setState(() => _isLoading = true);
-                    final success =
-                        await widget.onConfirm(_selectedReason!);
+                    final success = await widget.onConfirm(_selectedReason!);
                     if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -215,12 +213,12 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.danger,
               foregroundColor: AppColors.white,
-              disabledBackgroundColor:
-                  AppColors.danger.withValues(alpha: 0.4),
+              disabledBackgroundColor: AppColors.danger.withValues(alpha: 0.4),
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
             child: _isLoading
                 ? const SizedBox(

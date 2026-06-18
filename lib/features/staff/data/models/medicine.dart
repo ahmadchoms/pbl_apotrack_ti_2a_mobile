@@ -58,18 +58,39 @@ class Medicine {
       dosage: json['dosage'] ?? json['dosage_info'],
       sideEffects: json['side_effects'],
       price: num.tryParse(json['price']?.toString() ?? '0') ?? 0,
-      totalActiveStock: (num.tryParse(json['total_active_stock']?.toString() ?? json['stock']?.toString() ?? '0') ?? 0).toInt(),
-      requiresPrescription: json['requires_prescription'] == true || json['requires_prescription'] == 1,
+      totalActiveStock:
+          (num.tryParse(
+                    json['total_active_stock']?.toString() ??
+                        json['stock']?.toString() ??
+                        '0',
+                  ) ??
+                  0)
+              .toInt(),
+      requiresPrescription:
+          json['requires_prescription'] == true ||
+          json['requires_prescription'] == 1,
       isActive: json['is_active'] == true || json['is_active'] == 1,
-      category: json['category'] is Map ? json['category']['name'] : json['category']?.toString(),
-      form: json['form'] is Map ? json['form']['name'] : json['form']?.toString(),
-      type: json['type'] is Map ? json['type']['name'] : json['type']?.toString(),
-      unit: json['unit'] is Map ? json['unit']['name'] : json['unit']?.toString(),
+      category: json['category'] is Map
+          ? json['category']['name']
+          : json['category']?.toString(),
+      form: json['form'] is Map
+          ? json['form']['name']
+          : json['form']?.toString(),
+      type: json['type'] is Map
+          ? json['type']['name']
+          : json['type']?.toString(),
+      unit: json['unit'] is Map
+          ? json['unit']['name']
+          : json['unit']?.toString(),
       manufacturer: json['manufacturer'],
       weightInGrams: num.tryParse(json['weight_in_grams']?.toString() ?? ''),
       imageUrl: json['image_url'],
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
-      batches: json['batches'] != null ? List<Map<String, dynamic>>.from(json['batches']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
+      batches: json['batches'] != null
+          ? List<Map<String, dynamic>>.from(json['batches'])
+          : null,
       accentColor: _getAccentColor(json['category']),
       icon: _getIcon(json['category']),
     );

@@ -9,81 +9,128 @@ class TrackOrderEtaCard extends StatelessWidget {
 
   String _statusLabel(String status) {
     switch (status) {
-      case 'confirmed':      return 'MENCARI KURIR';
-      case 'allocated':      return 'KURIR DITEMUKAN';
-      case 'picking_up':     return 'MENUJU APOTEK';
-      case 'picked':         return 'PAKET DIAMBIL';
-      case 'dropping_off':   return 'DALAM PERJALANAN';
-      case 'delivered':      return 'TERKIRIM';
-      case 'cancelled':      return 'DIBATALKAN';
-      case 'rejected':       return 'DITOLAK KURIR';
-      case 'returned':       return 'PAKET DIKEMBALIKAN';
-      default:               return status.toUpperCase().replaceAll('_', ' ');
+      case 'confirmed':
+        return 'MENCARI KURIR';
+      case 'allocated':
+        return 'KURIR DITEMUKAN';
+      case 'picking_up':
+        return 'MENUJU APOTEK';
+      case 'picked':
+        return 'PAKET DIAMBIL';
+      case 'dropping_off':
+        return 'DALAM PERJALANAN';
+      case 'delivered':
+        return 'TERKIRIM';
+      case 'cancelled':
+        return 'DIBATALKAN';
+      case 'rejected':
+        return 'DITOLAK KURIR';
+      case 'returned':
+        return 'PAKET DIKEMBALIKAN';
+      default:
+        return status.toUpperCase().replaceAll('_', ' ');
     }
   }
 
   String _statusTitle(String status) {
     switch (status) {
-      case 'confirmed':      return 'Mencari Kurir Terdekat';
-      case 'allocated':      return 'Kurir Telah Ditemukan';
-      case 'picking_up':     return 'Kurir Menuju Apotek';
-      case 'picked':         return 'Paket Sedang Dibawa Kurir';
-      case 'dropping_off':   return 'Kurir Dalam Perjalanan';
-      case 'delivered':      return 'Pesanan Telah Sampai';
-      case 'cancelled':      return 'Pengiriman Dibatalkan';
-      case 'rejected':       return 'Kurir Menolak Pesanan';
-      case 'returned':       return 'Paket Dikembalikan';
-      default:               return 'Status Pengiriman';
+      case 'confirmed':
+        return 'Mencari Kurir Terdekat';
+      case 'allocated':
+        return 'Kurir Telah Ditemukan';
+      case 'picking_up':
+        return 'Kurir Menuju Apotek';
+      case 'picked':
+        return 'Paket Sedang Dibawa Kurir';
+      case 'dropping_off':
+        return 'Kurir Dalam Perjalanan';
+      case 'delivered':
+        return 'Pesanan Telah Sampai';
+      case 'cancelled':
+        return 'Pengiriman Dibatalkan';
+      case 'rejected':
+        return 'Kurir Menolak Pesanan';
+      case 'returned':
+        return 'Paket Dikembalikan';
+      default:
+        return 'Status Pengiriman';
     }
   }
 
   String _statusSubtitle(String status) {
     switch (status) {
-      case 'confirmed':      return 'Sistem sedang mencari kurir terdekat';
-      case 'allocated':      return 'Kurir akan segera menjemput pesanan';
-      case 'picking_up':     return 'Kurir sedang dalam perjalanan ke apotek';
-      case 'picked':         return 'Pesanan sudah diambil dan siap dikirim';
-      case 'dropping_off':   return 'Kurir sedang menuju lokasi Anda';
-      case 'delivered':      return 'Pesanan berhasil diterima';
-      case 'cancelled':      return 'Pengiriman telah dibatalkan';
-      case 'rejected':       return 'Kurir tidak dapat memproses pesanan ini';
-      case 'returned':       return 'Paket sedang dalam proses pengembalian';
-      default:               return 'Mohon tunggu proses pengiriman';
+      case 'confirmed':
+        return 'Sistem sedang mencari kurir terdekat';
+      case 'allocated':
+        return 'Kurir akan segera menjemput pesanan';
+      case 'picking_up':
+        return 'Kurir sedang dalam perjalanan ke apotek';
+      case 'picked':
+        return 'Pesanan sudah diambil dan siap dikirim';
+      case 'dropping_off':
+        return 'Kurir sedang menuju lokasi Anda';
+      case 'delivered':
+        return 'Pesanan berhasil diterima';
+      case 'cancelled':
+        return 'Pengiriman telah dibatalkan';
+      case 'rejected':
+        return 'Kurir tidak dapat memproses pesanan ini';
+      case 'returned':
+        return 'Paket sedang dalam proses pengembalian';
+      default:
+        return 'Mohon tunggu proses pengiriman';
     }
   }
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'delivered':                        return AppColors.success;
+      case 'delivered':
+        return AppColors.success;
       case 'cancelled':
-      case 'rejected':                         return AppColors.danger;
-      case 'returned':                         return AppColors.warning;
-      default:                                 return AppColors.primary;
+      case 'rejected':
+        return AppColors.danger;
+      case 'returned':
+        return AppColors.warning;
+      default:
+        return AppColors.primary;
     }
   }
 
   Color _statusBgColor(String status) {
     switch (status) {
-      case 'delivered':                        return AppColors.successLight;
+      case 'delivered':
+        return AppColors.successLight;
       case 'cancelled':
-      case 'rejected':                         return AppColors.dangerLight;
-      case 'returned':                         return AppColors.warningLight;
-      default:                                 return AppColors.primaryLight;
+      case 'rejected':
+        return AppColors.dangerLight;
+      case 'returned':
+        return AppColors.warningLight;
+      default:
+        return AppColors.primaryLight;
     }
   }
 
   IconData _statusIcon(String status) {
     switch (status) {
-      case 'confirmed':      return Icons.search_rounded;
-      case 'allocated':      return Icons.person_pin_circle_rounded;
-      case 'picking_up':     return Icons.store_rounded;
-      case 'picked':         return Icons.inventory_2_rounded;
-      case 'dropping_off':   return Icons.delivery_dining_rounded;
-      case 'delivered':      return Icons.check_circle_rounded;
+      case 'confirmed':
+        return Icons.search_rounded;
+      case 'allocated':
+        return Icons.person_pin_circle_rounded;
+      case 'picking_up':
+        return Icons.store_rounded;
+      case 'picked':
+        return Icons.inventory_2_rounded;
+      case 'dropping_off':
+        return Icons.delivery_dining_rounded;
+      case 'delivered':
+        return Icons.check_circle_rounded;
       case 'cancelled':
-      case 'rejected':       return Icons.cancel_rounded;
-      case 'returned':       return Icons.assignment_return_rounded;
-      default:               return Icons.local_shipping_rounded;
+      case 'rejected':
+        return Icons.cancel_rounded;
+      case 'returned':
+        return Icons.assignment_return_rounded;
+      default:
+        return Icons.local_shipping_rounded;
     }
   }
 
@@ -155,8 +202,11 @@ class TrackOrderEtaCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.tag_rounded,
-                          size: 13, color: AppColors.textMuted),
+                      const Icon(
+                        Icons.tag_rounded,
+                        size: 13,
+                        color: AppColors.textMuted,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         tracking.trackingNumber!,
@@ -179,11 +229,7 @@ class TrackOrderEtaCard extends StatelessWidget {
               color: bgColor,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: Icon(
-              _statusIcon(tracking.status),
-              color: color,
-              size: 30,
-            ),
+            child: Icon(_statusIcon(tracking.status), color: color, size: 30),
           ),
         ],
       ),

@@ -24,11 +24,7 @@ class ScanResultScreen extends StatelessWidget {
   final String? scanCode;
   final List<ScannedItem> items;
 
-  const ScanResultScreen({
-    super.key,
-    this.scanCode,
-    this.items = const [],
-  });
+  const ScanResultScreen({super.key, this.scanCode, this.items = const []});
 
   int get _subtotal => items.fold(0, (sum, e) => sum + e.totalPrice);
   int get _adminFee => 0; // Gratis
@@ -56,7 +52,11 @@ class ScanResultScreen extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: AppColors.textDark),
+            child: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 16,
+              color: AppColors.textDark,
+            ),
           ),
         ),
       ),
@@ -173,7 +173,10 @@ class ScanResultScreen extends StatelessWidget {
                   children: [
                     // Badge qty + unit
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
@@ -245,7 +248,9 @@ class ScanResultScreen extends StatelessWidget {
           // Admin fee
           _buildSummaryRow(
             label: 'Biaya Admin AI',
-            value: _adminFee == 0 ? 'Rp 0 (Gratis)' : 'Rp ${_formatPrice(_adminFee)}',
+            value: _adminFee == 0
+                ? 'Rp 0 (Gratis)'
+                : 'Rp ${_formatPrice(_adminFee)}',
             isTotal: false,
           ),
           const Padding(
@@ -305,14 +310,17 @@ class ScanResultScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => CustomerOrderDetailScreen(orderId: scanCode!),
+                        builder: (_) =>
+                            CustomerOrderDetailScreen(orderId: scanCode!),
                       ),
                     );
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               elevation: 0,
             ),
             child: const Text(
@@ -340,7 +348,9 @@ class ScanResultScreen extends StatelessWidget {
               foregroundColor: AppColors.textDark,
               padding: const EdgeInsets.symmetric(vertical: 16),
               side: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
           ),
         ),

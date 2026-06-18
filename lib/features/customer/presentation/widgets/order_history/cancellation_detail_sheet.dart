@@ -102,8 +102,7 @@ class CancellationDetailSheet extends StatelessWidget {
             ),
             Text(
               'Detail informasi pembatalan pesanan',
-              style: TextStyle(
-                  fontSize: 12, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
             ),
           ],
         ),
@@ -144,12 +143,15 @@ class CancellationDetailSheet extends StatelessWidget {
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.dangerLight,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: AppColors.danger.withValues(alpha: 0.2)),
+                    color: AppColors.danger.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Text(
                   order.notes ?? 'Tidak ada alasan',
@@ -178,7 +180,8 @@ class CancellationDetailSheet extends StatelessWidget {
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14)),
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
         child: const Text(
           'Tutup',

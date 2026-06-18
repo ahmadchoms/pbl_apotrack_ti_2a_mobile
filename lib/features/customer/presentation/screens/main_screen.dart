@@ -34,7 +34,9 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
       final data = await service.getNotifications();
       if (mounted) {
         final models = data.map((e) => NotificationModel.fromJson(e)).toList();
-        setState(() => _unreadNotifCount = models.where((n) => !n.isRead).length);
+        setState(
+          () => _unreadNotifCount = models.where((n) => !n.isRead).length,
+        );
       }
     } catch (_) {}
   }
@@ -78,11 +80,25 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _navItem(0, Icons.home_rounded, Icons.home_outlined, 'Beranda'),
-                _navItemWithBadge(1, Icons.notifications_rounded,
-                    Icons.notifications_none_rounded, 'Notifikasi', _unreadNotifCount),
-                _navItem(2, Icons.assignment_rounded, Icons.assignment_outlined, 'Riwayat'),
-                _navItem(3, Icons.person_rounded,
-                    Icons.person_outline_rounded, 'Profil'),
+                _navItemWithBadge(
+                  1,
+                  Icons.notifications_rounded,
+                  Icons.notifications_none_rounded,
+                  'Notifikasi',
+                  _unreadNotifCount,
+                ),
+                _navItem(
+                  2,
+                  Icons.assignment_rounded,
+                  Icons.assignment_outlined,
+                  'Riwayat',
+                ),
+                _navItem(
+                  3,
+                  Icons.person_rounded,
+                  Icons.person_outline_rounded,
+                  'Profil',
+                ),
               ],
             ),
           ),
@@ -91,8 +107,12 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
     );
   }
 
-  Widget _navItem(int index, IconData activeIcon, IconData inactiveIcon,
-      String label) {
+  Widget _navItem(
+    int index,
+    IconData activeIcon,
+    IconData inactiveIcon,
+    String label,
+  ) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () {
@@ -121,8 +141,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
               label,
               style: TextStyle(
                 fontSize: 10,
-                fontWeight:
-                    isSelected ? FontWeight.w800 : FontWeight.w600,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 color: isSelected ? AppColors.primary : AppColors.textLight,
               ),
             ),
@@ -132,8 +151,13 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
     );
   }
 
-  Widget _navItemWithBadge(int index, IconData activeIcon,
-      IconData inactiveIcon, String label, int badgeCount) {
+  Widget _navItemWithBadge(
+    int index,
+    IconData activeIcon,
+    IconData inactiveIcon,
+    String label,
+    int badgeCount,
+  ) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () {
@@ -163,7 +187,8 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                 ),
                 if (badgeCount > 0)
                   Positioned(
-                    top: -6, right: -8,
+                    top: -6,
+                    right: -8,
                     child: Container(
                       padding: const EdgeInsets.all(3),
                       decoration: const BoxDecoration(
@@ -171,8 +196,11 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                         shape: BoxShape.circle,
                       ),
                       constraints: const BoxConstraints(
-                          minWidth: 16, minHeight: 16),
-                      child: Text('$badgeCount',
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '$badgeCount',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 8,
@@ -189,8 +217,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
               label,
               style: TextStyle(
                 fontSize: 10,
-                fontWeight:
-                    isSelected ? FontWeight.w800 : FontWeight.w600,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 color: isSelected ? AppColors.primary : AppColors.textLight,
               ),
             ),

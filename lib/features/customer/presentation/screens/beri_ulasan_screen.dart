@@ -73,7 +73,8 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
     setState(() => _sending = true);
 
     try {
-      final medicineId = widget.items.first['medicine_id'] as String? ??
+      final medicineId =
+          widget.items.first['medicine_id'] as String? ??
           widget.items.first['id'] as String?;
 
       if (medicineId == null) {
@@ -105,7 +106,9 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -139,7 +142,11 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 18),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textDark,
+            size: 18,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -161,8 +168,11 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
                 color: AppColors.successLight,
                 borderRadius: BorderRadius.circular(48),
               ),
-              child: const Icon(Icons.check_circle_rounded,
-                  color: AppColors.success, size: 56),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.success,
+                size: 56,
+              ),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -177,7 +187,11 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
             const Text(
               'Terima kasih! Ulasan kamu\nmembantu pengguna lain.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, color: AppColors.textLight, height: 1.5),
+              style: TextStyle(
+                fontSize: 15,
+                color: AppColors.textLight,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -188,15 +202,22 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
-                    BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8)),
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.35),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
                   ],
                 ),
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((r) => r.isFirst),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: const Text(
                     'Kembali ke Beranda',
@@ -261,7 +282,11 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
               color: AppColors.primaryLight,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.local_pharmacy_rounded, color: AppColors.primary, size: 24),
+            child: const Icon(
+              Icons.local_pharmacy_rounded,
+              color: AppColors.primary,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -281,7 +306,10 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
                   children: [
                     const Text(
                       'Pesanan: ',
-                      style: TextStyle(fontSize: 12, color: AppColors.textLight),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textLight,
+                      ),
                     ),
                     Text(
                       widget.orderNumber,
@@ -339,7 +367,9 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
                     duration: const Duration(milliseconds: 150),
                     scale: i < _rating ? 1.1 : 1.0,
                     child: Icon(
-                      i < _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                      i < _rating
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
                       color: Colors.amber,
                       size: 38,
                     ),
@@ -360,7 +390,11 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
               ),
               child: Text(
                 _ratingLabel,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.warning),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.warning,
+                ),
               ),
             ),
           ),
@@ -402,12 +436,16 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
             children: _tags.map((tag) {
               final sel = _selectedTags.contains(tag);
               return GestureDetector(
-                onTap: () => setState(() => sel
-                    ? _selectedTags.remove(tag)
-                    : _selectedTags.add(tag)),
+                onTap: () => setState(
+                  () =>
+                      sel ? _selectedTags.remove(tag) : _selectedTags.add(tag),
+                ),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: sel ? AppColors.primary : Colors.white,
                     border: Border.all(
@@ -469,7 +507,13 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
                 width: isFocused ? 2 : 1.5,
               ),
               boxShadow: isFocused
-                  ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, 4))]
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
                   : [],
             ),
             child: TextField(
@@ -477,13 +521,24 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
               focusNode: _fieldFocus,
               maxLines: 4,
               maxLength: 500,
-              style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.w500, fontSize: 14),
+              style: const TextStyle(
+                color: AppColors.textDark,
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
               decoration: InputDecoration(
                 hintText: 'Bagaimana pengalaman Anda?',
-                hintStyle: const TextStyle(color: AppColors.textSubtle, fontWeight: FontWeight.w400, fontSize: 14),
+                hintStyle: const TextStyle(
+                  color: AppColors.textSubtle,
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                ),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.all(16),
-                counterStyle: const TextStyle(color: AppColors.textLight, fontSize: 12),
+                counterStyle: const TextStyle(
+                  color: AppColors.textLight,
+                  fontSize: 12,
+                ),
               ),
             ),
           ),
@@ -498,10 +553,16 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
       height: 56,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: _sending ? AppColors.primary.withValues(alpha: 0.6) : AppColors.primary,
+          color: _sending
+              ? AppColors.primary.withValues(alpha: 0.6)
+              : AppColors.primary,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8)),
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.35),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
           ],
         ),
         child: ElevatedButton(
@@ -510,15 +571,21 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
             disabledBackgroundColor: Colors.transparent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: _sending
                 ? const SizedBox(
                     key: ValueKey('loading'),
-                    width: 24, height: 24,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                    ),
                   )
                 : const Row(
                     key: ValueKey('label'),

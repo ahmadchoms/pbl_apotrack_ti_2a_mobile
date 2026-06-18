@@ -51,7 +51,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             duration: const Duration(seconds: 4),
             action: SnackBarAction(
               label: 'Ulang',
@@ -166,8 +168,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
-                      if (_refreshError)
-                        _buildRefreshErrorBanner(),
+                      if (_refreshError) _buildRefreshErrorBanner(),
                       const _SectionTitle(
                         title: 'Informasi Utama',
                         icon: Icons.analytics_outlined,
@@ -192,8 +193,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                             orderStatus: _order.orderStatus,
                             selectedStatus: _selectedSimulateStatus,
                             isSimulating: _isSimulating,
-                            onStatusChanged: (v) => setState(
-                                () => _selectedSimulateStatus = v!),
+                            onStatusChanged: (v) =>
+                                setState(() => _selectedSimulateStatus = v!),
                             onSimulate: _simulateTracking,
                           ),
                         ],
@@ -276,7 +277,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               ],
             ),
           ),
-          _buildHeaderAction(Icons.notifications_none_rounded, () => context.push('/staff/notifications')),
+          _buildHeaderAction(
+            Icons.notifications_none_rounded,
+            () => context.push('/staff/notifications'),
+          ),
         ],
       ),
     );
@@ -307,17 +311,28 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.cloud_off_rounded, color: AppColors.danger, size: 20),
+          const Icon(
+            Icons.cloud_off_rounded,
+            color: AppColors.danger,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Gagal memuat data dari server. Menampilkan data tersimpan.',
-              style: const TextStyle(fontSize: 12, color: AppColors.danger, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.danger,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           TextButton(
             onPressed: _refreshOrderDetail,
-            child: const Text('Ulangi', style: TextStyle(fontWeight: FontWeight.w800)),
+            child: const Text(
+              'Ulangi',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
@@ -636,10 +651,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: IconButton(
-                icon:
-                    const Icon(Icons.close_rounded, color: AppColors.danger),
-                onPressed:
-                    _isUpdating ? null : () => _updateStatus('CANCELLED'),
+                icon: const Icon(Icons.close_rounded, color: AppColors.danger),
+                onPressed: _isUpdating
+                    ? null
+                    : () => _updateStatus('CANCELLED'),
               ),
             ),
         ],
@@ -701,8 +716,9 @@ class _MetadataCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.warningLight,
                 borderRadius: BorderRadius.circular(12),
-                border:
-                    Border.all(color: AppColors.warning.withValues(alpha: 0.2)),
+                border: Border.all(
+                  color: AppColors.warning.withValues(alpha: 0.2),
+                ),
               ),
               child: Row(
                 children: [
@@ -710,13 +726,13 @@ class _MetadataCard extends StatelessWidget {
                     order.prescription?.isVerified == true
                         ? Icons.check_circle_rounded
                         : order.prescription?.isRejected == true
-                            ? Icons.cancel_rounded
-                            : Icons.verified_user_rounded,
+                        ? Icons.cancel_rounded
+                        : Icons.verified_user_rounded,
                     color: order.prescription?.isVerified == true
                         ? AppColors.success
                         : order.prescription?.isRejected == true
-                            ? AppColors.danger
-                            : AppColors.warning,
+                        ? AppColors.danger
+                        : AppColors.warning,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -725,16 +741,16 @@ class _MetadataCard extends StatelessWidget {
                       order.prescription?.isVerified == true
                           ? 'Resep sudah diverifikasi.'
                           : order.prescription?.isRejected == true
-                              ? 'Resep ditolak.'
-                              : 'Pesanan ini memerlukan verifikasi resep dokter.',
+                          ? 'Resep ditolak.'
+                          : 'Pesanan ini memerlukan verifikasi resep dokter.',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: order.prescription?.isVerified == true
                             ? const Color(0xFF166534)
                             : order.prescription?.isRejected == true
-                                ? const Color(0xFF991B1B)
-                                : const Color(0xFF92400E),
+                            ? const Color(0xFF991B1B)
+                            : const Color(0xFF92400E),
                       ),
                     ),
                   ),
@@ -762,8 +778,9 @@ class _MetadataCard extends StatelessWidget {
                                   if (progress == null) return child;
                                   return const Center(
                                     child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white),
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   );
                                 },
                                 errorBuilder: (c, error, stackTrace) {
@@ -778,9 +795,12 @@ class _MetadataCard extends StatelessWidget {
                                           size: 48,
                                         ),
                                         SizedBox(height: 8),
-                                        Text('Gagal memuat gambar',
-                                            style: TextStyle(
-                                                color: Colors.white54)),
+                                        Text(
+                                          'Gagal memuat gambar',
+                                          style: TextStyle(
+                                            color: Colors.white54,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   );
@@ -792,8 +812,10 @@ class _MetadataCard extends StatelessWidget {
                             top: 8,
                             right: 8,
                             child: IconButton(
-                              icon: const Icon(Icons.close_rounded,
-                                  color: Colors.white),
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                              ),
                               onPressed: () => Navigator.of(ctx).pop(),
                             ),
                           ),
@@ -825,12 +847,19 @@ class _MetadataCard extends StatelessWidget {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.image_not_supported_rounded,
-                                  color: AppColors.textLight, size: 32),
+                              Icon(
+                                Icons.image_not_supported_rounded,
+                                color: AppColors.textLight,
+                                size: 32,
+                              ),
                               SizedBox(height: 4),
-                              Text('Gagal memuat gambar',
-                                  style: TextStyle(
-                                      fontSize: 11, color: AppColors.textLight)),
+                              Text(
+                                'Gagal memuat gambar',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textLight,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -912,8 +941,7 @@ class _SimulateTrackingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.science_rounded,
-                  size: 18, color: Colors.amber),
+              const Icon(Icons.science_rounded, size: 18, color: Colors.amber),
               const SizedBox(width: 8),
               const Text(
                 'SIMULASI TRACKING (SANDBOX)',
@@ -937,14 +965,20 @@ class _SimulateTrackingCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 12),
+                horizontal: 14,
+                vertical: 12,
+              ),
             ),
             items: _statuses
-                .map((s) => DropdownMenuItem(
-                      value: s['value'],
-                      child: Text(s['label']!,
-                          style: const TextStyle(fontSize: 13)),
-                    ))
+                .map(
+                  (s) => DropdownMenuItem(
+                    value: s['value'],
+                    child: Text(
+                      s['label']!,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                )
                 .toList(),
             onChanged: onStatusChanged,
           ),
@@ -958,11 +992,12 @@ class _SimulateTrackingCard extends StatelessWidget {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.play_arrow_rounded, size: 18),
-              label: Text(
-                  isSimulating ? 'Memproses...' : 'Simulasikan Status'),
+              label: Text(isSimulating ? 'Memproses...' : 'Simulasikan Status'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber,
                 foregroundColor: Colors.white,

@@ -32,7 +32,8 @@ void showAddressPickerSheet(
 class AddressPickerSheet extends StatefulWidget {
   final AddressProvider provider;
   final VoidCallback onSelected;
-  final Future<void> Function(AddressModel address, bool isEdit)? onAddressSaved;
+  final Future<void> Function(AddressModel address, bool isEdit)?
+  onAddressSaved;
   final void Function(AddressModel address)? onSetPrimary;
   final void Function(String id)? onAddressDeleted;
 
@@ -112,26 +113,17 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 16),
-              _optionTile(
-                Icons.edit_rounded,
-                'Ubah',
-                () {
-                  Navigator.pop(context);
-                  _openForm(existing: address);
-                },
-              ),
+              _optionTile(Icons.edit_rounded, 'Ubah', () {
+                Navigator.pop(context);
+                _openForm(existing: address);
+              }),
               const SizedBox(height: 10),
-              _optionTile(
-                Icons.delete_outline_rounded,
-                'Hapus',
-                () {
-                  Navigator.pop(context);
-                  widget.onAddressDeleted?.call(address.id);
-                  widget.provider.deleteFavorite(address.id);
-                  setState(() {});
-                },
-                isDestructive: true,
-              ),
+              _optionTile(Icons.delete_outline_rounded, 'Hapus', () {
+                Navigator.pop(context);
+                widget.onAddressDeleted?.call(address.id);
+                widget.provider.deleteFavorite(address.id);
+                setState(() {});
+              }, isDestructive: true),
             ],
           ),
         ),
@@ -150,8 +142,7 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
           border: Border.all(
             color: isDestructive
@@ -186,18 +177,22 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
     final filteredFav = _query.isEmpty
         ? favorites
         : favorites
-            .where((a) =>
-                a.name.toLowerCase().contains(_query.toLowerCase()) ||
-                a.fullAddress.toLowerCase().contains(_query.toLowerCase()))
-            .toList();
+              .where(
+                (a) =>
+                    a.name.toLowerCase().contains(_query.toLowerCase()) ||
+                    a.fullAddress.toLowerCase().contains(_query.toLowerCase()),
+              )
+              .toList();
 
     final filteredRecent = _query.isEmpty
         ? recents
         : recents
-            .where((a) =>
-                a.name.toLowerCase().contains(_query.toLowerCase()) ||
-                a.fullAddress.toLowerCase().contains(_query.toLowerCase()))
-            .toList();
+              .where(
+                (a) =>
+                    a.name.toLowerCase().contains(_query.toLowerCase()) ||
+                    a.fullAddress.toLowerCase().contains(_query.toLowerCase()),
+              )
+              .toList();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.96,
@@ -245,8 +240,11 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                         color: Colors.grey.shade100,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.close_rounded,
-                          size: 18, color: AppColors.textDark),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: AppColors.textDark,
+                      ),
                     ),
                   ),
                 ],
@@ -266,11 +264,15 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                   controller: _searchCtrl,
                   onChanged: (v) => setState(() => _query = v),
                   style: const TextStyle(
-                      fontSize: 13, color: AppColors.textDark),
+                    fontSize: 13,
+                    color: AppColors.textDark,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Cari alamat...',
                     hintStyle: const TextStyle(
-                        color: AppColors.textLight, fontSize: 13),
+                      color: AppColors.textLight,
+                      fontSize: 13,
+                    ),
                     prefixIcon: Container(
                       margin: const EdgeInsets.all(10),
                       width: 8,
@@ -280,10 +282,15 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    suffixIcon: const Icon(Icons.search_rounded,
-                        color: AppColors.textLight, size: 20),
+                    suffixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: AppColors.textLight,
+                      size: 20,
+                    ),
                     contentPadding: const EdgeInsets.symmetric(
-                        vertical: 14, horizontal: 4),
+                      vertical: 14,
+                      horizontal: 4,
+                    ),
                     border: InputBorder.none,
                   ),
                 ),
@@ -332,18 +339,20 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                      builder: (_) => FavoriteAddressScreen(
-                        provider: widget.provider,
-                        onSelectAddress: _selectAddress,
-                        onAddressSaved: widget.onAddressSaved,
-                        onAddressDeleted: widget.onAddressDeleted,
-                      ),
+                                builder: (_) => FavoriteAddressScreen(
+                                  provider: widget.provider,
+                                  onSelectAddress: _selectAddress,
+                                  onAddressSaved: widget.onAddressSaved,
+                                  onAddressDeleted: widget.onAddressDeleted,
+                                ),
                               ),
                             ).then((_) => setState(() {}));
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(20),
@@ -380,11 +389,12 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                         .map((a) => _recentTile(a))
                         .toList()
                         .cast<Widget>()
-                        .expand((w) => [
-                              w,
-                              Divider(
-                                  height: 1, color: Colors.grey.shade100),
-                            ])
+                        .expand(
+                          (w) => [
+                            w,
+                            Divider(height: 1, color: Colors.grey.shade100),
+                          ],
+                        )
                         .toList()
                       ..removeLast(),
                     const SizedBox(height: 20),
@@ -508,8 +518,11 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.flag_rounded,
-                            size: 10, color: AppColors.textLight),
+                        const Icon(
+                          Icons.flag_rounded,
+                          size: 10,
+                          color: AppColors.textLight,
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -529,8 +542,11 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.more_vert_rounded,
-                  size: 18, color: AppColors.textLight),
+              icon: const Icon(
+                Icons.more_vert_rounded,
+                size: 18,
+                color: AppColors.textLight,
+              ),
               onPressed: () => _showFavoriteOptions(address),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -555,8 +571,11 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                 color: Colors.grey.shade100,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.access_time_rounded,
-                  size: 16, color: AppColors.textLight),
+              child: const Icon(
+                Icons.access_time_rounded,
+                size: 16,
+                color: AppColors.textLight,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -591,8 +610,11 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                 color: Colors.grey.shade100,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.bookmark_add_outlined,
-                  size: 14, color: AppColors.textLight),
+              child: const Icon(
+                Icons.bookmark_add_outlined,
+                size: 14,
+                color: AppColors.textLight,
+              ),
             ),
           ],
         ),
@@ -608,7 +630,8 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
 class FavoriteAddressScreen extends StatefulWidget {
   final AddressProvider provider;
   final void Function(AddressModel) onSelectAddress;
-  final Future<void> Function(AddressModel address, bool isEdit)? onAddressSaved;
+  final Future<void> Function(AddressModel address, bool isEdit)?
+  onAddressSaved;
   final void Function(String id)? onAddressDeleted;
 
   const FavoriteAddressScreen({
@@ -626,9 +649,8 @@ class FavoriteAddressScreen extends StatefulWidget {
 class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
   AddressType _tab = AddressType.personal;
 
-  List<AddressModel> get _filtered => widget.provider.favorites
-      .where((a) => a.type == _tab)
-      .toList();
+  List<AddressModel> get _filtered =>
+      widget.provider.favorites.where((a) => a.type == _tab).toList();
 
   Future<void> _openForm({AddressModel? existing}) async {
     final result = await Navigator.push<bool>(
@@ -670,7 +692,9 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
               Text(
                 address.fullAddress,
                 style: const TextStyle(
-                    fontSize: 12, color: AppColors.textLight),
+                  fontSize: 12,
+                  color: AppColors.textLight,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -680,17 +704,12 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                 _openForm(existing: address);
               }),
               const SizedBox(height: 10),
-              _optionTile(
-                Icons.delete_outline_rounded,
-                'Hapus',
-                () {
-                  Navigator.pop(context);
-                  widget.onAddressDeleted?.call(address.id);
-                  widget.provider.deleteFavorite(address.id);
-                  setState(() {});
-                },
-                isDestructive: true,
-              ),
+              _optionTile(Icons.delete_outline_rounded, 'Hapus', () {
+                Navigator.pop(context);
+                widget.onAddressDeleted?.call(address.id);
+                widget.provider.deleteFavorite(address.id);
+                setState(() {});
+              }, isDestructive: true),
             ],
           ),
         ),
@@ -709,8 +728,7 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
           border: Border.all(
             color: isDestructive
@@ -726,7 +744,10 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
             Text(
               label,
               style: TextStyle(
-                  fontWeight: FontWeight.w600, fontSize: 14, color: color),
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: color,
+              ),
             ),
           ],
         ),
@@ -742,8 +763,11 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              size: 18, color: AppColors.textDark),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: AppColors.textDark,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -780,7 +804,11 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
             color: Colors.white,
             child: Row(
               children: [
-                _tabItem(AddressType.personal, Icons.person_rounded, 'Personal'),
+                _tabItem(
+                  AddressType.personal,
+                  Icons.person_rounded,
+                  'Personal',
+                ),
                 _tabItem(AddressType.bisnis, Icons.business_rounded, 'Bisnis'),
               ],
             ),
@@ -793,9 +821,11 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.bookmark_border_rounded,
-                            size: 48,
-                            color: AppColors.textLight.withValues(alpha: 0.4)),
+                        Icon(
+                          Icons.bookmark_border_rounded,
+                          size: 48,
+                          color: AppColors.textLight.withValues(alpha: 0.4),
+                        ),
                         const SizedBox(height: 12),
                         const Text(
                           'Belum ada alamat favorit',
@@ -821,10 +851,8 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                 : ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: _filtered.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: 12),
-                    itemBuilder: (_, i) =>
-                        _addressCard(_filtered[i]),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (_, i) => _addressCard(_filtered[i]),
                   ),
           ),
         ],
@@ -847,9 +875,7 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                   Icon(
                     icon,
                     size: 16,
-                    color: isActive
-                        ? AppColors.primary
-                        : AppColors.textLight,
+                    color: isActive ? AppColors.primary : AppColors.textLight,
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -857,9 +883,7 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
-                      color: isActive
-                          ? AppColors.primary
-                          : AppColors.textLight,
+                      color: isActive ? AppColors.primary : AppColors.textLight,
                     ),
                   ),
                 ],
@@ -904,8 +928,11 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                     color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.bookmark_rounded,
-                      size: 14, color: AppColors.primary),
+                  child: const Icon(
+                    Icons.bookmark_rounded,
+                    size: 14,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -919,16 +946,22 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.share_outlined,
-                      size: 16, color: AppColors.textLight),
+                  icon: const Icon(
+                    Icons.share_outlined,
+                    size: 16,
+                    color: AppColors.textLight,
+                  ),
                   onPressed: () {},
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
                 const SizedBox(width: 4),
                 IconButton(
-                  icon: const Icon(Icons.more_horiz_rounded,
-                      size: 18, color: AppColors.textLight),
+                  icon: const Icon(
+                    Icons.more_horiz_rounded,
+                    size: 18,
+                    color: AppColors.textLight,
+                  ),
                   onPressed: () => _showOptions(address),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -949,20 +982,27 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                 Text(
                   address.fullAddress,
                   style: const TextStyle(
-                      fontSize: 12, color: AppColors.textLight),
+                    fontSize: 12,
+                    color: AppColors.textLight,
+                  ),
                 ),
                 if (address.landmark != null) ...[
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.flag_rounded,
-                          size: 12, color: AppColors.textLight),
+                      const Icon(
+                        Icons.flag_rounded,
+                        size: 12,
+                        color: AppColors.textLight,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           address.landmark!,
                           style: const TextStyle(
-                              fontSize: 11, color: AppColors.textLight),
+                            fontSize: 11,
+                            color: AppColors.textLight,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -980,7 +1020,9 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 8),
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: AppColors.primary),
                         borderRadius: BorderRadius.circular(20),

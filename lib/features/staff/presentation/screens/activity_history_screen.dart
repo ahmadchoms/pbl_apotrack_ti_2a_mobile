@@ -41,21 +41,24 @@ class ActivityHistoryScreen extends ConsumerWidget {
         child: auditsState.isLoading && auditsState.items.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : auditsState.error != null && auditsState.items.isEmpty
-                ? _buildErrorState(auditsState.error!, ref)
-                : auditsState.items.isEmpty
-                    ? _buildEmptyState()
-                    : NotificationListener<ScrollNotification>(
-                        onNotification: (ScrollNotification scrollInfo) {
-                          if (!auditsState.isLoadingNextPage &&
-                              auditsState.hasMore &&
-                              scrollInfo.metrics.pixels >=
-                                  scrollInfo.metrics.maxScrollExtent - 200) {
-                            ref.read(staffAuditsProvider.notifier).fetchNextPage();
-                          }
-                          return false;
-                        },
-                        child: _buildActivityList(auditsState.items, auditsState.isLoadingNextPage),
-                      ),
+            ? _buildErrorState(auditsState.error!, ref)
+            : auditsState.items.isEmpty
+            ? _buildEmptyState()
+            : NotificationListener<ScrollNotification>(
+                onNotification: (ScrollNotification scrollInfo) {
+                  if (!auditsState.isLoadingNextPage &&
+                      auditsState.hasMore &&
+                      scrollInfo.metrics.pixels >=
+                          scrollInfo.metrics.maxScrollExtent - 200) {
+                    ref.read(staffAuditsProvider.notifier).fetchNextPage();
+                  }
+                  return false;
+                },
+                child: _buildActivityList(
+                  auditsState.items,
+                  auditsState.isLoadingNextPage,
+                ),
+              ),
       ),
     );
   }
@@ -192,7 +195,8 @@ class LogItemCard extends StatelessWidget {
     } else if (action.contains('LOGOUT')) {
       icon = Icons.logout_rounded;
       color = AppColors.textLight;
-    } else if (action.contains('ADD_MEDICINE') || action.contains('UPDATE_MEDICINE')) {
+    } else if (action.contains('ADD_MEDICINE') ||
+        action.contains('UPDATE_MEDICINE')) {
       icon = Icons.check_circle_outline_rounded;
       color = AppColors.success;
     } else if (action.contains('DELETE_MEDICINE')) {
@@ -201,7 +205,10 @@ class LogItemCard extends StatelessWidget {
     } else if (action.contains('ADJUST_STOCK') || action.contains('STOCK')) {
       icon = Icons.warning_amber_rounded;
       color = AppColors.warning;
-    } else if (action.contains('ORDER') || action.contains('POS') || action.contains('SHIP') || action.contains('VERIFY')) {
+    } else if (action.contains('ORDER') ||
+        action.contains('POS') ||
+        action.contains('SHIP') ||
+        action.contains('VERIFY')) {
       icon = Icons.shopping_bag_outlined;
       color = AppColors.primary;
     } else if (action.contains('PROFILE') || action.contains('PASSWORD')) {
@@ -212,8 +219,8 @@ class LogItemCard extends StatelessWidget {
       color = AppColors.info;
     }
 
-    final displayTime = audit.relativeTime.isNotEmpty 
-        ? audit.relativeTime 
+    final displayTime = audit.relativeTime.isNotEmpty
+        ? audit.relativeTime
         : DateFormat('HH:mm').format(audit.createdAt);
 
     return Padding(

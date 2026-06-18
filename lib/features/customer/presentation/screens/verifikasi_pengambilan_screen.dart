@@ -48,7 +48,10 @@ class _VerifikasiPengambilanScreenState
     _orderService = ref.read(customerOrderServiceProvider);
     _verificationCode = widget.verificationCode;
     _cekStatus();
-    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) => _cekStatus());
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => _cekStatus(),
+    );
   }
 
   @override
@@ -77,10 +80,8 @@ class _VerifikasiPengambilanScreenState
     }
   }
 
-  String _rupiah(int amount) => 'Rp ${amount.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (m) => '${m[1]}.',
-      )}';
+  String _rupiah(int amount) =>
+      'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
 
   bool get _bisaUlas => _order?.orderStatus == 'COMPLETED';
 
@@ -98,7 +99,11 @@ class _VerifikasiPengambilanScreenState
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark, size: 18),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textDark,
+            size: 18,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -177,7 +182,11 @@ class _VerifikasiPengambilanScreenState
         const SizedBox(height: 6),
         Text(
           subtitle,
-          style: const TextStyle(fontSize: 13, color: AppColors.textLight, height: 1.5),
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textLight,
+            height: 1.5,
+          ),
         ),
       ],
     );
@@ -204,7 +213,9 @@ class _VerifikasiPengambilanScreenState
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
             child: const Center(
               child: Text(
@@ -244,7 +255,9 @@ class _VerifikasiPengambilanScreenState
                   duration: Duration(seconds: 1),
                   behavior: SnackBarBehavior.floating,
                   margin: EdgeInsets.all(16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
                 ),
               );
             },
@@ -269,7 +282,11 @@ class _VerifikasiPengambilanScreenState
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Icon(Icons.copy_rounded, size: 16, color: AppColors.textLight),
+                  const Icon(
+                    Icons.copy_rounded,
+                    size: 16,
+                    color: AppColors.textLight,
+                  ),
                 ],
               ),
             ),
@@ -317,7 +334,10 @@ class _VerifikasiPengambilanScreenState
                     children: [
                       const Text(
                         'Obat yang dipesan:',
-                        style: TextStyle(fontSize: 12, color: AppColors.textLight),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textLight,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       ...widget.items.map(
@@ -326,7 +346,8 @@ class _VerifikasiPengambilanScreenState
                           child: Row(
                             children: [
                               Container(
-                                width: 4, height: 4,
+                                width: 4,
+                                height: 4,
                                 decoration: const BoxDecoration(
                                   color: AppColors.textMid,
                                   shape: BoxShape.circle,
@@ -337,7 +358,8 @@ class _VerifikasiPengambilanScreenState
                                 child: Text(
                                   '${item['medicine_name']} x${item['quantity']}',
                                   style: const TextStyle(
-                                    fontSize: 13, color: AppColors.textMid,
+                                    fontSize: 13,
+                                    color: AppColors.textMid,
                                   ),
                                 ),
                               ),
@@ -365,24 +387,34 @@ class _VerifikasiPengambilanScreenState
           color: enabled ? AppColors.primary : Colors.grey.shade300,
           borderRadius: BorderRadius.circular(16),
           boxShadow: enabled
-              ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8))]
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
               : [],
         ),
         child: ElevatedButton.icon(
           onPressed: enabled
               ? () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BeriUlasanScreen(
-                        orderNumber: widget.orderNumber,
-                        pharmacyId: widget.pharmacyId,
-                        pharmacyName: widget.pharmacyName,
-                        items: widget.items,
-                      ),
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BeriUlasanScreen(
+                      orderNumber: widget.orderNumber,
+                      pharmacyId: widget.pharmacyId,
+                      pharmacyName: widget.pharmacyName,
+                      items: widget.items,
                     ),
-                  )
+                  ),
+                )
               : null,
-          icon: Icon(Icons.star_rounded, size: 20, color: enabled ? Colors.white : Colors.grey.shade400),
+          icon: Icon(
+            Icons.star_rounded,
+            size: 20,
+            color: enabled ? Colors.white : Colors.grey.shade400,
+          ),
           label: Text(
             enabled ? 'Beri Ulasan' : 'Tunggu verifikasi apoteker...',
             style: TextStyle(
@@ -396,7 +428,9 @@ class _VerifikasiPengambilanScreenState
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
             disabledBackgroundColor: Colors.transparent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
         ),
       ),
@@ -414,7 +448,11 @@ class _VerifikasiPengambilanScreenState
       ),
       child: Column(
         children: [
-          const Icon(Icons.access_time_rounded, color: Color(0xFFC2410C), size: 32),
+          const Icon(
+            Icons.access_time_rounded,
+            color: Color(0xFFC2410C),
+            size: 32,
+          ),
           const SizedBox(height: 10),
           const Text(
             'Menunggu konfirmasi apoteker',
@@ -428,7 +466,11 @@ class _VerifikasiPengambilanScreenState
           const Text(
             'Tunjukkan QR di atas ke apoteker. Setelah dikonfirmasi, kamu bisa memberikan ulasan.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Color(0xFF92400E), height: 1.5),
+            style: TextStyle(
+              fontSize: 13,
+              color: Color(0xFF92400E),
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -437,12 +479,16 @@ class _VerifikasiPengambilanScreenState
             child: OutlinedButton.icon(
               onPressed: _cekStatus,
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Cek Status',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
+              label: const Text(
+                'Cek Status',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFC2410C),
                 side: const BorderSide(color: Color(0xFFFDB974)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
@@ -468,7 +514,11 @@ class _VerifikasiPengambilanScreenState
           Expanded(
             child: Text(
               'Datang ke apotek dan tunjukkan QR Code ini kepada apoteker. Apoteker akan scan QR untuk memverifikasi dan menyerahkan pesanan kamu.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF1E3A5F), height: 1.5),
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF1E3A5F),
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -501,8 +551,14 @@ class _InfoRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label,
-                  style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontWeight: FontWeight.w600)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textLight,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 2),
               Text(
                 value,

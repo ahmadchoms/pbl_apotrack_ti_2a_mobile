@@ -11,22 +11,17 @@ class EditAddressScreen extends ConsumerStatefulWidget {
   final bool isAdd;
   final CustomerAddress? address;
 
-  const EditAddressScreen({
-    super.key,
-    this.isAdd = false,
-    this.address,
-  });
+  const EditAddressScreen({super.key, this.isAdd = false, this.address});
 
   @override
-  ConsumerState<EditAddressScreen> createState() =>
-      _EditAddressScreenState();
+  ConsumerState<EditAddressScreen> createState() => _EditAddressScreenState();
 }
 
 class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
   late final TextEditingController _labelController;
   late final TextEditingController _addressController;
-  bool    _isPrimary = false;
-  bool    _isSaving  = false;
+  bool _isPrimary = false;
+  bool _isSaving = false;
   String? _labelError;
   String? _addressError;
 
@@ -36,12 +31,13 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
   @override
   void initState() {
     super.initState();
-    _labelController   = TextEditingController(text: widget.address?.label ?? '');
+    _labelController = TextEditingController(text: widget.address?.label ?? '');
     _addressController = TextEditingController(
-        text: widget.address?.addressDetail ?? '');
-    _isPrimary  = widget.address?.isPrimary ?? false;
-    _latitude   = widget.address?.latitude  ?? -6.2088;
-    _longitude  = widget.address?.longitude ?? 106.8456;
+      text: widget.address?.addressDetail ?? '',
+    );
+    _isPrimary = widget.address?.isPrimary ?? false;
+    _latitude = widget.address?.latitude ?? -6.2088;
+    _longitude = widget.address?.longitude ?? 106.8456;
   }
 
   @override
@@ -74,7 +70,9 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
     setState(() => _isSaving = true);
     try {
       if (widget.isAdd) {
-        await ref.read(profileProvider.notifier).addAddress(
+        await ref
+            .read(profileProvider.notifier)
+            .addAddress(
               label: _labelController.text.trim(),
               addressDetail: _addressController.text.trim(),
               latitude: _latitude,
@@ -82,7 +80,9 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
               isPrimary: _isPrimary,
             );
       } else {
-        await ref.read(profileProvider.notifier).updateAddress(
+        await ref
+            .read(profileProvider.notifier)
+            .updateAddress(
               id: widget.address!.id,
               label: _labelController.text.trim(),
               addressDetail: _addressController.text.trim(),
@@ -94,9 +94,11 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.isAdd
-                ? 'Alamat berhasil ditambahkan'
-                : 'Alamat berhasil diperbarui'),
+            content: Text(
+              widget.isAdd
+                  ? 'Alamat berhasil ditambahkan'
+                  : 'Alamat berhasil diperbarui',
+            ),
             backgroundColor: AppColors.success,
           ),
         );
@@ -104,9 +106,9 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -121,7 +123,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
         longitude: _longitude,
         onLocationSelected: (lat, lng) {
           setState(() {
-            _latitude  = lat;
+            _latitude = lat;
             _longitude = lng;
           });
         },
@@ -137,16 +139,20 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textDark, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textDark,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
           widget.isAdd ? 'Tambah Alamat' : 'Edit Alamat',
           style: const TextStyle(
-              color: AppColors.textDark,
-              fontWeight: FontWeight.w900,
-              fontSize: 17),
+            color: AppColors.textDark,
+            fontWeight: FontWeight.w900,
+            fontSize: 17,
+          ),
         ),
         centerTitle: true,
       ),
@@ -159,10 +165,11 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
             const Text(
               'LOKASI PRESISI',
               style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textLight,
-                  letterSpacing: 0.8),
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textLight,
+                letterSpacing: 0.8,
+              ),
             ),
             const SizedBox(height: 10),
             GestureDetector(
@@ -195,19 +202,26 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.black.withValues(alpha: 0.12),
+                                  color: AppColors.black.withValues(
+                                    alpha: 0.12,
+                                  ),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: const Icon(Icons.location_on_rounded,
-                                size: 28, color: AppColors.primary),
+                            child: const Icon(
+                              Icons.location_on_rounded,
+                              size: 28,
+                              color: AppColors.primary,
+                            ),
                           ),
                           const SizedBox(height: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 6),
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.white.withValues(alpha: 0.9),
                               borderRadius: BorderRadius.circular(20),
@@ -215,9 +229,10 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                             child: const Text(
                               'Ketuk untuk pilih lokasi',
                               style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w700),
+                                fontSize: 12,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],
@@ -267,15 +282,18 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                   }
                 },
                 style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textDark),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.all(16),
                   hintText: 'Jl. Nama Jalan No. X, Kelurahan, Kecamatan...',
                   hintStyle: TextStyle(
-                      fontSize: 13, color: AppColors.textLight),
+                    fontSize: 13,
+                    color: AppColors.textLight,
+                  ),
                 ),
               ),
             ),
@@ -294,18 +312,20 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                 onChanged: (v) => setState(() => _isPrimary = v),
                 activeThumbColor: AppColors.primary,
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 4),
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 title: const Text(
                   'Jadikan Alamat Utama',
                   style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textDark),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                  ),
                 ),
                 subtitle: const Text(
                   'Digunakan sebagai default pengiriman',
-                  style: TextStyle(
-                      fontSize: 12, color: AppColors.textLight),
+                  style: TextStyle(fontSize: 12, color: AppColors.textLight),
                 ),
               ),
             ),
@@ -321,8 +341,11 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline_rounded,
-                      size: 16, color: AppColors.primary),
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -330,10 +353,11 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                           ? 'Alamat baru akan ditambahkan ke daftar pengirimanmu.'
                           : 'Perubahan akan langsung diterapkan.',
                       style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.primary,
-                          height: 1.4,
-                          fontWeight: FontWeight.w600),
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        height: 1.4,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -351,7 +375,8 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                   foregroundColor: AppColors.white,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
                 child: _isSaving
@@ -359,11 +384,17 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                            color: AppColors.white, strokeWidth: 2))
+                          color: AppColors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : Text(
                         widget.isAdd ? 'Tambah Alamat' : 'Simpan Alamat',
                         style: const TextStyle(
-                            fontWeight: FontWeight.w900, fontSize: 16)),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -373,16 +404,16 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
   }
 
   Widget _buildFieldLabel(String text, String? error) => Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            color: error != null ? AppColors.danger : AppColors.textLight,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(left: 4),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: error != null ? AppColors.danger : AppColors.textLight,
+      ),
+    ),
+  );
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -390,52 +421,57 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
     required IconData icon,
     required bool hasError,
     required ValueChanged<String> onChanged,
-  }) =>
-      Container(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: hasError ? AppColors.danger : AppColors.divider,
-            width: hasError ? 1.5 : 1,
-          ),
+  }) => Container(
+    decoration: BoxDecoration(
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: hasError ? AppColors.danger : AppColors.divider,
+        width: hasError ? 1.5 : 1,
+      ),
+    ),
+    child: TextField(
+      controller: controller,
+      onChanged: onChanged,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textDark,
+      ),
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: AppColors.textMid, size: 20),
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
         ),
-        child: TextField(
-          controller: controller,
-          onChanged: onChanged,
-          style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark),
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: AppColors.textMid, size: 20),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 14),
-            hintText: hint,
-            hintStyle:
-                const TextStyle(fontSize: 13, color: AppColors.textLight),
-          ),
-        ),
-      );
+        hintText: hint,
+        hintStyle: const TextStyle(fontSize: 13, color: AppColors.textLight),
+      ),
+    ),
+  );
 
   Widget _buildErrorText(String text) => Padding(
-        padding: const EdgeInsets.only(left: 4, top: 6),
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline_rounded,
-                size: 13, color: AppColors.danger),
-            const SizedBox(width: 4),
-            Text(
-              text,
-              style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.danger,
-                  fontWeight: FontWeight.w600),
-            ),
-          ],
+    padding: const EdgeInsets.only(left: 4, top: 6),
+    child: Row(
+      children: [
+        const Icon(
+          Icons.error_outline_rounded,
+          size: 13,
+          color: AppColors.danger,
         ),
-      );
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 11,
+            color: AppColors.danger,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _MapGridPainter extends CustomPainter {

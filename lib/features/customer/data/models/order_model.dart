@@ -58,10 +58,20 @@ class OrderItemModel {
     return OrderItemModel(
       id: json['id'] as String? ?? '',
       orderId: json['order_id'] as String? ?? '',
-      medicineId: json['medicine_id'] as String? ?? json['medicine']?['id'] as String? ?? '',
-      medicineName: json['medicine_name'] as String? ?? json['medicine']?['name'] as String? ?? '',
-      unitName: json['unit_name'] as String? ?? json['medicine']?['unit'] as String? ?? 'Pcs',
-      requiresPrescription: json['requires_prescription'] as bool? ??
+      medicineId:
+          json['medicine_id'] as String? ??
+          json['medicine']?['id'] as String? ??
+          '',
+      medicineName:
+          json['medicine_name'] as String? ??
+          json['medicine']?['name'] as String? ??
+          '',
+      unitName:
+          json['unit_name'] as String? ??
+          json['medicine']?['unit'] as String? ??
+          'Pcs',
+      requiresPrescription:
+          json['requires_prescription'] as bool? ??
           json['medicine']?['requires_prescription'] as bool? ??
           false,
       quantity: json['quantity'] as int? ?? 1,
@@ -122,8 +132,8 @@ class OrderModel {
     final itemsRaw = json['order_items'];
     final List<OrderItemModel> items = itemsRaw != null
         ? (itemsRaw as List<dynamic>)
-            .map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
-            .toList()
+              .map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
+              .toList()
         : [];
 
     return OrderModel(
@@ -143,10 +153,18 @@ class OrderModel {
       notes: json['notes'] as String?,
       cancellationReason: json['cancellation_reason'] as String?,
       distanceKm: (json['distance_km'] as num?)?.toDouble(),
-      paidAt: json['paid_at'] != null ? DateTime.tryParse(json['paid_at'] as String) : null,
-      expiredAt: DateTime.tryParse(json['expired_at'] as String? ?? '') ?? DateTime.now(),
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? '') ?? DateTime.now(),
+      paidAt: json['paid_at'] != null
+          ? DateTime.tryParse(json['paid_at'] as String)
+          : null,
+      expiredAt:
+          DateTime.tryParse(json['expired_at'] as String? ?? '') ??
+          DateTime.now(),
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(json['updated_at'] as String? ?? '') ??
+          DateTime.now(),
       items: items,
     );
   }
@@ -206,8 +224,8 @@ class Order {
     final itemsRaw = json['order_items'];
     final List<OrderItemModel> items = itemsRaw != null
         ? (itemsRaw as List<dynamic>)
-            .map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
-            .toList()
+              .map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
+              .toList()
         : [];
 
     return Order(
@@ -221,16 +239,26 @@ class Order {
       paymentMethod: json['payment_method'] as String? ?? '',
       orderStatus: json['order_status'] as String? ?? 'PENDING',
       paymentStatus: json['payment_status'] as String? ?? 'UNPAID',
-      subtotalAmount: double.tryParse((json['subtotal_amount'] ?? 0).toString()) ?? 0.0,
-      shippingCost: double.tryParse((json['shipping_cost'] ?? 0).toString()) ?? 0.0,
+      subtotalAmount:
+          double.tryParse((json['subtotal_amount'] ?? 0).toString()) ?? 0.0,
+      shippingCost:
+          double.tryParse((json['shipping_cost'] ?? 0).toString()) ?? 0.0,
       grandTotal: double.tryParse((json['grand_total'] ?? 0).toString()) ?? 0.0,
       notes: json['notes'] as String?,
       cancellationReason: json['cancellation_reason'] as String?,
       distanceKm: (json['distance_km'] as num?)?.toDouble(),
-      paidAt: json['paid_at'] != null ? DateTime.tryParse(json['paid_at'] as String) : null,
-      expiredAt: DateTime.tryParse(json['expired_at'] as String? ?? '') ?? DateTime.now(),
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? '') ?? DateTime.now(),
+      paidAt: json['paid_at'] != null
+          ? DateTime.tryParse(json['paid_at'] as String)
+          : null,
+      expiredAt:
+          DateTime.tryParse(json['expired_at'] as String? ?? '') ??
+          DateTime.now(),
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(json['updated_at'] as String? ?? '') ??
+          DateTime.now(),
       items: items,
     );
   }

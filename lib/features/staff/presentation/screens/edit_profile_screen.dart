@@ -16,13 +16,13 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
-  final _nameController  = TextEditingController();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _imagePicker     = ImagePicker();
+  final _imagePicker = ImagePicker();
 
-  XFile?  _pickedFile;
-  bool    _isLoading = false;
+  XFile? _pickedFile;
+  bool _isLoading = false;
 
   String? _nameError;
   String? _emailError;
@@ -33,9 +33,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (parts.length >= 2) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
-    return username
-        .substring(0, username.length >= 2 ? 2 : 1)
-        .toUpperCase();
+    return username.substring(0, username.length >= 2 ? 2 : 1).toUpperCase();
   }
 
   @override
@@ -43,12 +41,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.initState();
     final profileUser = ref.read(profileProvider).profile;
     if (profileUser != null) {
-      _nameController.text  = profileUser.username;
+      _nameController.text = profileUser.username;
       _emailController.text = profileUser.email;
       _phoneController.text = profileUser.phone ?? '';
     } else {
       final authUser = ref.read(authNotifierProvider).user;
-      _nameController.text  = authUser?.username ?? '';
+      _nameController.text = authUser?.username ?? '';
       _emailController.text = authUser?.email ?? '';
       _phoneController.text = authUser?.phone ?? '';
     }
@@ -75,8 +73,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (_emailController.text.trim().isEmpty) {
       _emailError = 'Email tidak boleh kosong';
       valid = false;
-    } else if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$')
-        .hasMatch(_emailController.text.trim())) {
+    } else if (!RegExp(
+      r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$',
+    ).hasMatch(_emailController.text.trim())) {
       _emailError = 'Format email tidak valid';
       valid = false;
     } else {
@@ -157,11 +156,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.camera_alt_rounded,
-                      color: AppColors.primary),
+                  child: const Icon(
+                    Icons.camera_alt_rounded,
+                    color: AppColors.primary,
+                  ),
                 ),
-                title: const Text('Ambil Foto',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                title: const Text(
+                  'Ambil Foto',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
                 onTap: () => _pickImage(ImageSource.camera),
               ),
               const Divider(height: 1),
@@ -174,11 +177,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     color: AppColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.photo_library_rounded,
-                      color: AppColors.success),
+                  child: const Icon(
+                    Icons.photo_library_rounded,
+                    color: AppColors.success,
+                  ),
                 ),
-                title: const Text('Pilih dari Galeri',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                title: const Text(
+                  'Pilih dari Galeri',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
                 onTap: () => _pickImage(ImageSource.gallery),
               ),
             ],
@@ -193,7 +200,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(profileProvider.notifier).updateProfile(
+      await ref
+          .read(profileProvider.notifier)
+          .updateProfile(
             username: _nameController.text.trim(),
             email: _emailController.text.trim(),
             phone: _phoneController.text.trim().isEmpty
@@ -202,7 +211,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             imageFile: _pickedFile,
           );
 
-      await ref.read(authNotifierProvider.notifier).updateProfileData(
+      await ref
+          .read(authNotifierProvider.notifier)
+          .updateProfileData(
             username: _nameController.text.trim(),
             email: _emailController.text.trim(),
             phone: _phoneController.text.trim().isEmpty
@@ -241,14 +252,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     ref.listen(profileProvider.select((s) => s.profile), (prev, next) {
       if (next != null && prev != next) {
-        _nameController.text  = next.username;
+        _nameController.text = next.username;
         _emailController.text = next.email;
         _phoneController.text = next.phone ?? '';
       }
     });
 
-    final profile   = ref.watch(profileProvider).profile;
-    final initials  = profile != null ? _initials(profile.username) : 'ST';
+    final profile = ref.watch(profileProvider).profile;
+    final initials = profile != null ? _initials(profile.username) : 'ST';
     final avatarUrl = profile?.avatarUrl;
 
     return Scaffold(
@@ -257,16 +268,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textDark, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textDark,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: const Text(
           'Ubah Profil',
           style: TextStyle(
-              color: AppColors.textDark,
-              fontWeight: FontWeight.w900,
-              fontSize: 17),
+            color: AppColors.textDark,
+            fontWeight: FontWeight.w900,
+            fontSize: 17,
+          ),
         ),
         centerTitle: true,
       ),
@@ -284,19 +299,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(
-                            color: AppColors.primary, width: 2),
+                        border: Border.all(color: AppColors.primary, width: 2),
                       ),
                       child: CircleAvatar(
                         radius: 55,
                         backgroundColor: AppColors.surfaceLight,
                         backgroundImage: _pickedFile != null
                             ? FileImage(File(_pickedFile!.path))
-                                as ImageProvider
+                                  as ImageProvider
                             : (avatarUrl != null && avatarUrl.isNotEmpty)
-                                ? NetworkImage(avatarUrl) as ImageProvider
-                                : null,
-                        child: (_pickedFile == null &&
+                            ? NetworkImage(avatarUrl) as ImageProvider
+                            : null,
+                        child:
+                            (_pickedFile == null &&
                                 (avatarUrl == null || avatarUrl.isEmpty))
                             ? Text(
                                 initials,
@@ -317,11 +332,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(
-                              color: AppColors.white, width: 2),
+                          border: Border.all(color: AppColors.white, width: 2),
                         ),
-                        child: const Icon(Icons.camera_alt_rounded,
-                            color: AppColors.white, size: 18),
+                        child: const Icon(
+                          Icons.camera_alt_rounded,
+                          color: AppColors.white,
+                          size: 18,
+                        ),
                       ),
                     ),
                   ],
@@ -373,7 +390,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   foregroundColor: AppColors.white,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
                 child: _isLoading
@@ -381,10 +399,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                            color: AppColors.white, strokeWidth: 2))
-                    : const Text('Simpan Perubahan',
+                          color: AppColors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Simpan Perubahan',
                         style: TextStyle(
-                            fontWeight: FontWeight.w900, fontSize: 16)),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -411,9 +436,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: errorText != null
-                  ? AppColors.danger
-                  : AppColors.textLight,
+              color: errorText != null ? AppColors.danger : AppColors.textLight,
             ),
           ),
         ),
@@ -422,9 +445,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             color: AppColors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: errorText != null
-                  ? AppColors.danger
-                  : AppColors.divider,
+              color: errorText != null ? AppColors.danger : AppColors.divider,
               width: errorText != null ? 1.5 : 1,
             ),
           ),
@@ -433,14 +454,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             keyboardType: keyboardType,
             onChanged: onChanged,
             style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDark),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
             decoration: InputDecoration(
               prefixIcon: Icon(icon, color: AppColors.textMid, size: 20),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 16),
+                horizontal: 16,
+                vertical: 16,
+              ),
             ),
           ),
         ),
@@ -449,15 +473,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             padding: const EdgeInsets.only(left: 4, top: 6),
             child: Row(
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    size: 13, color: AppColors.danger),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 13,
+                  color: AppColors.danger,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   errorText,
                   style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.danger,
-                      fontWeight: FontWeight.w600),
+                    fontSize: 11,
+                    color: AppColors.danger,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),

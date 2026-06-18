@@ -95,11 +95,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.white),
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                     child: const Text(
                       'Input Kode Manual',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -118,7 +123,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Input Kode Manual', style: TextStyle(fontWeight: FontWeight.w900)),
+        title: const Text(
+          'Input Kode Manual',
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.text,
@@ -126,19 +134,30 @@ class _ScannerScreenState extends State<ScannerScreen> {
             hintText: 'Masukkan 8 digit kode...',
             filled: true,
             fillColor: const Color(0xFFF1F5F9),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
             onPressed: () {
               final String code = controller.text;
               Navigator.pop(context);
               Navigator.pop(this.context, code);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1D70F5)),
-            child: const Text('Verifikasi', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1D70F5),
+            ),
+            child: const Text(
+              'Verifikasi',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -168,7 +187,8 @@ class QrScannerOverlayShape extends ShapeBorder {
   Path getInnerPath(Rect rect, {TextDirection? textDirection}) => Path();
 
   @override
-  Path getOuterPath(Rect rect, {TextDirection? textDirection}) => Path()..addRect(rect);
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) =>
+      Path()..addRect(rect);
 
   @override
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
@@ -185,7 +205,9 @@ class QrScannerOverlayShape extends ShapeBorder {
       Path.combine(
         PathOperation.difference,
         Path()..addRect(rect),
-        Path()..addRRect(RRect.fromRectAndRadius(cutOutRect, Radius.circular(borderRadius))),
+        Path()..addRRect(
+          RRect.fromRectAndRadius(cutOutRect, Radius.circular(borderRadius)),
+        ),
       ),
       paint,
     );
@@ -199,22 +221,34 @@ class QrScannerOverlayShape extends ShapeBorder {
 
     borderPath.moveTo(cutOutRect.left, cutOutRect.top + borderLength);
     borderPath.lineTo(cutOutRect.left, cutOutRect.top + borderRadius);
-    borderPath.arcToPoint(Offset(cutOutRect.left + borderRadius, cutOutRect.top), radius: Radius.circular(borderRadius));
+    borderPath.arcToPoint(
+      Offset(cutOutRect.left + borderRadius, cutOutRect.top),
+      radius: Radius.circular(borderRadius),
+    );
     borderPath.lineTo(cutOutRect.left + borderLength, cutOutRect.top);
 
     borderPath.moveTo(cutOutRect.right - borderLength, cutOutRect.top);
     borderPath.lineTo(cutOutRect.right - borderRadius, cutOutRect.top);
-    borderPath.arcToPoint(Offset(cutOutRect.right, cutOutRect.top + borderRadius), radius: Radius.circular(borderRadius));
+    borderPath.arcToPoint(
+      Offset(cutOutRect.right, cutOutRect.top + borderRadius),
+      radius: Radius.circular(borderRadius),
+    );
     borderPath.lineTo(cutOutRect.right, cutOutRect.top + borderLength);
 
     borderPath.moveTo(cutOutRect.right, cutOutRect.bottom - borderLength);
     borderPath.lineTo(cutOutRect.right, cutOutRect.bottom - borderRadius);
-    borderPath.arcToPoint(Offset(cutOutRect.right - borderRadius, cutOutRect.bottom), radius: Radius.circular(borderRadius));
+    borderPath.arcToPoint(
+      Offset(cutOutRect.right - borderRadius, cutOutRect.bottom),
+      radius: Radius.circular(borderRadius),
+    );
     borderPath.lineTo(cutOutRect.right - borderLength, cutOutRect.bottom);
 
     borderPath.moveTo(cutOutRect.left + borderLength, cutOutRect.bottom);
     borderPath.lineTo(cutOutRect.left + borderRadius, cutOutRect.bottom);
-    borderPath.arcToPoint(Offset(cutOutRect.left, cutOutRect.bottom - borderRadius), radius: Radius.circular(borderRadius));
+    borderPath.arcToPoint(
+      Offset(cutOutRect.left, cutOutRect.bottom - borderRadius),
+      radius: Radius.circular(borderRadius),
+    );
     borderPath.lineTo(cutOutRect.left, cutOutRect.bottom - borderLength);
 
     canvas.drawPath(borderPath, borderPaint);

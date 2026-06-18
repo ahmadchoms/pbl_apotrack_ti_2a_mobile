@@ -41,11 +41,11 @@ class StaffService {
     return Order.fromJson(response.data['data']);
   }
 
-
   // --- INVENTARIS (MEDICINES) ---
 
-  Future<List<Medicine>> getMedicines(
-      {Map<String, dynamic>? queryParams}) async {
+  Future<List<Medicine>> getMedicines({
+    Map<String, dynamic>? queryParams,
+  }) async {
     final response = await _repository.getMedicines(queryParams);
     final list = response.data['data'] as List? ?? [];
     return list.map((e) => Medicine.fromJson(e)).toList();
@@ -67,7 +67,9 @@ class StaffService {
   }
 
   Future<void> updateStock(
-      String medicineId, Map<String, dynamic> payload) async {
+    String medicineId,
+    Map<String, dynamic> payload,
+  ) async {
     await _repository.updateStock(medicineId, payload);
   }
 
@@ -89,8 +91,9 @@ class StaffService {
     return list.map((e) => AuditLog.fromJson(e)).toList();
   }
 
-  Future<List<AuditLog>> fetchAuditLogs(
-      {Map<String, dynamic>? queryParams}) async {
+  Future<List<AuditLog>> fetchAuditLogs({
+    Map<String, dynamic>? queryParams,
+  }) async {
     final response = await _repository.getAudits(queryParams);
     final list = response.data['data'] as List? ?? [];
     return list.map((e) => AuditLog.fromJson(e)).toList();
@@ -134,9 +137,7 @@ class StaffService {
 
     try {
       final response = await _repository.updateProfile(formData);
-      return UserModel.fromJson(
-        response.data['data'] as Map<String, dynamic>,
-      );
+      return UserModel.fromJson(response.data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
         _extractLaravelError(e.response?.data) ?? 'Gagal memperbarui profil',

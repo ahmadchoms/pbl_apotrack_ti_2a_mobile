@@ -94,10 +94,14 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     }
 
     final address = AddressModel(
-      id: widget.existing?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id:
+          widget.existing?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       name: _nameCtrl.text.trim(),
       fullAddress: _addressCtrl.text.trim(),
-      landmark: _landmarkCtrl.text.trim().isEmpty ? null : _landmarkCtrl.text.trim(),
+      landmark: _landmarkCtrl.text.trim().isEmpty
+          ? null
+          : _landmarkCtrl.text.trim(),
       type: _type,
       latitude: _latitude ?? -6.208800,
       longitude: _longitude ?? 106.845600,
@@ -123,8 +127,11 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              size: 18, color: AppColors.textDark),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: AppColors.textDark,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -155,10 +162,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
           // ── Form fields ──────────────────────────────────────────
           _fieldLabel('Nama Alamat *'),
           const SizedBox(height: 8),
-          _textField(
-            controller: _nameCtrl,
-            hint: 'Cth: Sekolah, Rumah nenek',
-          ),
+          _textField(controller: _nameCtrl, hint: 'Cth: Sekolah, Rumah nenek'),
           const SizedBox(height: 16),
 
           _fieldLabel('Alamat Lengkap *'),
@@ -216,15 +220,22 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   else
-                    const Icon(Icons.map_rounded, size: 48, color: Color(0xFFBBC6CF)),
+                    const Icon(
+                      Icons.map_rounded,
+                      size: 48,
+                      color: Color(0xFFBBC6CF),
+                    ),
                   const SizedBox(height: 8),
                   Text(
                     _locating
                         ? 'Mendapatkan lokasi...'
                         : _latitude != null
-                            ? 'Lokasi: $_latitude, $_longitude'
-                            : 'Peta lokasi',
-                    style: const TextStyle(color: Color(0xFFBBC6CF), fontSize: 13),
+                        ? 'Lokasi: $_latitude, $_longitude'
+                        : 'Peta lokasi',
+                    style: const TextStyle(
+                      color: Color(0xFFBBC6CF),
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -250,14 +261,13 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.arrow_upward_rounded,
-                        color: Colors.white, size: 22),
+                    child: const Icon(
+                      Icons.arrow_upward_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
-                  Container(
-                    width: 2,
-                    height: 10,
-                    color: AppColors.primary,
-                  ),
+                  Container(width: 2, height: 10, color: AppColors.primary),
                 ],
               ),
             ),
@@ -288,8 +298,11 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.location_on_rounded,
-                  color: AppColors.primary, size: 20),
+              const Icon(
+                Icons.location_on_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -312,19 +325,26 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
             controller: _landmarkCtrl,
             style: const TextStyle(fontSize: 13, color: AppColors.textDark),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.flag_rounded,
-                  color: AppColors.textLight, size: 18),
+              prefixIcon: const Icon(
+                Icons.flag_rounded,
+                color: AppColors.textLight,
+                size: 18,
+              ),
               hintText: 'Tambah patokan',
               hintStyle: const TextStyle(
-                  color: AppColors.textLight, fontSize: 13),
+                color: AppColors.textLight,
+                fontSize: 13,
+              ),
               filled: true,
               fillColor: Colors.grey.shade100,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none,
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 10,
+                horizontal: 12,
+              ),
             ),
           ),
         ],
@@ -334,13 +354,13 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 
   // ── Helpers ──────────────────────────────────────────────────────
   Widget _fieldLabel(String text) => Text(
-        text,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textDark,
-        ),
-      );
+    text,
+    style: const TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textDark,
+    ),
+  );
 
   Widget _textField({
     required TextEditingController controller,
@@ -360,8 +380,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         style: const TextStyle(fontSize: 13, color: AppColors.textDark),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle:
-              const TextStyle(color: AppColors.textLight, fontSize: 13),
+          hintStyle: const TextStyle(color: AppColors.textLight, fontSize: 13),
           prefixIcon: prefixIcon != null
               ? Icon(prefixIcon, size: 18, color: AppColors.textLight)
               : null,
@@ -378,8 +397,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       onTap: () => setState(() => _type = type),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -391,9 +409,11 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 16,
-                color: isSelected ? Colors.white : AppColors.textLight),
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : AppColors.textLight,
+            ),
             const SizedBox(width: 6),
             Text(
               label,
@@ -412,7 +432,11 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   Widget _buildSaveButton() {
     return Container(
       padding: EdgeInsets.fromLTRB(
-          20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
+        20,
+        16,
+        20,
+        MediaQuery.of(context).padding.bottom + 16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -438,8 +462,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
           ),
           child: Text(
             _isEdit ? 'Simpan Perubahan' : 'Simpan Alamat',
-            style: const TextStyle(
-                fontWeight: FontWeight.w800, fontSize: 15),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
         ),
       ),

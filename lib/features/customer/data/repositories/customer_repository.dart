@@ -11,12 +11,10 @@ class CustomerRepository {
   Future<Response> getCustomerOrders(Map<String, dynamic>? queryParams) =>
       _dio.get('/orders', queryParameters: queryParams);
 
-  Future<Response> getCustomerOrderHistory(
-          Map<String, dynamic>? queryParams) =>
+  Future<Response> getCustomerOrderHistory(Map<String, dynamic>? queryParams) =>
       _dio.get('/orders/history', queryParameters: queryParams);
 
-  Future<Response> getCustomerOrderDetail(String id) =>
-      _dio.get('/orders/$id');
+  Future<Response> getCustomerOrderDetail(String id) => _dio.get('/orders/$id');
 
   Future<Response> getCustomerOrderTracking(String id) =>
       _dio.get('/orders/$id/tracking');
@@ -31,7 +29,7 @@ class CustomerRepository {
       _dio.post('/orders/$id/confirm-received');
 
   Future<Response> joinStaffByInvitation(String invitationUrl) =>
-    _dio.post('/staff/join', data: {'invitation_url': invitationUrl});
+      _dio.post('/staff/join', data: {'invitation_url': invitationUrl});
 
   // ── Profile methods ──────────────────────────────────────────
   Future<Response> fetchMe() => _dio.get('/me');
@@ -72,11 +70,18 @@ class CustomerRepository {
   Future<Response> setPrimaryAddress(String id) async {
     debugPrint('[Repository] setPrimaryAddress PATCH /user/addresses/$id');
     try {
-      final response = await _dio.patch('/user/addresses/$id', data: {'is_primary': true});
-      debugPrint('[Repository] setPrimaryAddress success: ${response.statusCode}');
+      final response = await _dio.patch(
+        '/user/addresses/$id',
+        data: {'is_primary': true},
+      );
+      debugPrint(
+        '[Repository] setPrimaryAddress success: ${response.statusCode}',
+      );
       return response;
     } on DioException catch (e) {
-      debugPrint('[Repository] setPrimaryAddress error: ${e.response?.statusCode}');
+      debugPrint(
+        '[Repository] setPrimaryAddress error: ${e.response?.statusCode}',
+      );
       debugPrint('[Repository] error body: ${e.response?.data}');
       rethrow;
     }

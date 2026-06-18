@@ -23,9 +23,13 @@ class AddressProvider extends ChangeNotifier {
   }
 
   void updatePrimaryFlags(String primaryId) {
-    _favorites = _favorites.map((a) => a.copyWith(isPrimary: a.id == primaryId)).toList();
+    _favorites = _favorites
+        .map((a) => a.copyWith(isPrimary: a.id == primaryId))
+        .toList();
     if (_selectedAddress != null) {
-      _selectedAddress = _selectedAddress!.copyWith(isPrimary: _selectedAddress!.id == primaryId);
+      _selectedAddress = _selectedAddress!.copyWith(
+        isPrimary: _selectedAddress!.id == primaryId,
+      );
     }
     notifyListeners();
   }

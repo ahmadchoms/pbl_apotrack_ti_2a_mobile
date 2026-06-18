@@ -5,11 +5,7 @@ class MedicineFormCard extends StatelessWidget {
   final Widget child;
   final Widget? header;
 
-  const MedicineFormCard({
-    super.key,
-    required this.child,
-    this.header,
-  });
+  const MedicineFormCard({super.key, required this.child, this.header});
 
   @override
   Widget build(BuildContext context) {
