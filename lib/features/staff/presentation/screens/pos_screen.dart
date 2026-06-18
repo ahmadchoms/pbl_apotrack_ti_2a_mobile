@@ -109,10 +109,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   Widget _buildHeader(BuildContext context, String pharmacyName) {
     return Container(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 16,
-        bottom: 24,
-        left: 20,
-        right: 20,
+        top: MediaQuery.of(context).padding.top + 12,
+        bottom: 16,
+        left: 16,
+        right: 16,
       ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -197,17 +197,18 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   Widget _buildSearchAndFilter(List<String> categories) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 16,
+                  blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
@@ -215,25 +216,26 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Cari nama obat atau SKU...',
+                hintText: 'Cari obat...',
                 prefixIcon: const Icon(
                   Icons.search_rounded,
                   color: AppColors.primary,
+                  size: 20,
                 ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.cancel_rounded),
+                        icon: const Icon(Icons.cancel_rounded, size: 18),
                         onPressed: () => _searchController.clear(),
                       )
                     : null,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           SizedBox(
-            height: 38,
+            height: 34,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: categories.length,
@@ -255,11 +257,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.divider,
           ),
@@ -269,7 +271,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           style: TextStyle(
             color: isSelected ? Colors.white : AppColors.textMid,
             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            fontSize: 13,
+            fontSize: 12,
           ),
         ),
       ),
@@ -279,14 +281,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   Widget _buildGrid(List<Medicine> filtered, bool isLoadingNextPage) {
     if (filtered.isEmpty) return _buildEmptyState();
 
+    final screenHeight = MediaQuery.of(context).size.height;
+    final aspectRatio = screenHeight < 700 ? 0.72 : 0.62;
+
     return GridView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.62,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: aspectRatio,
       ),
       itemCount: filtered.length + (isLoadingNextPage ? 2 : 0),
       itemBuilder: (_, i) {
@@ -337,21 +342,21 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
     return Container(
       padding: EdgeInsets.fromLTRB(
-        20,
         16,
-        20,
-        MediaQuery.of(context).padding.bottom + 16,
+        12,
+        16,
+        MediaQuery.of(context).padding.bottom + 12,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
+            blurRadius: 16,
             offset: const Offset(0, -4),
           ),
         ],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Row(
         children: [

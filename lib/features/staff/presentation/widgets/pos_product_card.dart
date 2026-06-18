@@ -51,7 +51,7 @@ class PosProductCard extends StatelessWidget {
           children: [
             // --- Image Section ---
             Expanded(
-              flex: 4,
+              flex: 3,
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -98,7 +98,7 @@ class PosProductCard extends StatelessWidget {
 
             // --- Content Section ---
             Expanded(
-              flex: 5,
+              flex: 7,
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(
@@ -114,7 +114,7 @@ class PosProductCard extends StatelessWidget {
                         _buildStockIndicator(stock, isCritical, isLowStock),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 4),
                     Text(
                       medicine.name,
                       style: const TextStyle(
@@ -123,20 +123,19 @@ class PosProductCard extends StatelessWidget {
                         color: AppColors.textDark,
                         height: 1.2,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const Spacer(),
                     Text(
                       _formatRupiah(medicine.price),
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.w900,
                         color: AppColors.primary,
                         letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 12),
                     // Tombol Aksi (Tambah / Qty Selector)
                     _buildAddButton(),
                   ],
@@ -158,7 +157,7 @@ class PosProductCard extends StatelessWidget {
         },
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
             color: AppColors.primary,
             borderRadius: BorderRadius.circular(12),

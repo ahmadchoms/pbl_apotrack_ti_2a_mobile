@@ -392,149 +392,150 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
 
   void _showFilterSheet(BuildContext context) {
     final categories = ref.read(medicineCategoriesProvider);
-    final filterState = ref.read(inventoryFilterProvider);
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          padding: const EdgeInsets.fromLTRB(28, 12, 28, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: AppColors.divider,
-                    borderRadius: BorderRadius.circular(10),
+        builder: (ctx, setSheetState) {
+          final filterState = ref.read(inventoryFilterProvider);
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            padding: const EdgeInsets.fromLTRB(28, 12, 28, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: AppColors.divider,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Filter Inventori',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textDark,
+                const SizedBox(height: 24),
+                const Text(
+                  'Filter Inventori',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textDark,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'STATUS KETERSEDIAAN',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textLight,
-                  letterSpacing: 1,
+                const SizedBox(height: 24),
+                const Text(
+                  'STATUS KETERSEDIAAN',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textLight,
+                    letterSpacing: 1,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: ['Semua', 'Stok Kritis', 'Stok Rendah', 'Normal']
-                    .map(
-                      (s) => _buildChoiceChip(
-                        s,
-                        filterState.stockFilter == s,
-                        onSelected: (val) {
-                          ref
-                              .read(inventoryFilterProvider.notifier)
-                              .setStockFilter(s);
-                          setSheetState(() {});
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: ['Semua', 'Stok Kritis', 'Stok Rendah', 'Normal']
+                      .map(
+                        (s) => _buildChoiceChip(
+                          s,
+                          filterState.stockFilter == s,
+                          onSelected: (val) {
+                            ref
+                                .read(inventoryFilterProvider.notifier)
+                                .setStockFilter(s);
+                            setSheetState(() {});
+                          },
+                        ),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'KATEGORI PRODUK',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textLight,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: categories
+                          .map(
+                            (c) => _buildChoiceChip(
+                              c,
+                              filterState.categoryFilter == c,
+                              onSelected: (val) {
+                                ref
+                                    .read(inventoryFilterProvider.notifier)
+                                    .setCategoryFilter(c);
+                                setSheetState(() {});
+                              },
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          ref.read(inventoryFilterProvider.notifier).reset();
+                          Navigator.pop(ctx);
                         },
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'KATEGORI PRODUK',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textLight,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                // maxHeight: 200,
-                child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: categories
-                        .map(
-                          (c) => _buildChoiceChip(
-                            c,
-                            filterState.categoryFilter == c,
-                            onSelected: (val) {
-                              ref
-                                  .read(inventoryFilterProvider.notifier)
-                                  .setCategoryFilter(c);
-                              setSheetState(() {});
-                            },
+                        child: const Text(
+                          'Reset',
+                          style: TextStyle(
+                            color: AppColors.textLight,
+                            fontWeight: FontWeight.w700,
                           ),
-                        )
-                        .toList(),
-                  ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text(
+                          'Terapkan Filter',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () {
-                        ref.read(inventoryFilterProvider.notifier).reset();
-                        Navigator.pop(ctx);
-                      },
-                      child: const Text(
-                        'Reset',
-                        style: TextStyle(
-                          color: AppColors.textLight,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: const Text(
-                        'Terapkan Filter',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -561,7 +562,11 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
@@ -576,38 +581,44 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 20),
-            ...options.map((opt) {
-              final isSelected = filterState.sortBy == opt.$1;
-              return ListTile(
-                onTap: () {
-                  ref.read(inventoryFilterProvider.notifier).setSortBy(opt.$1);
-                  Navigator.pop(ctx);
-                },
-                leading: Icon(
-                  opt.$3,
-                  color: isSelected ? AppColors.primary : AppColors.textLight,
-                ),
-                title: Text(
-                  opt.$2,
-                  style: TextStyle(
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                    color: isSelected ? AppColors.primary : AppColors.textDark,
-                  ),
-                ),
-                trailing: isSelected
-                    ? const Icon(
-                        Icons.check_circle_rounded,
-                        color: AppColors.primary,
-                      )
-                    : null,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                tileColor: isSelected
-                    ? AppColors.primary.withValues(alpha: 0.05)
-                    : null,
-              );
-            }),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                children: options.map((opt) {
+                  final isSelected = filterState.sortBy == opt.$1;
+                  return ListTile(
+                    onTap: () {
+                      ref.read(inventoryFilterProvider.notifier).setSortBy(opt.$1);
+                      Navigator.pop(ctx);
+                    },
+                    leading: Icon(
+                      opt.$3,
+                      color: isSelected ? AppColors.primary : AppColors.textLight,
+                    ),
+                    title: Text(
+                      opt.$2,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                        color: isSelected ? AppColors.primary : AppColors.textDark,
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(
+                            Icons.check_circle_rounded,
+                            color: AppColors.primary,
+                          )
+                        : null,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    tileColor: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.05)
+                        : null,
+                  );
+                }).toList(),
+              ),
+            ),
           ],
         ),
       ),

@@ -57,6 +57,8 @@ class MedicineInventoryCard extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 medicine.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 15,
