@@ -29,9 +29,6 @@ class CustomerRepository {
   Future<Response> confirmReceived(String id) =>
       _dio.post('/orders/$id/confirm-received');
 
-  Future<Response> joinStaffByInvitation(String invitationUrl) =>
-    _dio.post('/staff/join', data: {'invitation_url': invitationUrl});
-
   // ── Profile methods ──────────────────────────────────────────
   Future<Response> fetchMe() => _dio.get('/me');
 
@@ -69,9 +66,9 @@ class CustomerRepository {
   }
 
   Future<Response> setPrimaryAddress(String id) async {
-    print('[Repository] setPrimaryAddress PATCH /user/addresses/$id');
+    print('[Repository] setPrimaryAddress PATCH /user/addresses/$id/set-primary');
     try {
-      final response = await _dio.patch('/user/addresses/$id', data: {'is_primary': true});
+      final response = await _dio.patch('/user/addresses/$id/set-primary');
       print('[Repository] setPrimaryAddress success: ${response.statusCode}');
       return response;
     } on DioException catch (e) {

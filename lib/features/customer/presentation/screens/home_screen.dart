@@ -79,6 +79,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         imageUrl: imageUrl,
         pharmacyName: pharmacyData?['name'] as String? ?? 'Apotek',
         pharmacyId: pharmacyData?['id']?.toString() ?? '',
+        requiresPrescription: product['requires_prescription'] == true,
+        typeName: product['type'] as String?,
       ),
     );
     setState(() {

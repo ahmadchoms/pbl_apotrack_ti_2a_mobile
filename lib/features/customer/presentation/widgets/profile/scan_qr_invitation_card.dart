@@ -98,47 +98,13 @@ class ScanQrInvitationCard extends ConsumerWidget {
     WidgetRef ref,
     String invitationUrl,
   ) async {
-    // Tampilkan loading
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-
-    try {
-      final repo = ref.read(customerRepositoryProvider);
-      final response = await repo.joinStaffByInvitation(invitationUrl);
-
-      if (context.mounted) Navigator.pop(context); // tutup loading
-
-      final pharmacyName = response.data['pharmacy']?['name'] ?? 'apotek';
-
-      if (context.mounted) {
-        _showResultDialog(
-          context,
-          isSuccess: true,
-          message:
-              'Kamu berhasil bergabung sebagai Staff di $pharmacyName!\n\nSilakan login ulang untuk mengakses fitur staff.',
-        );
-      }
-    } on DioException catch (e) {
-      if (context.mounted) Navigator.pop(context); // tutup loading
-
-      final msg =
-          e.response?.data?['message'] ?? 'Terjadi kesalahan. Coba lagi.';
-
-      if (context.mounted) {
-        _showResultDialog(context, isSuccess: false, message: msg);
-      }
-    } catch (e) {
-      if (context.mounted) Navigator.pop(context);
-      if (context.mounted) {
-        _showResultDialog(
-          context,
-          isSuccess: false,
-          message: 'Terjadi kesalahan tidak terduga.',
-        );
-      }
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Fitur bergabung sebagai staff belum tersedia'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 

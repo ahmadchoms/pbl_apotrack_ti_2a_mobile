@@ -81,7 +81,7 @@ class TrackOrderScreen extends ConsumerWidget {
         addressData?['label']?.toString() ?? 'Tujuan';
 
     // Tombol konfirmasi hanya muncul saat DELIVERED
-    final isDelivered = tracking.status == 'delivered';
+    final isDelivered = tracking.status == 'DELIVERED';
 
     return ListView(
       children: [

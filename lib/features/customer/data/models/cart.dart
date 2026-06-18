@@ -7,6 +7,9 @@ class CartItem {
   final String imageUrl;
   final String pharmacyName;
   final String pharmacyId;  // pharmacy UUID
+  final bool requiresPrescription;
+  final String? typeName;
+  final int stock;
   int quantity;
 
   CartItem({
@@ -17,6 +20,9 @@ class CartItem {
     required this.imageUrl,
     required this.pharmacyName,
     required this.pharmacyId,
+    this.requiresPrescription = false,
+    this.typeName,
+    this.stock = 99,
     this.quantity = 1,
   });
 }
@@ -31,7 +37,7 @@ class CartState {
   void addItem(CartItem newItem) {
     final existing = items.firstWhere(
       (e) => e.id == newItem.id && e.pharmacyId == newItem.pharmacyId,
-      orElse: () => CartItem(id: '', name: '', price: 0, unit: '', imageUrl: '', pharmacyName: '', pharmacyId: ''),
+      orElse: () => CartItem(id: '', name: '', price: 0, unit: '', imageUrl: '', pharmacyName: '', pharmacyId: '', requiresPrescription: false, typeName: null, stock: 0),
     );
     if (existing.id.isNotEmpty) {
       existing.quantity++;

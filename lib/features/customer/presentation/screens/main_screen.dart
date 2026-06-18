@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,14 +20,32 @@ class CustomerMainScreen extends ConsumerStatefulWidget {
   ConsumerState<CustomerMainScreen> createState() => _CustomerMainScreenState();
 }
 
-class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
+class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen>
+    with WidgetsBindingObserver {
   int _currentIndex = 0;
   int _unreadNotifCount = 0;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadUnreadCount();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _loadUnreadCount());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadUnreadCount();
+    }
   }
 
   Future<void> _loadUnreadCount() async {

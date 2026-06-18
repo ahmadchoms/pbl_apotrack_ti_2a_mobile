@@ -90,7 +90,7 @@ class _OrderConfirmationScreenState
                   'medicine_id': item.id,
                   'medicine_name': item.name,
                   'unit_name': item.unit,
-                  'requires_prescription': false,
+                  'requires_prescription': item.requiresPrescription,
                   'quantity': item.quantity,
                   'price': item.price,
                   'subtotal': item.price * item.quantity,

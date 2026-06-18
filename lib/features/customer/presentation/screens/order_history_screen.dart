@@ -269,6 +269,22 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       padding: const EdgeInsets.fromLTRB(20, 20, 16, 0),
       child: Row(
         children: [
+          GestureDetector(
+            onTap: () => context.go('/'),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.home_rounded,
+                color: AppColors.primary,
+                size: 22,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
           const Expanded(
             child: Text(
               'Riwayat Pesanan',
