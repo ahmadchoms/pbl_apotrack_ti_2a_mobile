@@ -90,7 +90,7 @@ class _OrderConfirmationScreenState
                   'medicine_id': item.id,
                   'medicine_name': item.name,
                   'unit_name': item.unit,
-                  'requires_prescription': false,
+                  'requires_prescription': item.requiresPrescription,
                   'quantity': item.quantity,
                   'price': item.price,
                   'subtotal': item.price * item.quantity,
@@ -102,7 +102,7 @@ class _OrderConfirmationScreenState
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (_) => QrisPaymentScreen(
+            builder: (_) => QrisPaymentScreen(
               pharmacyId: widget.pharmacyId,
               pharmacyName: pharmacyName,
               deliveryMethod: widget.deliveryMethod,
@@ -113,6 +113,7 @@ class _OrderConfirmationScreenState
               items: items,
               subtotal: widget.total - widget.shippingCost,
               shippingCost: widget.shippingCost,
+              prescriptionFile: widget.prescriptionFile,
             ),
           ),
         );
@@ -145,6 +146,10 @@ class _OrderConfirmationScreenState
         courierCode: widget.courierCode,
         courierService: widget.courierService,
       );
+
+      if (widget.prescriptionFile != null) {
+        await service.uploadPrescription(order.id, widget.prescriptionFile!);
+      }
 
       if (!mounted) return;
 

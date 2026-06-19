@@ -260,6 +260,7 @@ class ProfileState {
     UserModel? profile,
     List<CustomerAddress>? addresses,
     CustomerAddress? tempGpsAddress,
+    bool clearTempGpsAddress = false,
     bool? isLoading,
     String? error,
     bool clearError = false,
@@ -267,7 +268,7 @@ class ProfileState {
     return ProfileState(
       profile: profile ?? this.profile,
       addresses: addresses ?? this.addresses,
-      tempGpsAddress: tempGpsAddress ?? this.tempGpsAddress,
+      tempGpsAddress: clearTempGpsAddress ? null : tempGpsAddress ?? this.tempGpsAddress,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : error ?? this.error,
     );
@@ -279,6 +280,10 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
 
   final StaffService _service;
   final SecureStorageService _storage;
+
+  void clearTempGpsLocation() {
+    state = state.copyWith(clearTempGpsAddress: true);
+  }
 
   void updateCurrentGpsLocation({
     required double latitude,
@@ -294,7 +299,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
       longitude: longitude,
       isPrimary: false,
     );
-    state = state.copyWith(tempGpsAddress: gpsAddress);
+    state = state.copyWith(tempGpsAddress: gpsAddress, clearTempGpsAddress: false);
   }
 
   Future<void> loadAll() async {

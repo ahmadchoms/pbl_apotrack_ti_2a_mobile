@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -17,6 +18,7 @@ class QrisPaymentScreen extends ConsumerStatefulWidget {
   final String? notes;
   final String? courierCode;
   final String? courierService;
+  final File? prescriptionFile;
 
   const QrisPaymentScreen({
     super.key,
@@ -30,6 +32,7 @@ class QrisPaymentScreen extends ConsumerStatefulWidget {
     this.notes,
     this.courierCode,
     this.courierService,
+    this.prescriptionFile,
   });
 
   @override
@@ -121,6 +124,10 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
         courierCode: widget.courierCode,
         courierService: widget.courierService,
       );
+
+      if (widget.prescriptionFile != null) {
+        await _orderService.uploadPrescription(order.id, widget.prescriptionFile!);
+      }
 
       _orderNumber = order.orderNumber;
 

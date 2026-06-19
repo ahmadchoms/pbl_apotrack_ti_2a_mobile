@@ -956,6 +956,76 @@ class _MetadataCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+            if (order.prescription?.patientName != null ||
+                order.prescription?.doctorName != null ||
+                order.prescription?.issuedDate != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (order.prescription?.patientName != null)
+                      _InfoRow(
+                        icon: Icons.person_rounded,
+                        label: 'Pasien',
+                        value: order.prescription!.patientName!,
+                      ),
+                    if (order.prescription?.doctorName != null)
+                      _InfoRow(
+                        icon: Icons.local_hospital_rounded,
+                        label: 'Dokter',
+                        value: order.prescription!.doctorName!,
+                      ),
+                    if (order.prescription?.issuedDate != null)
+                      _InfoRow(
+                        icon: Icons.calendar_today_rounded,
+                        label: 'Tanggal Resep',
+                        value: order.prescription!.issuedDate!,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (order.prescription?.rejectionNote != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.dangerLight,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.danger.withOpacity(0.2)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.info_rounded,
+                        color: AppColors.danger, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('ALASAN PENOLAKAN',
+                              style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.danger)),
+                          const SizedBox(height: 4),
+                          Text(order.prescription!.rejectionNote!,
+                              style: const TextStyle(
+                                  fontSize: 13, color: AppColors.danger)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             if (order.prescription?.imageUrl != null) ...[
               GestureDetector(
                 onTap: () {
@@ -1324,4 +1394,38 @@ String _formatRupiah(num value) {
     buf.write(str[i]);
   }
   return 'Rp ${buf.toString()}';
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppColors.textLight),
+          const SizedBox(width: 8),
+          Text('$label: ',
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textLight)),
+          Expanded(
+            child: Text(value,
+                style: const TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
 }

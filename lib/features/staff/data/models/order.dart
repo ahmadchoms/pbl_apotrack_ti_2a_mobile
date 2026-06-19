@@ -109,11 +109,19 @@ class PrescriptionData {
   final String id;
   final String? imageUrl;
   final String status;
+  final String? patientName;
+  final String? doctorName;
+  final String? issuedDate;
+  final String? rejectionNote;
 
   PrescriptionData({
     required this.id,
     this.imageUrl,
     required this.status,
+    this.patientName,
+    this.doctorName,
+    this.issuedDate,
+    this.rejectionNote,
   });
 
   factory PrescriptionData.fromJson(Map<String, dynamic> json) {
@@ -121,6 +129,10 @@ class PrescriptionData {
       id: json['id']?.toString() ?? '',
       imageUrl: json['image_url']?.toString(),
       status: json['status']?.toString() ?? 'UPLOADING',
+      patientName: json['patient_name']?.toString(),
+      doctorName: json['doctor_name']?.toString(),
+      issuedDate: json['issued_date']?.toString(),
+      rejectionNote: json['rejection_note']?.toString(),
     );
   }
 

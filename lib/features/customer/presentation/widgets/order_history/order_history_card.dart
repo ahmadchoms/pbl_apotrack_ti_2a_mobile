@@ -60,6 +60,17 @@ class OrderHistoryCard extends StatelessWidget {
           primaryLabel: 'Lacak Kurir',
           primarySolid: true,
         );
+      case 'DELIVERED':
+        return _StatusConfig(
+          badgeLabel: 'Diterima',
+          badgeColor: AppColors.mapGrid,
+          badgeBg: AppColors.warningLight,
+          iconColor: AppColors.mapGrid,
+          iconBg: AppColors.warningLight,
+          icon: Icons.check_circle_rounded,
+          primaryLabel: 'Beli Lagi',
+          primarySolid: true,
+        );
       case 'COMPLETED':
         return _StatusConfig(
           badgeLabel: 'Selesai',

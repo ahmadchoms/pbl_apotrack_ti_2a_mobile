@@ -8,12 +8,13 @@ import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/network/api_client.dart';
 import 'core/services/push_notification_service.dart';
+import 'core/services/local_notification_service.dart';
 import 'routes/app_router.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/customer/presentation/screens/order_detail_screen.dart';
+import 'features/customer/presentation/screens/order_history_screen.dart';
 import 'features/staff/presentation/screens/staff_orders_screen.dart';
 import 'features/staff/presentation/screens/staff_inventory_screen.dart';
-import 'shared/widgets/notification_popup.dart';
 import 'dart:async';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -26,7 +27,14 @@ bool get _supportsFcm {
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  debugPrint('Background message: ${message.messageId}');
+  await LocalNotificationService.init();
+  final data = message.data;
+  await LocalNotificationService.show(
+    id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+    title: (data['title'] ?? 'Notifikasi Baru') as String,
+    body: (data['body'] ?? '') as String,
+    payload: data.toString(),
+  );
 }
 
 Future<void> main() async {
@@ -53,6 +61,10 @@ Future<void> main() async {
       }
 
       await initializeDateFormatting('id_ID', null);
+
+      if (_supportsFcm) {
+        await LocalNotificationService.init();
+      }
 
       FlutterError.onError = (details) {
         FlutterError.presentError(details);
@@ -97,27 +109,74 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
 
   void _setupForegroundListener() {
     FirebaseMessaging.onMessage.listen((message) {
-      final title = message.notification?.title ?? 'Notifikasi Baru';
-      final body = message.notification?.body ?? '';
-      final data = message.data;
-      final type = (data['type'] ?? '').toString().toUpperCase();
-      final referenceId = data['reference_id'];
-      final navContext = AppRouter.navigatorKey.currentContext;
-      if (navContext != null && navContext.mounted) {
-        NotificationPopup.show(
-          context: navContext,
-          title: title,
-          body: body,
-          type: type,
-          referenceId: referenceId,
-          onTap: () => _navigateToScreen(message),
-        );
-      }
+      final title = data['title'] ?? message.notification?.title ?? 'Notifikasi Baru';
+      final body = data['body'] ?? message.notification?.body ?? '';
+
+      LocalNotificationService.show(
+        id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title: title,
+        body: body,
+        payload: data.toString(),
+      );
     });
   }
 
   void _setupBackgroundTapListener() {
     FirebaseMessaging.onMessageOpenedApp.listen(_navigateToScreen);
+    LocalNotificationService.onNotificationTap = (payload) {
+      if (payload == null || payload.isEmpty) return;
+      final navContext = AppRouter.navigatorKey.currentContext;
+      if (navContext == null) return;
+      try {
+        final data = _parsePayload(payload);
+        _navigateByData(context: navContext, data: data);
+      } catch (_) {}
+    };
+  }
+
+  void _navigateByData({required BuildContext context, required Map<String, dynamic> data}) {
+    final type = (data['type'] ?? '').toString().toUpperCase();
+    final referenceId = data['reference_id'];
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+    final navigator = Navigator.of(context);
+    if (user.isCustomer) {
+      switch (type) {
+        case 'ORDER':
+        case 'ORDER_STATUS':
+          if (referenceId != null && referenceId.toString().isNotEmpty) {
+            navigator.pushReplacement(
+              MaterialPageRoute(builder: (_) => const OrderHistoryScreen()),
+            );
+            navigator.push(
+              MaterialPageRoute(
+                builder: (_) => CustomerOrderDetailScreen(orderId: referenceId.toString()),
+              ),
+            );
+          }
+          break;
+      }
+    } else if (user.isStaff) {
+      switch (type) {
+        case 'ORDER':
+        case 'ORDER_STATUS':
+          navigator.push(MaterialPageRoute(builder: (_) => const StaffOrdersScreen()));
+          break;
+        case 'STOCK':
+        case 'INVENTORY':
+          navigator.push(MaterialPageRoute(builder: (_) => const StaffInventoryScreen()));
+          break;
+      }
+    }
+  }
+
+  Map<String, dynamic> _parsePayload(String payload) {
+    final map = <String, dynamic>{};
+    for (final entry in payload.replaceAll('{', '').replaceAll('}', '').split(', ')) {
+      final parts = entry.split(': ');
+      if (parts.length == 2) map[parts[0]] = parts[1];
+    }
+    return map;
   }
 
   void _setupTokenRefresh() {
@@ -154,6 +213,9 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
         case 'ORDER':
         case 'ORDER_STATUS':
           if (referenceId != null && referenceId.isNotEmpty) {
+            navigator.pushReplacement(
+              MaterialPageRoute(builder: (_) => const OrderHistoryScreen()),
+            );
             navigator.push(
               MaterialPageRoute(
                 builder: (_) => CustomerOrderDetailScreen(orderId: referenceId),

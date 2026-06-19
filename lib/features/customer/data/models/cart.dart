@@ -6,8 +6,10 @@ class CartItem {
   final String imageUrl;
   final String pharmacyName;
   final String pharmacyId;  // pharmacy UUID
-  int quantity;
+  final bool requiresPrescription;
+  final String? typeName;
   final int stock;
+  int quantity;
 
   CartItem({
     required this.id,
@@ -17,8 +19,10 @@ class CartItem {
     required this.imageUrl,
     required this.pharmacyName,
     required this.pharmacyId,
-    this.quantity = 1,
+    this.requiresPrescription = false,
+    this.typeName,
     this.stock = 99,
+    this.quantity = 1,
   });
 }
 

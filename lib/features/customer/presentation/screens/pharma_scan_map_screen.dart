@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/customer/data/models/pharmacy_model.dart';
 import 'package:mobile/features/customer/data/services/pharmacy_service.dart';
+import 'package:mobile/features/customer/presentation/providers/customer_profile_provider.dart';
 import 'medicine_list_screen.dart';
 
 class PharmaScanMapScreen extends ConsumerStatefulWidget {
@@ -92,11 +93,33 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
     }
   }
 
+  Position? get _activePosition {
+    final profileState = ref.read(customerProfileProvider);
+    final activeAddr = profileState.tempGpsAddress ??
+        profileState.addresses.where((a) => a.isPrimary).firstOrNull;
+    if (activeAddr != null) {
+      return Position(
+        latitude: activeAddr.latitude,
+        longitude: activeAddr.longitude,
+        timestamp: DateTime.now(),
+        accuracy: 0.0,
+        altitude: 0.0,
+        altitudeAccuracy: 0.0,
+        heading: 0.0,
+        headingAccuracy: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+      );
+    }
+    return _userPosition;
+  }
+
   double _hitungJarak(PharmacyModel p) {
-    if (_userPosition == null) return double.infinity;
+    final pos = _activePosition;
+    if (pos == null) return double.infinity;
     return Geolocator.distanceBetween(
-          _userPosition!.latitude,
-          _userPosition!.longitude,
+          pos.latitude,
+          pos.longitude,
           p.latitude,
           p.longitude,
         ) /
@@ -129,7 +152,8 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
       return matchSearch && matchFilter;
     }).toList();
 
-    if (_userPosition != null) {
+    final pos = _activePosition;
+    if (pos != null) {
       filtered.removeWhere((p) => _hitungJarak(p) > _maxRadiusKm);
     }
 
@@ -506,7 +530,7 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
 
   Widget _buildEmptyState() {
     String message = 'Apotek tidak ditemukan';
-    String detail = _userPosition != null
+    String detail = _activePosition != null
         ? 'Tidak ada apotek dalam radius ${_maxRadiusKm.toInt()} km'
         : 'Coba ubah kata kunci pencarian';
 

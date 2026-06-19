@@ -71,21 +71,42 @@ class LocationHelper {
       List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
-        // Susun alamat sederhana yang pas untuk Header Home Screen
-        final street = place.street ?? '';
+        
+        final name = place.name ?? '';
+        final thoroughfare = place.thoroughfare ?? '';
+        final subThoroughfare = place.subThoroughfare ?? '';
         final subLocality = place.subLocality ?? '';
         final locality = place.locality ?? '';
-        final name = place.name ?? '';
         
-        final list = [street, subLocality, locality]
-            .where((s) => s.isNotEmpty)
-            .toList();
-            
-        if (list.isEmpty && name.isNotEmpty) {
-          list.add(name);
+        final List<String> parts = [];
+        
+        // Hanya tambahkan nama landmark jika bukan plus code dan bukan sekadar nomor jalan
+        if (name.isNotEmpty && !name.contains('+') && name != subThoroughfare) {
+          parts.add(name);
         }
         
-        return list.join(', ');
+        // Gabungkan nama jalan dan nomor rumah/jalan jika ada
+        if (thoroughfare.isNotEmpty) {
+          if (subThoroughfare.isNotEmpty) {
+            parts.add('$thoroughfare No. $subThoroughfare');
+          } else {
+            parts.add(thoroughfare);
+          }
+        }
+        
+        // Tambahkan kelurahan/kecamatan
+        if (subLocality.isNotEmpty) {
+          parts.add(subLocality);
+        }
+        
+        // Tambahkan kota/kabupaten
+        if (locality.isNotEmpty) {
+          parts.add(locality);
+        }
+        
+        if (parts.isNotEmpty) {
+          return parts.join(', ');
+        }
       }
     } catch (e) {
       debugPrint('Gagal geocoding: $e');
