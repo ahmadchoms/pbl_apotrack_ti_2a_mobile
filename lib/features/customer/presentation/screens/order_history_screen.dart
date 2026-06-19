@@ -34,7 +34,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     'Diproses',
     'Siap Diambil',
     'Dikirim',
-    'Minta Batal',
     'Selesai',
     'Dibatalkan',
   ];
@@ -68,9 +67,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                   o.orderStatus == 'COMPLETED' || o.orderStatus == 'REVIEWED',
             )
             .toList();
-        break;
-      case 'Minta Batal':
-        result = all.where((o) => o.orderStatus == 'CANCEL_REQUESTED').toList();
         break;
       case 'Dibatalkan':
         result = all.where((o) => o.orderStatus == 'CANCELLED').toList();
