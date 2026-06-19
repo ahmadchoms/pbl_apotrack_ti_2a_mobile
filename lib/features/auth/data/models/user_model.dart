@@ -1,4 +1,3 @@
-/// Model data untuk pengguna yang terautentikasi.
 class UserModel {
   final String id;
   final String username;
@@ -19,13 +18,13 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    // 1. Ekstraksi Nama Apotek (Cek apakah dia String atau Map)
     String? pName;
     final rawPharmacyName = json['pharmacy_name'];
-    
+
     if (rawPharmacyName is String) {
       pName = rawPharmacyName;
-    } else if (json['pharmacy_staff'] != null && json['pharmacy_staff'] is Map) {
+    } else if (json['pharmacy_staff'] != null &&
+        json['pharmacy_staff'] is Map) {
       final staff = json['pharmacy_staff'] as Map<String, dynamic>;
       final pharmacy = staff['pharmacy'];
       if (pharmacy != null && pharmacy is Map) {
@@ -33,13 +32,11 @@ class UserModel {
       }
     }
 
-    // 2. Ekstraksi Avatar (Pastikan bukan Map)
     String? avatar;
     if (json['avatar_url'] is String) {
       avatar = json['avatar_url'] as String;
     }
 
-    // 3. Ekstraksi Phone (Cek beberapa kemungkinan key)
     final phone = json['phone']?.toString() ?? json['phone_number']?.toString();
 
     return UserModel(
@@ -65,8 +62,12 @@ class UserModel {
     };
   }
 
-  bool get isStaff => role == 'STAFF' || role == 'APOTEKER' || email.toLowerCase().contains('@apotek');
-  bool get isCustomer => role == 'USER' && !email.toLowerCase().contains('@apotek');
+  bool get isStaff =>
+      role == 'STAFF' ||
+      role == 'APOTEKER' ||
+      email.toLowerCase().contains('@apotek');
+  bool get isCustomer =>
+      role == 'USER' && !email.toLowerCase().contains('@apotek');
 
   String get initials {
     final parts = username.trim().split(' ');

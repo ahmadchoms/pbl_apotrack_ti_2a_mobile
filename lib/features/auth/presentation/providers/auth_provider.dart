@@ -158,7 +158,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String username,
     required String email,
     String? phone,
-    dynamic imageFile, // Bisa XFile atau File
+    dynamic imageFile,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
@@ -167,7 +167,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         'email': email,
         // ignore: use_null_aware_elements
         if (phone != null) 'phone': phone,
-        '_method': 'PUT', // Penting untuk Laravel Multipart Update
+        '_method': 'PUT',
       });
 
       if (imageFile != null) {

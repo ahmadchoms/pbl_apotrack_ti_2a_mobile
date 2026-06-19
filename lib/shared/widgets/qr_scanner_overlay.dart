@@ -35,20 +35,15 @@ class QrScannerOverlayShape extends ShapeBorder {
       height: cutOutSize,
     );
 
-    final paint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.5);
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.5);
 
     canvas.drawPath(
       Path.combine(
         PathOperation.difference,
         Path()..addRect(rect),
-        Path()
-          ..addRRect(
-            RRect.fromRectAndRadius(
-              cutOutRect,
-              Radius.circular(borderRadius),
-            ),
-          ),
+        Path()..addRRect(
+          RRect.fromRectAndRadius(cutOutRect, Radius.circular(borderRadius)),
+        ),
       ),
       paint,
     );
@@ -60,7 +55,6 @@ class QrScannerOverlayShape extends ShapeBorder {
 
     final borderPath = Path();
 
-    // Top Left
     borderPath.moveTo(cutOutRect.left, cutOutRect.top + borderLength);
     borderPath.lineTo(cutOutRect.left, cutOutRect.top + borderRadius);
     borderPath.arcToPoint(
@@ -69,7 +63,6 @@ class QrScannerOverlayShape extends ShapeBorder {
     );
     borderPath.lineTo(cutOutRect.left + borderLength, cutOutRect.top);
 
-    // Top Right
     borderPath.moveTo(cutOutRect.right - borderLength, cutOutRect.top);
     borderPath.lineTo(cutOutRect.right - borderRadius, cutOutRect.top);
     borderPath.arcToPoint(
@@ -78,7 +71,6 @@ class QrScannerOverlayShape extends ShapeBorder {
     );
     borderPath.lineTo(cutOutRect.right, cutOutRect.top + borderLength);
 
-    // Bottom Right
     borderPath.moveTo(cutOutRect.right, cutOutRect.bottom - borderLength);
     borderPath.lineTo(cutOutRect.right, cutOutRect.bottom - borderRadius);
     borderPath.arcToPoint(
@@ -87,7 +79,6 @@ class QrScannerOverlayShape extends ShapeBorder {
     );
     borderPath.lineTo(cutOutRect.right - borderLength, cutOutRect.bottom);
 
-    // Bottom Left
     borderPath.moveTo(cutOutRect.left + borderLength, cutOutRect.bottom);
     borderPath.lineTo(cutOutRect.left + borderRadius, cutOutRect.bottom);
     borderPath.arcToPoint(

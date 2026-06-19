@@ -498,7 +498,6 @@ class _AddressTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Badge showing count of other addresses
           if (badge != null)
             Container(
               margin: const EdgeInsets.only(right: 6),

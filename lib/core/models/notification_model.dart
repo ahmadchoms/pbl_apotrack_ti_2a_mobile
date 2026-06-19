@@ -1,4 +1,3 @@
-// mobile/lib/core/models/notification_model.dart
 class NotificationModel {
   final String id;
   final String title;
@@ -9,8 +8,12 @@ class NotificationModel {
   final DateTime createdAt;
 
   NotificationModel({
-    required this.id, required this.title, required this.message,
-    required this.type, required this.isRead, this.referenceId,
+    required this.id,
+    required this.title,
+    required this.message,
+    required this.type,
+    required this.isRead,
+    this.referenceId,
     required this.createdAt,
   });
 

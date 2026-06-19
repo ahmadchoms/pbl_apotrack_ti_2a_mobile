@@ -10,10 +10,7 @@ import 'order_history_screen.dart';
 class NotificationScreen extends ConsumerStatefulWidget {
   final bool showBack;
 
-  const NotificationScreen({
-    super.key,
-    this.showBack = true,
-  });
+  const NotificationScreen({super.key, this.showBack = true});
 
   @override
   ConsumerState<NotificationScreen> createState() => _NotificationScreenState();
@@ -36,17 +33,18 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       final data = await _notificationService.getNotifications();
       if (mounted) {
         setState(() {
-          _notifications = data.map((e) => NotificationModel.fromJson(e)).toList();
+          _notifications = data
+              .map((e) => NotificationModel.fromJson(e))
+              .toList();
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        // Tambahkan feedback jika error (optional)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat notifikasi: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memuat notifikasi: $e')));
       }
     }
   }
@@ -60,8 +58,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
         elevation: 0,
         leading: widget.showBack
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: AppColors.textDark, size: 18),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.textDark,
+                  size: 18,
+                ),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
@@ -82,23 +83,21 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _notifications.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadNotifications,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    itemCount: _notifications.length,
-                    itemBuilder: (context, index) {
-                      final notif = _notifications[index];
-                      // Oper objek NotificationModel ke item builder
-                      return _buildNotificationItem(context, notif); 
-                    },
-                  ),
-                ),
+          ? _buildEmptyState()
+          : RefreshIndicator(
+              onRefresh: _loadNotifications,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                itemCount: _notifications.length,
+                itemBuilder: (context, index) {
+                  final notif = _notifications[index];
+                  return _buildNotificationItem(context, notif);
+                },
+              ),
+            ),
     );
   }
 
-  // UPDATE: Parameter menggunakan NotificationModel
   Widget _buildNotificationItem(BuildContext context, NotificationModel notif) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -106,7 +105,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Material(
@@ -121,8 +124,15 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: _getIconBgColor(notif.type), shape: BoxShape.circle),
-                  child: Icon(_getIcon(notif.type), color: _getIconColor(notif.type), size: 20),
+                  decoration: BoxDecoration(
+                    color: _getIconBgColor(notif.type),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _getIcon(notif.type),
+                    color: _getIconColor(notif.type),
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -134,9 +144,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              notif.title, // Pakai notif.title
+                              notif.title,
                               style: TextStyle(
-                                fontWeight: notif.isRead ? FontWeight.w700 : FontWeight.w900,
+                                fontWeight: notif.isRead
+                                    ? FontWeight.w700
+                                    : FontWeight.w900,
                                 fontSize: 14,
                                 color: const Color(0xFF1E293B),
                               ),
@@ -146,19 +158,31 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                             Container(
                               width: 8,
                               height: 8,
-                              decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                              decoration: const BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                              ),
                             ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        notif.message, // Pakai notif.message
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12, height: 1.4, fontWeight: FontWeight.w500),
+                        notif.message,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                          height: 1.4,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _formatTime(notif.createdAt), // Gunakan DateTime dari model
-                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w600),
+                        _formatTime(notif.createdAt),
+                        style: const TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -195,7 +219,10 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       );
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => CustomerOrderDetailScreen(orderId: notif.referenceId!)),
+        MaterialPageRoute(
+          builder: (_) =>
+              CustomerOrderDetailScreen(orderId: notif.referenceId!),
+        ),
       );
     }
   }
@@ -207,11 +234,19 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.notifications_none_rounded, size: 80, color: Colors.grey[300]),
+            Icon(
+              Icons.notifications_none_rounded,
+              size: 80,
+              color: Colors.grey[300],
+            ),
             const SizedBox(height: 16),
             Text(
               'Belum ada notifikasi',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[600],
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -263,7 +298,6 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
     }
   }
 
-  // Update format time agar menerima DateTime
   String _formatTime(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);

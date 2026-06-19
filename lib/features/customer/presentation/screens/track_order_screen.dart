@@ -24,8 +24,11 @@ class TrackOrderScreen extends ConsumerWidget {
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textDark, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textDark,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: const Text(
@@ -39,8 +42,7 @@ class TrackOrderScreen extends ConsumerWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded,
-                color: AppColors.primary),
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
             onPressed: () {
               ref.invalidate(orderTrackingProvider(order.id));
               ref.invalidate(orderDetailProvider(order.id));
@@ -49,36 +51,32 @@ class TrackOrderScreen extends ConsumerWidget {
         ],
       ),
       body: trackingAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
-        error: (e, _) =>
-            _buildErrorState(context, ref, e.toString()),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => _buildErrorState(context, ref, e.toString()),
         data: (tracking) => detailAsync.when(
-          loading: () =>
-              _buildContent(context, ref, tracking, null),
-          error: (e, _) =>
-              _buildContent(context, ref, tracking, null),
-          data: (detail) =>
-              _buildContent(context, ref, tracking, detail),
+          loading: () => _buildContent(context, ref, tracking, null),
+          error: (e, _) => _buildContent(context, ref, tracking, null),
+          data: (detail) => _buildContent(context, ref, tracking, detail),
         ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref,
-      DeliveryTracking tracking, Order? detail) {
-    final pharmacyName =
-        order.pharmacy['name']?.toString() ?? '—';
-    final pharmacyAddress =
-        order.pharmacy['address']?.toString() ?? '—';
+  Widget _buildContent(
+    BuildContext context,
+    WidgetRef ref,
+    DeliveryTracking tracking,
+    Order? detail,
+  ) {
+    final pharmacyName = order.pharmacy['name']?.toString() ?? '—';
+    final pharmacyAddress = order.pharmacy['address']?.toString() ?? '—';
 
     final addressData = detail?.address ?? order.address;
     final deliveryAddress =
         addressData?['address_detail']?.toString() ??
-            addressData?['complete_address']?.toString() ??
-            '—';
-    final deliveryLabel =
-        addressData?['label']?.toString() ?? 'Tujuan';
+        addressData?['complete_address']?.toString() ??
+        '—';
+    final deliveryLabel = addressData?['label']?.toString() ?? 'Tujuan';
 
     // Tombol konfirmasi hanya muncul saat DELIVERED
     final isDelivered = tracking.status == 'delivered';
@@ -121,11 +119,11 @@ class TrackOrderScreen extends ConsumerWidget {
                   child: OutlinedButton(
                     onPressed: () => context.pop(),
                     style: OutlinedButton.styleFrom(
-                      padding:
-                          const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       side: const BorderSide(color: AppColors.divider),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                     child: const Text(
                       'Tutup',
@@ -144,16 +142,18 @@ class TrackOrderScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorState(
-      BuildContext context, WidgetRef ref, String error) {
+  Widget _buildErrorState(BuildContext context, WidgetRef ref, String error) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.local_shipping_outlined,
-                size: 56, color: AppColors.textMuted),
+            const Icon(
+              Icons.local_shipping_outlined,
+              size: 56,
+              color: AppColors.textMuted,
+            ),
             const SizedBox(height: 16),
             const Text(
               'Data tracking belum tersedia',
@@ -167,8 +167,7 @@ class TrackOrderScreen extends ConsumerWidget {
             Text(
               error,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                  color: AppColors.textSlate, fontSize: 12),
+              style: const TextStyle(color: AppColors.textSlate, fontSize: 12),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -274,8 +273,7 @@ class _ConfirmReceivedButtonState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -320,13 +318,11 @@ class _ConfirmReceivedButtonState
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context, false),
                       style: OutlinedButton.styleFrom(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(
-                            color: AppColors.divider),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(color: AppColors.divider),
                         shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       child: const Text(
                         'Belum',
@@ -345,16 +341,14 @@ class _ConfirmReceivedButtonState
                         backgroundColor: AppColors.success,
                         foregroundColor: AppColors.white,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       child: const Text(
                         'Ya, Diterima',
-                        style:
-                            TextStyle(fontWeight: FontWeight.w700),
+                        style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -385,7 +379,6 @@ class _ConfirmReceivedButtonState
           behavior: SnackBarBehavior.floating,
         ),
       );
-      // Pop kembali ke order history
       if (mounted) context.pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -413,14 +406,10 @@ class _ConfirmReceivedButtonState
                   strokeWidth: 2,
                 ),
               )
-            : const Icon(Icons.check_circle_outline_rounded,
-                size: 20),
+            : const Icon(Icons.check_circle_outline_rounded, size: 20),
         label: Text(
           _isLoading ? 'Memproses...' : 'Pesanan Diterima',
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.success,
@@ -428,7 +417,8 @@ class _ConfirmReceivedButtonState
           padding: const EdgeInsets.symmetric(vertical: 16),
           elevation: 0,
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16)),
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
     );

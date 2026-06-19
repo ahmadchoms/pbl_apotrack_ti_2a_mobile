@@ -175,7 +175,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       return;
     }
 
-    // Loading kecil selagi ambil stok terbaru dari server
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -190,7 +189,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     }
 
     if (!mounted) return;
-    Navigator.pop(context); // tutup loading
+    Navigator.pop(context);
 
     final List<String> outOfStockNames = [];
     final List<CartItem> toAdd = [];
@@ -260,7 +259,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       );
     }
 
-    // Kalau semua obat di pesanan itu habis, tidak usah pindah ke keranjang
     if (toAdd.isEmpty || !mounted) return;
 
     Navigator.push(
@@ -293,18 +291,14 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   }
 
   Widget _buildBody(CustomerOrderState state, List<Order> filtered) {
-    // Masih loading keduanya dan belum ada data sama sekali
     if (state.isLoading && filtered.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Keduanya gagal dan tidak ada data
     if (state.error != null) {
       return _buildErrorState(state.error!);
     }
 
-    // Ada partial error (salah satu gagal) tapi ada data → tampilkan data
-    // dengan banner peringatan di atas
     return RefreshIndicator(
       onRefresh: () => ref.read(customerOrderProvider.notifier).loadAll(),
       child: filtered.isEmpty
@@ -333,7 +327,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                     );
                   },
                 ),
-                // Banner partial error (history gagal tapi active berhasil)
                 if (state.historyError != null && state.activeOrders.isNotEmpty)
                   Positioned(
                     top: 0,

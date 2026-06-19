@@ -51,8 +51,6 @@ class ScanQrInvitationCard extends ConsumerWidget {
           );
 
           if (result != null && context.mounted) {
-            // Deteksi: kalau result berupa URL (hasil scan QR), pakai flow URL.
-            // Kalau pendek (8 karakter, hasil input manual PIN), pakai flow PIN.
             final isUrl = result.startsWith('http');
             if (isUrl) {
               _showConfirmDialog(context, ref, invitationUrl: result);
@@ -214,8 +212,9 @@ class ScanQrInvitationCard extends ConsumerWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color:
-                    isSuccess ? AppColors.successLight : AppColors.dangerLight,
+                color: isSuccess
+                    ? AppColors.successLight
+                    : AppColors.dangerLight,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -251,8 +250,9 @@ class ScanQrInvitationCard extends ConsumerWidget {
             child: ElevatedButton(
               onPressed: () => Navigator.pop(ctx),
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    isSuccess ? AppColors.success : AppColors.primary,
+                backgroundColor: isSuccess
+                    ? AppColors.success
+                    : AppColors.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

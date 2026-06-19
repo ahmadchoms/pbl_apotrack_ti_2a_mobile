@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/models/notification_model.dart';
-import '../../../../routes/app_router.dart';
-import '../../../../core/utils/location_helper.dart';
-import '../../data/models/cart.dart';
-import '../../data/services/notification_service.dart';
-import '../providers/customer_profile_provider.dart';
+import 'package:mobile/core/models/notification_model.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/core/utils/location_helper.dart';
+import 'package:mobile/features/customer/data/models/cart.dart';
+import 'package:mobile/features/customer/data/services/notification_service.dart';
+import 'package:mobile/features/customer/presentation/providers/customer_profile_provider.dart';
+import 'package:mobile/routes/app_router.dart';
 import 'cart_screen.dart';
 import 'notification.dart';
 import 'address/address_model.dart';
@@ -62,11 +62,13 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       );
 
       if (mounted) {
-        ref.read(customerProfileProvider.notifier).updateCurrentGpsLocation(
-          latitude: position.latitude,
-          longitude: position.longitude,
-          addressDetail: addressText,
-        );
+        ref
+            .read(customerProfileProvider.notifier)
+            .updateCurrentGpsLocation(
+              latitude: position.latitude,
+              longitude: position.longitude,
+              addressDetail: addressText,
+            );
       }
     } catch (e) {
       debugPrint('Gagal mendapatkan lokasi GPS: $e');
@@ -131,7 +133,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       _addressProvider,
       onSelected: () => setState(() {}),
       onSetPrimary: (address) {
-        ref.read(customerProfileProvider.notifier).setPrimaryAddress(address.id);
+        ref
+            .read(customerProfileProvider.notifier)
+            .setPrimaryAddress(address.id);
         _addressProvider.updatePrimaryFlags(address.id);
       },
       onAddressSaved: (address, isEdit) async {
@@ -166,8 +170,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   Widget build(BuildContext context) {
     ref.listen(customerProfileProvider, (prev, next) {
       if (!next.isLoading) {
-        final converted =
-            next.addresses.map(AddressModel.fromCustomerAddress).toList();
+        final converted = next.addresses
+            .map(AddressModel.fromCustomerAddress)
+            .toList();
         _addressProvider.loadFromApi(converted);
       }
     });
@@ -212,7 +217,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
 
   Widget _buildHeader() {
     final state = ref.watch(customerProfileProvider);
-    final activeAddr = state.tempGpsAddress ?? state.addresses.where((a) => a.isPrimary).firstOrNull;
+    final activeAddr =
+        state.tempGpsAddress ??
+        state.addresses.where((a) => a.isPrimary).firstOrNull;
     final locationName = activeAddr?.displayAddress ?? 'Atur Alamat';
     return Material(
       color: Colors.transparent,
@@ -238,7 +245,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                         Text(
                           'Lokasi Anda',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
@@ -401,7 +408,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -641,7 +648,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: gradientColors[0].withOpacity(0.3),
+              color: gradientColors[0].withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -655,7 +662,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
               child: Icon(
                 iconData,
                 size: 72,
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
               ),
             ),
             Padding(
@@ -667,7 +674,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(iconData, color: Colors.white, size: 20),

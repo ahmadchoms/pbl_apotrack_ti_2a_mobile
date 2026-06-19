@@ -19,33 +19,29 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 }
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
-  // ── State ────────────────────────────────────────────────────────
-  String _deliveryMethod = 'kirim'; // 'kirim' | 'ambil'
+  String _deliveryMethod = 'kirim';
   String _paymentMethod = 'cod';
   File? _prescriptionFile;
   final TextEditingController _noteController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
-  // Address provider — diisi dari API via customerProfileProvider
   late final AddressProvider _addressProvider;
   bool _addressesLoaded = false;
 
-  // Courier state
   List<Map<String, dynamic>> _courierRates = [];
   String? _selectedCourierCode;
   String? _selectedCourierService;
   int _selectedCourierPrice = 0;
   bool _isLoadingRates = false;
   bool _ratesError = false;
-  // Dummy item (in real app, comes from CartState)
   final List<CartItem> _cartItems = CartState().items;
 
   int get _subtotal =>
       _cartItems.fold(0, (sum, item) => sum + item.price * item.quantity);
-  int get _shippingCost => _deliveryMethod == 'kirim' ? _selectedCourierPrice : 0;
+  int get _shippingCost =>
+      _deliveryMethod == 'kirim' ? _selectedCourierPrice : 0;
   int get _total => _subtotal + _shippingCost;
 
-  // ── Init ──────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
@@ -59,8 +55,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ref.read(customerProfileProvider.notifier).loadAll();
     } else if (profileState.addresses.isNotEmpty) {
       _addressesLoaded = true;
-      final converted =
-          profileState.addresses.map(AddressModel.fromCustomerAddress).toList();
+      final converted = profileState.addresses
+          .map(AddressModel.fromCustomerAddress)
+          .toList();
       _addressProvider.loadFromApi(converted);
       _initializeDefaultAddress();
     }
@@ -71,32 +68,31 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     final profileState = ref.read(customerProfileProvider);
 
-    // 1. Check if there is a temp GPS address active from the home screen
     if (profileState.tempGpsAddress != null) {
       final gpsAddr = profileState.tempGpsAddress!;
       if (gpsAddr.id == 'gps_session') {
-        // Automatically save the temporary GPS location to the DB for checkout
         try {
           setState(() {
             _isLoadingRates = true;
           });
-          final savedAddr = await ref.read(customerProfileProvider.notifier).addAddress(
-            label: 'Lokasi Sekarang',
-            addressDetail: gpsAddr.addressDetail,
-            latitude: gpsAddr.latitude,
-            longitude: gpsAddr.longitude,
-            isPrimary: false,
-          );
+          final savedAddr = await ref
+              .read(customerProfileProvider.notifier)
+              .addAddress(
+                label: 'Lokasi Sekarang',
+                addressDetail: gpsAddr.addressDetail,
+                latitude: gpsAddr.latitude,
+                longitude: gpsAddr.longitude,
+                isPrimary: false,
+              );
           final activeAddr = AddressModel.fromCustomerAddress(savedAddr);
           _addressProvider.selectAddress(activeAddr);
-          
-          // Refresh list of addresses in provider
+
           final updatedProfileState = ref.read(customerProfileProvider);
           final converted = updatedProfileState.addresses
               .map(AddressModel.fromCustomerAddress)
               .toList();
           _addressProvider.loadFromApi(converted);
-          
+
           _fetchRates();
         } catch (e) {
           debugPrint('Failed to save temp GPS location on checkout: $e');
@@ -105,28 +101,33 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           });
         }
       } else {
-        _addressProvider.selectAddress(AddressModel.fromCustomerAddress(gpsAddr));
+        _addressProvider.selectAddress(
+          AddressModel.fromCustomerAddress(gpsAddr),
+        );
         _fetchRates();
       }
       return;
     }
 
-    // 2. Otherwise, check if there is a primary address
-    final primaryAddr = profileState.addresses.where((a) => a.isPrimary).firstOrNull;
+    final primaryAddr = profileState.addresses
+        .where((a) => a.isPrimary)
+        .firstOrNull;
     if (primaryAddr != null) {
-      _addressProvider.selectAddress(AddressModel.fromCustomerAddress(primaryAddr));
+      _addressProvider.selectAddress(
+        AddressModel.fromCustomerAddress(primaryAddr),
+      );
       _fetchRates();
       return;
     }
 
-    // 3. Fallback to first address if no primary
     if (profileState.addresses.isNotEmpty) {
-      _addressProvider.selectAddress(AddressModel.fromCustomerAddress(profileState.addresses.first));
+      _addressProvider.selectAddress(
+        AddressModel.fromCustomerAddress(profileState.addresses.first),
+      );
       _fetchRates();
     }
   }
 
-  // ── Courier Rates ────────────────────────────────────────────────
   Future<void> _fetchRates() async {
     final address = _addressProvider.selectedAddress;
     if (address == null) return;
@@ -142,13 +143,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     try {
       final service = ref.read(orderServiceProvider);
-      final items = _cartItems.map((item) => {
-        'id': item.id,
-        'name': item.name,
-        'quantity': item.quantity,
-        'value': item.price,
-        'weight': 200,
-      }).toList();
+      final items = _cartItems
+          .map(
+            (item) => {
+              'id': item.id,
+              'name': item.name,
+              'quantity': item.quantity,
+              'value': item.price,
+              'weight': 200,
+            },
+          )
+          .toList();
       final result = await service.getShippingRates(
         pharmacyId: _cartItems.isNotEmpty ? _cartItems.first.pharmacyId : '',
         addressId: address.id,
@@ -161,7 +166,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         _isLoadingRates = false;
       });
 
-      // Auto-pilih kurir pertama
       if (_courierRates.isNotEmpty) {
         _selectCourier(_courierRates.first);
       }
@@ -182,7 +186,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     });
   }
 
-  // ── Pick Image ───────────────────────────────────────────────────
   Future<void> _pickPrescription() async {
     showModalBottomSheet(
       context: context,
@@ -206,26 +209,24 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              _sheetOption(
-                Icons.camera_alt_rounded,
-                'Ambil Foto',
-                () async {
-                  Navigator.pop(context);
-                  final xfile =
-                      await _picker.pickImage(source: ImageSource.camera);
-                  if (xfile != null) {
-                    setState(() => _prescriptionFile = File(xfile.path));
-                  }
-                },
-              ),
+              _sheetOption(Icons.camera_alt_rounded, 'Ambil Foto', () async {
+                Navigator.pop(context);
+                final xfile = await _picker.pickImage(
+                  source: ImageSource.camera,
+                );
+                if (xfile != null) {
+                  setState(() => _prescriptionFile = File(xfile.path));
+                }
+              }),
               const SizedBox(height: 12),
               _sheetOption(
                 Icons.photo_library_rounded,
                 'Pilih dari Galeri',
                 () async {
                   Navigator.pop(context);
-                  final xfile =
-                      await _picker.pickImage(source: ImageSource.gallery);
+                  final xfile = await _picker.pickImage(
+                    source: ImageSource.gallery,
+                  );
                   if (xfile != null) {
                     setState(() => _prescriptionFile = File(xfile.path));
                   }
@@ -266,14 +267,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  // ── Build ────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     ref.listen(customerProfileProvider, (prev, next) {
       if (!next.isLoading && next.addresses.isNotEmpty && !_addressesLoaded) {
         _addressesLoaded = true;
-        final converted =
-            next.addresses.map(AddressModel.fromCustomerAddress).toList();
+        final converted = next.addresses
+            .map(AddressModel.fromCustomerAddress)
+            .toList();
         _addressProvider.loadFromApi(converted);
         _initializeDefaultAddress();
       }
@@ -288,8 +289,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 18, color: AppColors.textDark),
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 18,
+                color: AppColors.textDark,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             title: const Text(
@@ -312,7 +316,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               _buildOrderSummary(),
               _buildDivider(),
               _buildDeliveryMethod(),
-              // ── Alamat & Kurir muncul hanya saat pilih "kirim" ────
               if (_deliveryMethod == 'kirim') ...[
                 _buildDivider(),
                 _buildAddressSection(),
@@ -335,7 +338,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  // ── Section: Order Summary ───────────────────────────────────────
   Widget _buildOrderSummary() {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -360,8 +362,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         width: 56,
                         height: 56,
                         color: AppColors.background,
-                        child: Icon(Icons.medication_rounded,
-                            color: AppColors.primary.withValues(alpha: 0.3)),
+                        child: Icon(
+                          Icons.medication_rounded,
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
                       ),
                     ),
                   ),
@@ -402,7 +406,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.15),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -416,11 +422,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             }
                           },
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 6,
+                            ),
                             child: Icon(
                               Icons.remove_rounded,
                               size: 16,
-                              color: item.quantity > 1 ? AppColors.primary : AppColors.textLight,
+                              color: item.quantity > 1
+                                  ? AppColors.primary
+                                  : AppColors.textLight,
                             ),
                           ),
                         ),
@@ -441,18 +452,25 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Stok tidak mencukupi (Maks. ${item.stock})'),
+                                  content: Text(
+                                    'Stok tidak mencukupi (Maks. ${item.stock})',
+                                  ),
                                   duration: const Duration(seconds: 2),
                                 ),
                               );
                             }
                           },
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 6,
+                            ),
                             child: Icon(
                               Icons.add_rounded,
                               size: 16,
-                              color: item.quantity < item.stock ? AppColors.primary : AppColors.textLight,
+                              color: item.quantity < item.stock
+                                  ? AppColors.primary
+                                  : AppColors.textLight,
                             ),
                           ),
                         ),
@@ -468,7 +486,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  // ── Section: Delivery Method ─────────────────────────────────────
   Widget _buildDeliveryMethod() {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -525,16 +542,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     color: AppColors.primary.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
-                  )
+                  ),
                 ]
               : [],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon,
-                color: isSelected ? Colors.white : AppColors.textLight,
-                size: 20),
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : AppColors.textLight,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Text(
               label,
@@ -550,7 +569,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  // ── Section: Alamat Pengiriman ───────────────────────────────────
   Widget _buildAddressSection() {
     final selected = _addressProvider.selectedAddress;
     return AnimatedSize(
@@ -566,8 +584,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 _sectionLabel('ALAMAT PENGIRIMAN'),
                 const Spacer(),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEF4444),
                     borderRadius: BorderRadius.circular(6),
@@ -604,7 +624,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ],
               ),
               child: selected == null
-                  // ── Belum pilih alamat ─────────────────────────
                   ? GestureDetector(
                       onTap: _openAddressPicker,
                       child: Row(
@@ -616,8 +635,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                               color: Colors.orange.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.location_off_rounded,
-                                color: Colors.orange, size: 20),
+                            child: const Icon(
+                              Icons.location_off_rounded,
+                              color: Colors.orange,
+                              size: 20,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           const Expanded(
@@ -643,12 +665,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                               ],
                             ),
                           ),
-                          Icon(Icons.chevron_right_rounded,
-                              color: AppColors.textLight, size: 20),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColors.textLight,
+                            size: 20,
+                          ),
                         ],
                       ),
                     )
-                  // ── Alamat sudah dipilih ───────────────────────
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -659,8 +683,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(Icons.location_on_rounded,
-                              color: AppColors.primary, size: 20),
+                          child: Icon(
+                            Icons.location_on_rounded,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -689,9 +716,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(Icons.flag_rounded,
-                                        size: 11,
-                                        color: AppColors.textLight),
+                                    const Icon(
+                                      Icons.flag_rounded,
+                                      size: 11,
+                                      color: AppColors.textLight,
+                                    ),
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
@@ -715,7 +744,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           onTap: _openAddressPicker,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               border: Border.all(color: AppColors.primary),
                               borderRadius: BorderRadius.circular(20),
@@ -734,22 +765,27 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
             ),
 
-            // ── Warning jika belum pilih alamat ───────────────────
             if (selected == null) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.orange.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: Colors.orange.withValues(alpha: 0.2)),
+                    color: Colors.orange.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.info_outline_rounded,
-                        size: 14, color: Colors.orange),
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 14,
+                      color: Colors.orange,
+                    ),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -765,8 +801,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
               ),
             ],
-
-
           ],
         ),
       ),
@@ -787,7 +821,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         });
       },
       onSetPrimary: (address) {
-        ref.read(customerProfileProvider.notifier).setPrimaryAddress(address.id);
+        ref
+            .read(customerProfileProvider.notifier)
+            .setPrimaryAddress(address.id);
         _addressProvider.updatePrimaryFlags(address.id);
       },
       onAddressSaved: (address, isEdit) async {
@@ -818,8 +854,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  // ── Section: Pilih Kurir ─────────────────────────────────────────
-  // ── Courier Rate Trigger (auto-fetch, no UI) ──────────────────
   Widget _buildCourierRateTrigger() {
     if (_courierRates.isEmpty && !_isLoadingRates && !_ratesError) {
       final address = _addressProvider.selectedAddress;
@@ -830,7 +864,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return const SizedBox.shrink();
   }
 
-  // ── Section: Note ────────────────────────────────────────────────
   Widget _buildNoteField() {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -851,8 +884,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               style: const TextStyle(fontSize: 13, color: AppColors.textDark),
               decoration: const InputDecoration(
                 hintText: 'Contoh: Titipkan di satpam, jangan diketuk...',
-                hintStyle:
-                    TextStyle(color: AppColors.textLight, fontSize: 13),
+                hintStyle: TextStyle(color: AppColors.textLight, fontSize: 13),
                 contentPadding: EdgeInsets.all(14),
                 border: InputBorder.none,
               ),
@@ -863,7 +895,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  // ── Section: Payment Method ──────────────────────────────────────
   Widget _buildPaymentMethod() {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -875,8 +906,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               _sectionLabel('METODE PEMBAYARAN'),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEF4444),
                   borderRadius: BorderRadius.circular(6),
@@ -981,16 +1011,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color:
-                      isSelected ? AppColors.primary : Colors.grey.shade300,
+                  color: isSelected ? AppColors.primary : Colors.grey.shade300,
                   width: 2,
                 ),
-                color:
-                    isSelected ? AppColors.primary : Colors.transparent,
+                color: isSelected ? AppColors.primary : Colors.transparent,
               ),
               child: isSelected
-                  ? const Icon(Icons.check_rounded,
-                      color: Colors.white, size: 14)
+                  ? const Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    )
                   : null,
             ),
           ],
@@ -999,7 +1030,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  // ── Section: Prescription Upload ────────────────────────────────
   Widget _buildPrescriptionUpload() {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -1011,8 +1041,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               _sectionLabel('UPLOAD RESEP DOKTER'),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(6),
@@ -1044,8 +1073,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
               child: Column(
                 children: [
-                  Icon(Icons.upload_file_rounded,
-                      color: AppColors.primary.withValues(alpha: 0.5), size: 36),
+                  Icon(
+                    Icons.upload_file_rounded,
+                    color: AppColors.primary.withValues(alpha: 0.5),
+                    size: 36,
+                  ),
                   const SizedBox(height: 8),
                   const Text(
                     'Unggah foto resep Anda',
@@ -1058,10 +1090,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   const SizedBox(height: 4),
                   const Text(
                     'Format JPG, PNG, atau PDF (Maks. 5MB)',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textLight,
-                    ),
+                    style: TextStyle(fontSize: 11, color: AppColors.textLight),
                   ),
                 ],
               ),
@@ -1069,8 +1098,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
           const SizedBox(height: 10),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
               borderRadius: BorderRadius.circular(12),
@@ -1102,24 +1130,25 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded,
-                        size: 18, color: AppColors.textLight),
-                    onPressed: () =>
-                        setState(() => _prescriptionFile = null),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: AppColors.textLight,
+                    ),
+                    onPressed: () => setState(() => _prescriptionFile = null),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
                 ] else ...[
-                  Icon(Icons.insert_drive_file_outlined,
-                      color: AppColors.textLight.withValues(alpha: 0.5),
-                      size: 20),
+                  Icon(
+                    Icons.insert_drive_file_outlined,
+                    color: AppColors.textLight.withValues(alpha: 0.5),
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   const Text(
                     'Belum ada file dipilih',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textLight,
-                    ),
+                    style: TextStyle(fontSize: 12, color: AppColors.textLight),
                   ),
                 ],
               ],
@@ -1130,7 +1159,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  // ── Section: Payment Details ─────────────────────────────────────
   Widget _buildPaymentDetails() {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -1151,16 +1179,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 _priceRow('Subtotal Produk', _subtotal),
                 const SizedBox(height: 10),
                 _priceRow(
-                    _deliveryMethod == 'kirim'
-                        ? (_selectedCourierCode != null
+                  _deliveryMethod == 'kirim'
+                      ? (_selectedCourierCode != null
                             ? 'Biaya Pengiriman (${_selectedCourierCode!.toUpperCase()})'
                             : 'Biaya Pengiriman')
-                        : 'Biaya Pengiriman',
-                    _deliveryMethod == 'kirim' ? _selectedCourierPrice : 0),
+                      : 'Biaya Pengiriman',
+                  _deliveryMethod == 'kirim' ? _selectedCourierPrice : 0,
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  child:
-                      Divider(color: Colors.grey.shade100, height: 1),
+                  child: Divider(color: Colors.grey.shade100, height: 1),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1210,22 +1238,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: isDiscount
-                ? const Color(0xFFEF4444)
-                : AppColors.textDark,
+            color: isDiscount ? const Color(0xFFEF4444) : AppColors.textDark,
           ),
         ),
       ],
     );
   }
 
-  // ── Bottom Bar ───────────────────────────────────────────────────
   Widget _buildBottomBar() {
-    // Validasi: jika kirim, wajib ada alamat + kurir
     final bool hasAddress = _addressProvider.selectedAddress != null;
     final bool hasCourier = _selectedCourierCode != null;
-    final bool canProceed = _deliveryMethod == 'ambil' ||
-        (hasAddress && hasCourier);
+    final bool canProceed =
+        _deliveryMethod == 'ambil' || (hasAddress && hasCourier);
 
     String? errorMsg;
     if (_deliveryMethod == 'kirim') {
@@ -1238,7 +1262,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     return Container(
       padding: EdgeInsets.fromLTRB(
-          20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
+        20,
+        16,
+        20,
+        MediaQuery.of(context).padding.bottom + 16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -1262,12 +1290,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         cartItems: _cartItems,
                         deliveryMethod: _deliveryMethod,
                         paymentMethod: _paymentMethod,
-                        courierCode: _deliveryMethod == 'kirim' ? _selectedCourierCode : null,
+                        courierCode: _deliveryMethod == 'kirim'
+                            ? _selectedCourierCode
+                            : null,
                         courierService: _selectedCourierService,
                         total: _total,
                         shippingCost: _shippingCost,
-                        deliveryAddress:
-                            _addressProvider.selectedAddress,
+                        deliveryAddress: _addressProvider.selectedAddress,
                         pharmacyId: _cartItems.isNotEmpty
                             ? _cartItems.first.pharmacyId
                             : '',
@@ -1279,14 +1308,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               : () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(errorMsg ?? 'Lengkapi data terlebih dahulu'),
+                      content: Text(
+                        errorMsg ?? 'Lengkapi data terlebih dahulu',
+                      ),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                 },
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                canProceed ? AppColors.primary : Colors.grey.shade300,
+            backgroundColor: canProceed
+                ? AppColors.primary
+                : Colors.grey.shade300,
             foregroundColor: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -1302,25 +1334,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────
-  Widget _buildDivider() =>
-      Container(height: 8, color: Colors.grey.shade100);
+  Widget _buildDivider() => Container(height: 8, color: Colors.grey.shade100);
 
   Widget _sectionLabel(String text) => Text(
-        text,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textLight,
-          letterSpacing: 0.8,
-        ),
-      );
+    text,
+    style: const TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textLight,
+      letterSpacing: 0.8,
+    ),
+  );
 
   String _formatPrice(int price) {
     return price.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]}.',
-        );
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
   }
 
   @override

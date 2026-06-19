@@ -19,7 +19,6 @@ class MedicineModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  // Dari join tabel
   final String? categoryName;
   final String? typeName;
   final String? unitName;
@@ -66,14 +65,16 @@ class MedicineModel {
       dosageInfo: json['dosage_info'] as String? ?? '',
       price: double.parse((json['price'] ?? 0).toString()),
       requiresPrescription: json['requires_prescription'] as bool? ?? false,
-      weightInGrams:
-          double.parse((json['weight_in_grams'] ?? 0).toString()),
+      weightInGrams: double.parse((json['weight_in_grams'] ?? 0).toString()),
       imageUrl: json['image_url'] as String?,
       isActive: json['is_active'] as bool? ?? true,
       totalActiveStock: (json['total_active_stock'] as num?)?.toInt() ?? 0,
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? '') ?? DateTime.now(),
-      // Dari join (Supabase) atau langsung (Laravel API)
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(json['updated_at'] as String? ?? '') ??
+          DateTime.now(),
       categoryName: json['medicine_categories'] != null
           ? json['medicine_categories']['name'] as String?
           : json['category'] as String?,
@@ -111,7 +112,6 @@ class Medicine {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  // Dari join tabel
   final String? categoryName;
   final String? typeName;
   final String? unitName;
@@ -157,13 +157,20 @@ class Medicine {
       description: json['description'] as String? ?? '',
       dosageInfo: json['dosage_info'] as String? ?? '',
       price: double.tryParse((json['price'] ?? 0).toString()) ?? 0.0,
-      requiresPrescription: json['requires_prescription'] == true || json['requires_prescription'] == 1,
-      weightInGrams: double.tryParse((json['weight_in_grams'] ?? 0).toString()) ?? 0.0,
+      requiresPrescription:
+          json['requires_prescription'] == true ||
+          json['requires_prescription'] == 1,
+      weightInGrams:
+          double.tryParse((json['weight_in_grams'] ?? 0).toString()) ?? 0.0,
       imageUrl: json['image_url'] as String?,
       isActive: json['is_active'] as bool? ?? true,
       totalActiveStock: (json['total_active_stock'] as num?)?.toInt() ?? 0,
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(json['updated_at'] as String? ?? '') ??
+          DateTime.now(),
       categoryName: json['medicine_categories'] != null
           ? json['medicine_categories']['name'] as String?
           : json['category'] as String?,

@@ -29,7 +29,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
   Future<void> _handleLogout() async {
     try {
       await ref.read(profileProvider.notifier).logout();
-      // Invalidate semua provider agar data customer lama tidak tersisa
       ref.invalidate(customerOrderProvider);
       ref.invalidate(profileProvider);
       ref.invalidate(authNotifierProvider);

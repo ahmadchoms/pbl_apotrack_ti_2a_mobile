@@ -5,15 +5,12 @@ import '../../../../core/network/secure_storage_service.dart';
 import '../models/user_model.dart';
 import '../repositories/auth_repository.dart';
 
-/// Service untuk menangani logika bisnis otentikasi.
-/// Menghubungkan AuthRepository (API) dengan SecureStorageService (Lokal).
 class AuthService {
   final AuthRepository _repository;
   final SecureStorageService _storage;
 
   AuthService(this._repository, this._storage);
 
-  /// Melakukan login dan menyimpan token serta informasi user.
   Future<UserModel> login({
     required String emailOrPhone,
     required String password,
@@ -23,7 +20,6 @@ class AuthService {
       password: password,
     );
 
-    // Simpan token, role, dan data user ke storage lokal
     await _storage.saveToken(result['token']);
     final user = UserModel.fromJson(result['user']);
     await _storage.saveUserRole(user.role);
@@ -32,18 +28,15 @@ class AuthService {
     return user;
   }
 
-  /// Melakukan logout dan membersihkan storage lokal.
   Future<void> logout() async {
     try {
       await _repository.logout();
     } catch (_) {
-      // Abaikan error logout API, tetap bersihkan storage lokal
     } finally {
       await _storage.clearAll();
     }
   }
 
-  /// Memulihkan sesi user dari token yang tersimpan.
   Future<UserModel?> restoreSession() async {
     final token = await _storage.getToken();
     if (token == null) return null;
@@ -63,13 +56,11 @@ class AuthService {
         statusCode = e.response?.statusCode;
       }
 
-      // Hapus sesi hanya jika token expired/invalid (401), bukan error jaringan
       if (statusCode == 401) {
         await _storage.clearAll();
         return null;
       }
 
-      // Untuk error jaringan/timeout, coba pakai data user yang di-cache
       if (originalError is DioException) {
         final cached = await _storage.getUserData();
         if (cached != null) {
@@ -77,16 +68,13 @@ class AuthService {
             return UserModel.fromJson(
               jsonDecode(cached) as Map<String, dynamic>,
             );
-          } catch (_) {
-            // cached data corrupted
-          }
+          } catch (_) {}
         }
       }
       return null;
     }
   }
 
-  /// Finalisasi pendaftaran setelah verifikasi OTP.
   Future<UserModel?> finalizeRegistration({
     required String email,
     required String otp,
@@ -109,8 +97,6 @@ class AuthService {
     }
     return null;
   }
-
-  // --- Proxy ke Repository (Logic tanpa storage) ---
 
   Future<void> forgotPassword({required String email}) async {
     await _repository.forgotPassword(email: email);

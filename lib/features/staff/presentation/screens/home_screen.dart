@@ -269,33 +269,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (_) => const Center(child: CircularProgressIndicator()),
+                builder: (_) =>
+                    const Center(child: CircularProgressIndicator()),
               );
 
               try {
-                final order = await ref.read(staffServiceProvider).verifyOrderByCode(code);
+                final order = await ref
+                    .read(staffServiceProvider)
+                    .verifyOrderByCode(code);
                 if (!context.mounted) return;
-                Navigator.pop(context); // tutup loading
+                Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Verifikasi berhasil!'),
                     backgroundColor: AppColors.success,
                     behavior: SnackBarBehavior.floating,
                     margin: EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
                   ),
                 );
                 context.push('/staff/order-detail', extra: order);
               } catch (e) {
                 if (!context.mounted) return;
-                Navigator.pop(context); // tutup loading
+                Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Verifikasi gagal: $e'),
                     backgroundColor: AppColors.danger,
                     behavior: SnackBarBehavior.floating,
                     margin: const EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
                   ),
                 );
               }
@@ -431,8 +438,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 }
-
-// --- SUB-WIDGETS ---
 
 class _ActionCard extends StatelessWidget {
   final String title, subtitle;
@@ -571,7 +576,6 @@ class _RecentOrderTile extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          // Navigasi ke OrderDetailScreen dengan mengirimkan data order
           onTap: () {
             HapticFeedback.lightImpact();
             context.push('/staff/order-detail', extra: order);
@@ -614,7 +618,6 @@ class _RecentOrderTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Gunakan status badge informatif yang telah kita buat sebelumnya
                 _buildStatusBadge(order.orderStatus),
               ],
             ),
@@ -625,7 +628,6 @@ class _RecentOrderTile extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(String status) {
-
     final Map<String, ({String label, Color color, IconData icon})>
     statusConfig = {
       'PENDING': (
@@ -673,7 +675,10 @@ class _RecentOrderTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: config.color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: config.color.withValues(alpha: 0.2), width: 1),
+        border: Border.all(
+          color: config.color.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -1,5 +1,3 @@
-// Model tambahan khusus customer yang tidak ada di staff/data/models/order.dart
-
 class CustomerPrescription {
   final String id;
   final String imageUrl;

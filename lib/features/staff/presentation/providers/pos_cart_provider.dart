@@ -103,5 +103,4 @@ final posCartProvider = StateNotifierProvider<PosCartNotifier, List<CartItem>>((
   return PosCartNotifier();
 });
 
-// Provider untuk memantau status loading checkout secara global
 final posProcessingProvider = StateProvider<bool>((ref) => false);

@@ -7,18 +7,14 @@ import '../auth/auth_state_provider.dart';
 import 'app_exception.dart';
 import 'secure_storage_service.dart';
 
-/// Base URL server Laravel.
-/// Override at build time: flutter run --dart-define=API_BASE_URL=https://api.example.com
 const String _kBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
   defaultValue: 'http://127.0.0.1:8000/api',
 );
 
-/// Riverpod Provider untuk instance Dio yang sudah terkonfigurasi penuh.
 final dioProvider = Provider<Dio>((ref) {
   final storageService = ref.watch(secureStorageServiceProvider);
 
-  // Penanganan otomatis untuk Android Emulator
   String baseUrl = _kBaseUrl;
   if (!kIsWeb && Platform.isAndroid && baseUrl.contains('127.0.0.1')) {
     baseUrl = baseUrl.replaceFirst('127.0.0.1', '10.0.2.2');
@@ -27,7 +23,6 @@ final dioProvider = Provider<Dio>((ref) {
   return _buildDio(storageService, ref, baseUrl);
 });
 
-/// Factory function yang membangun Dio dengan semua konfigurasi.
 Dio _buildDio(SecureStorageService storageService, Ref ref, String baseUrl) {
   final dio = Dio(
     BaseOptions(
@@ -42,7 +37,6 @@ Dio _buildDio(SecureStorageService storageService, Ref ref, String baseUrl) {
     ),
   );
 
-  // Pasang interceptor autentikasi & logging
   dio.interceptors.addAll([
     _AuthInterceptor(storageService, ref),
     if (kDebugMode) _LoggingInterceptor(),
@@ -51,10 +45,6 @@ Dio _buildDio(SecureStorageService storageService, Ref ref, String baseUrl) {
   return dio;
 }
 
-// ─────────────────────────────────────────────
-// AUTH INTERCEPTOR
-// Otomatis menyisipkan Bearer token ke setiap request
-// ─────────────────────────────────────────────
 class _AuthInterceptor extends Interceptor {
   _AuthInterceptor(this._storageService, this._ref);
   final SecureStorageService _storageService;
@@ -70,7 +60,6 @@ class _AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // Dynamic IP discovery for local development in debug mode on physical devices/emulators
     if (kDebugMode &&
         !kIsWeb &&
         (options.baseUrl.contains('localhost') ||
@@ -112,7 +101,6 @@ class _AuthInterceptor extends Interceptor {
       _isHandling401 = false;
     }
 
-    // Transformasi error menjadi pesan yang lebih ramah
     final appError = _mapDioError(err);
     final appException = AppException.fromDioException(appError);
     final wrappedError = appError.copyWith(
@@ -120,7 +108,6 @@ class _AuthInterceptor extends Interceptor {
       error: appException,
     );
 
-    // Layer di atas (seperti ApiService) sebaiknya menangkap AppException yang dibungkus dalam DioException
     return handler.next(wrappedError);
   }
 
@@ -142,9 +129,7 @@ class _AuthInterceptor extends Interceptor {
         if (statusCode == 401) {
           message =
               'Sesi tidak valid atau telah berakhir. Silakan masuk kembali.';
-          // Jangan clearAll di sini — biarkan service layer yang handle
         } else if (statusCode == 422) {
-          // Laravel validation error — ambil pesan pertama dari errors map
           final errors = responseData?['errors'];
           if (errors is Map && errors.isNotEmpty) {
             message = (errors.values.first as List).first.toString();
@@ -173,9 +158,6 @@ class _AuthInterceptor extends Interceptor {
   }
 }
 
-// ─────────────────────────────────────────────
-// LOGGING INTERCEPTOR (Debug Mode Only)
-// ─────────────────────────────────────────────
 class _LoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
@@ -206,8 +188,6 @@ class _LoggingInterceptor extends Interceptor {
   }
 }
 
-/// Menemukan IP lokal komputer host yang menjalankan server Laravel pada port 8000.
-/// Melakukan scanning terhadap seluruh subnet /24 secara parallel dengan timeout singkat.
 Future<String?> _discoverLocalServerIp() async {
   try {
     final interfaces = await NetworkInterface.list(
@@ -224,11 +204,10 @@ Future<String?> _discoverLocalServerIp() async {
         if (parts.length != 4) continue;
         final prefix = '${parts[0]}.${parts[1]}.${parts[2]}.';
 
-        // Scan seluruh subnet (1-254) secara parallel
         final futures = <Future<String?>>[];
         for (int i = 1; i < 255; i++) {
           final targetIp = '$prefix$i';
-          if (targetIp == ip) continue; // Lewati IP perangkat sendiri
+          if (targetIp == ip) continue;
 
           futures.add(() async {
             try {
@@ -248,7 +227,9 @@ Future<String?> _discoverLocalServerIp() async {
         final results = await Future.wait(futures);
         for (final res in results) {
           if (res != null) {
-            debugPrint('Auto-discovered Laravel server at: http://$res:8000/api');
+            debugPrint(
+              'Auto-discovered Laravel server at: http://$res:8000/api',
+            );
             return 'http://$res:8000/api';
           }
         }

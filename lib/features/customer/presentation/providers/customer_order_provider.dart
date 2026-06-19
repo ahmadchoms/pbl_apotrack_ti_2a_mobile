@@ -44,10 +44,10 @@ class CustomerOrderState {
       historyOrders: historyOrders ?? this.historyOrders,
       isLoadingActive: isLoadingActive ?? this.isLoadingActive,
       isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
-      activeError:
-          clearActiveError ? null : activeError ?? this.activeError,
-      historyError:
-          clearHistoryError ? null : historyError ?? this.historyError,
+      activeError: clearActiveError ? null : activeError ?? this.activeError,
+      historyError: clearHistoryError
+          ? null
+          : historyError ?? this.historyError,
     );
   }
 }
@@ -55,8 +55,7 @@ class CustomerOrderState {
 class CustomerOrderNotifier extends StateNotifier<CustomerOrderState> {
   final CustomerOrderService _service;
 
-  CustomerOrderNotifier(this._service)
-      : super(const CustomerOrderState()) {
+  CustomerOrderNotifier(this._service) : super(const CustomerOrderState()) {
     loadAll();
   }
 
@@ -71,8 +70,7 @@ class CustomerOrderNotifier extends StateNotifier<CustomerOrderState> {
     try {
       final orders = await _service.getActiveOrders();
       if (!mounted) return;
-      state = state.copyWith(
-          activeOrders: orders, isLoadingActive: false);
+      state = state.copyWith(activeOrders: orders, isLoadingActive: false);
     } catch (e) {
       if (!mounted) return;
       state = state.copyWith(
@@ -84,13 +82,11 @@ class CustomerOrderNotifier extends StateNotifier<CustomerOrderState> {
 
   Future<void> loadHistory() async {
     if (!mounted) return;
-    state =
-        state.copyWith(isLoadingHistory: true, clearHistoryError: true);
+    state = state.copyWith(isLoadingHistory: true, clearHistoryError: true);
     try {
       final orders = await _service.getOrderHistory();
       if (!mounted) return;
-      state = state.copyWith(
-          historyOrders: orders, isLoadingHistory: false);
+      state = state.copyWith(historyOrders: orders, isLoadingHistory: false);
     } catch (e) {
       if (!mounted) return;
       state = state.copyWith(
@@ -100,11 +96,9 @@ class CustomerOrderNotifier extends StateNotifier<CustomerOrderState> {
     }
   }
 
-  Future<bool> requestCancellation(
-      String orderId, String reason) async {
+  Future<bool> requestCancellation(String orderId, String reason) async {
     try {
-      final updated =
-          await _service.requestCancellation(orderId, reason);
+      final updated = await _service.requestCancellation(orderId, reason);
       if (!mounted) return false;
       state = state.copyWith(
         activeOrders: state.activeOrders.map((o) {
@@ -114,9 +108,7 @@ class CustomerOrderNotifier extends StateNotifier<CustomerOrderState> {
       return true;
     } catch (e) {
       if (!mounted) return false;
-      state = state.copyWith(
-        activeError: 'Gagal membatalkan: ${e.toString()}',
-      );
+      state = state.copyWith(activeError: 'Gagal membatalkan: ${e.toString()}');
       return false;
     }
   }
@@ -125,31 +117,31 @@ class CustomerOrderNotifier extends StateNotifier<CustomerOrderState> {
     try {
       await _service.confirmReceived(orderId);
       if (!mounted) return false;
-      // Pindah dari active ke history setelah konfirmasi
       unawaited(loadAll());
       return true;
     } catch (e) {
       if (!mounted) return false;
-      state = state.copyWith(
-        activeError: 'Gagal konfirmasi: ${e.toString()}',
-      );
+      state = state.copyWith(activeError: 'Gagal konfirmasi: ${e.toString()}');
       return false;
     }
   }
 }
 
 final customerOrderProvider =
-    StateNotifierProvider<CustomerOrderNotifier, CustomerOrderState>(
-        (ref) {
-  return CustomerOrderNotifier(ref.read(customerOrderServiceProvider));
-});
+    StateNotifierProvider<CustomerOrderNotifier, CustomerOrderState>((ref) {
+      return CustomerOrderNotifier(ref.read(customerOrderServiceProvider));
+    });
 
-final orderDetailProvider =
-    FutureProvider.family<Order, String>((ref, id) async {
+final orderDetailProvider = FutureProvider.family<Order, String>((
+  ref,
+  id,
+) async {
   return ref.read(customerOrderServiceProvider).getOrderDetail(id);
 });
 
-final orderTrackingProvider =
-    FutureProvider.family<DeliveryTracking, String>((ref, id) async {
+final orderTrackingProvider = FutureProvider.family<DeliveryTracking, String>((
+  ref,
+  id,
+) async {
   return ref.read(customerOrderServiceProvider).getOrderTracking(id);
 });

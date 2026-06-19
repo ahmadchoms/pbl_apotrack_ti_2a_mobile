@@ -3,16 +3,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
 class LocationHelper {
-  /// Memeriksa izin & mengembalikan posisi saat ini jika diizinkan
   static Future<Position?> determinePosition(BuildContext context) async {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // 1. Cek apakah layanan GPS aktif di HP
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       if (!context.mounted) return null;
-      // Minta pengguna mengaktifkan GPS lewat pengaturan sistem
       final bool? openSettings = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -38,25 +35,21 @@ class LocationHelper {
       return null;
     }
 
-    // 2. Cek izin akses lokasi saat ini
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        // Izin ditolak oleh pengguna
         return null;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      // Izin ditolak permanen, minta pengguna membuka Pengaturan Aplikasi
       if (context.mounted) {
         _showPermissionDeniedDialog(context);
       }
       return null;
     }
 
-    // 3. Ambil lokasi koordinat
     return await Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.medium,
@@ -65,27 +58,30 @@ class LocationHelper {
     );
   }
 
-  /// Konversi Lat/Lng menjadi Alamat Fisik (Reverse Geocoding)
-  static Future<String> getAddressFromLatLng(double latitude, double longitude) async {
+  static Future<String> getAddressFromLatLng(
+    double latitude,
+    double longitude,
+  ) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        latitude,
+        longitude,
+      );
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
-        
+
         final name = place.name ?? '';
         final thoroughfare = place.thoroughfare ?? '';
         final subThoroughfare = place.subThoroughfare ?? '';
         final subLocality = place.subLocality ?? '';
         final locality = place.locality ?? '';
-        
+
         final List<String> parts = [];
-        
-        // Hanya tambahkan nama landmark jika bukan plus code dan bukan sekadar nomor jalan
+
         if (name.isNotEmpty && !name.contains('+') && name != subThoroughfare) {
           parts.add(name);
         }
-        
-        // Gabungkan nama jalan dan nomor rumah/jalan jika ada
+
         if (thoroughfare.isNotEmpty) {
           if (subThoroughfare.isNotEmpty) {
             parts.add('$thoroughfare No. $subThoroughfare');
@@ -93,17 +89,15 @@ class LocationHelper {
             parts.add(thoroughfare);
           }
         }
-        
-        // Tambahkan kelurahan/kecamatan
+
         if (subLocality.isNotEmpty) {
           parts.add(subLocality);
         }
-        
-        // Tambahkan kota/kabupaten
+
         if (locality.isNotEmpty) {
           parts.add(locality);
         }
-        
+
         if (parts.isNotEmpty) {
           return parts.join(', ');
         }

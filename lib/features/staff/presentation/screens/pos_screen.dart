@@ -557,8 +557,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 }
 
-// --- Cart Sheet Wrapper & UI Components (As Refactored Previously) ---
-
 class _CartSheetWrapper extends ConsumerWidget {
   final Future<bool> Function() onCheckout;
   final TextEditingController notesController;

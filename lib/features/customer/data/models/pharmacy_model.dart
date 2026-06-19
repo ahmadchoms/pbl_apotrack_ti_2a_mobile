@@ -7,7 +7,7 @@ class PharmacyModel {
   final double latitude;
   final double longitude;
   final double rating;
-  final String verificationStatus; // VERIFIED, PENDING, REJECTED
+  final String verificationStatus;
   final int totalReviews;
   final bool isActive;
   final bool isForceClosed;
@@ -31,7 +31,6 @@ class PharmacyModel {
     required this.updatedAt,
   });
 
-  /// Apotek dianggap buka jika: aktif, verified, dan tidak force closed
   bool get isOpen =>
       isActive && verificationStatus == 'VERIFIED' && !isForceClosed;
 
@@ -123,10 +122,18 @@ class Pharmacy {
       rating: double.tryParse(json['rating']?.toString() ?? '0.0') ?? 0.0,
       verificationStatus: json['verification_status'] as String? ?? 'PENDING',
       totalReviews: json['total_reviews'] as int? ?? 0,
-      isActive: json['is_active'] == true || json['is_active'] == 1 || json['verification_status'] == 'VERIFIED',
-      isForceClosed: json['is_force_closed'] == true || json['is_force_closed'] == 1,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now() : DateTime.now(),
-      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at'].toString()) ?? DateTime.now() : DateTime.now(),
+      isActive:
+          json['is_active'] == true ||
+          json['is_active'] == 1 ||
+          json['verification_status'] == 'VERIFIED',
+      isForceClosed:
+          json['is_force_closed'] == true || json['is_force_closed'] == 1,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
     );
   }
 

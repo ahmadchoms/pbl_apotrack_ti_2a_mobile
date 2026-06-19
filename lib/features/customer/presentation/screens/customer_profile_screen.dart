@@ -30,18 +30,14 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
 
   Future<void> _handleLogout() async {
     try {
-      // 1. Logout dari Riverpod provider
       await ref.read(customerProfileProvider.notifier).logout();
 
-      // 2. Invalidate auth provider agar trigger GoRouter redirect logic
       ref.invalidate(authNotifierProvider);
 
       debugPrint('✅ Logout complete, redirecting to login...');
     } catch (e) {
-      // Tetap lanjut redirect meski ada error
       debugPrint('⚠️ Logout error: $e');
     } finally {
-      // 3. Direct redirect ke login (failsafe jika GoRouter redirect tidak trigger)
       if (mounted) {
         context.go(AppRouter.login);
       }

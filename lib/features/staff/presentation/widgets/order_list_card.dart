@@ -37,7 +37,6 @@ class OrderListCard extends StatelessWidget {
           ),
         ],
       ),
-      // Card sekarang BUKAN InkWell lagi -> tidak bisa diklik langsung.
       child: Column(
         children: [
           Padding(
@@ -117,10 +116,7 @@ class OrderListCard extends StatelessWidget {
           ),
           const Divider(height: 1, color: AppColors.divider),
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             child: Row(
               children: [
                 Text(
@@ -133,7 +129,6 @@ class OrderListCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                // Hanya tombol ini yang punya akses navigasi.
                 _buildActionButton(context, status),
               ],
             ),
@@ -230,7 +225,6 @@ class OrderListCard extends StatelessWidget {
     );
   }
 
-  // Sekarang menerima `context` dan punya navigasi sendiri.
   Widget _buildActionButton(BuildContext context, String status) {
     final Map<String, String> actions = {
       'PENDING': 'Mulai Proses',

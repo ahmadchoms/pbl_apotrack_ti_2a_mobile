@@ -30,7 +30,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
   bool _isSaving = false;
   final _picker = ImagePicker();
 
-  // Controllers
   final _nameCtrl = TextEditingController();
   final _genericNameCtrl = TextEditingController();
   final _manufacturerCtrl = TextEditingController();
@@ -39,7 +38,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
   final _descCtrl = TextEditingController();
   final _dosageCtrl = TextEditingController();
 
-  // Selections
   String? _category;
   String? _type;
   String? _form;
@@ -47,10 +45,8 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
   bool _requiresPrescription = false;
   bool _isActive = true;
 
-  // Batches (Temporary storage as Map for form logic)
   final List<Map<String, dynamic>> _batches = [];
 
-  // Options (from API in real app)
   final _categories = [
     'Antibiotik',
     'Analgesik',
@@ -71,7 +67,7 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     'Obat Wajib Apotek',
     'Obat Keras',
     'Alat Kesehatan',
-    'Herbal'
+    'Herbal',
   ];
   final _forms = [
     'Tablet',
@@ -82,11 +78,10 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     'Salep / Krim',
     'Injeksi',
     'Botol',
-    'Sachet'
+    'Sachet',
   ];
   final _units = ['Strip', 'Box', 'Botol', 'Tube', 'Pcs', 'Sachet'];
 
-  // Animation
   late AnimationController _headerAnimCtrl;
 
   @override
@@ -114,7 +109,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
       _requiresPrescription = m.requiresPrescription;
       _isActive = m.isActive;
 
-      // Handle missing categories/types in lists to avoid Dropdown error
       if (_category != null && !_categories.contains(_category)) {
         _categories.add(_category!);
       }
@@ -128,13 +122,12 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
         _units.add(_unit!);
       }
 
-      // Load existing batches into the form
       if (m.batches != null && m.batches!.isNotEmpty) {
         for (final b in m.batches!) {
           _batches.add({
-            'id': b['id'], // Simpan ID agar Laravel tahu ini update batch lama, bukan buat baru
+            'id': b['id'],
             'number': b['batch_number'],
-            'exp': b['expired_date']?.toString().split(' ')[0], // Ambil format YYYY-MM-DD saja
+            'exp': b['expired_date']?.toString().split(' ')[0],
             'stock': b['stock'].toString(),
           });
         }
@@ -181,7 +174,10 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengambil gambar: $e'), backgroundColor: AppColors.danger),
+          SnackBar(
+            content: Text('Gagal mengambil gambar: $e'),
+            backgroundColor: AppColors.danger,
+          ),
         );
       }
     }
@@ -189,9 +185,9 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
 
   Future<void> _saveMedicine() async {
     if (_nameCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama obat wajib diisi')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Nama obat wajib diisi')));
       return;
     }
 
@@ -208,7 +204,9 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
         'unit': _unit,
         'price': num.tryParse(_priceCtrl.text) ?? 0,
         'is_active': _isActive ? 1 : 0,
-        'manufacturer': _manufacturerCtrl.text.isEmpty ? 'ApoTrack' : _manufacturerCtrl.text,
+        'manufacturer': _manufacturerCtrl.text.isEmpty
+            ? 'ApoTrack'
+            : _manufacturerCtrl.text,
         'description': _descCtrl.text,
         'dosage_info': _dosageCtrl.text,
         'weight_in_grams': num.tryParse(_weightCtrl.text) ?? 0,
@@ -217,30 +215,50 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
 
       final formData = FormData.fromMap(data);
 
-      // Add batches with indices for Laravel: batches[0][batch_number]
       for (var i = 0; i < _batches.length; i++) {
         final b = _batches[i];
         if (b['number'] != null && b['number'].toString().isNotEmpty) {
           if (b['id'] != null) {
-            formData.fields.add(MapEntry('batches[$i][id]', b['id'].toString()));
+            formData.fields.add(
+              MapEntry('batches[$i][id]', b['id'].toString()),
+            );
           }
-          formData.fields.add(MapEntry('batches[$i][batch_number]', b['number'].toString()));
-          formData.fields.add(MapEntry('batches[$i][expired_date]', b['exp'].toString()));
-          formData.fields.add(MapEntry('batches[$i][stock]', (int.tryParse(b['stock'].toString()) ?? 0).toString()));
+          formData.fields.add(
+            MapEntry('batches[$i][batch_number]', b['number'].toString()),
+          );
+          formData.fields.add(
+            MapEntry('batches[$i][expired_date]', b['exp'].toString()),
+          );
+          formData.fields.add(
+            MapEntry(
+              'batches[$i][stock]',
+              (int.tryParse(b['stock'].toString()) ?? 0).toString(),
+            ),
+          );
         }
       }
 
       if (_pickedFile != null) {
         if (kIsWeb) {
-          formData.files.add(MapEntry(
-            'image',
-            MultipartFile.fromBytes(await _pickedFile!.readAsBytes(), filename: 'medicine.jpg'),
-          ));
+          formData.files.add(
+            MapEntry(
+              'image',
+              MultipartFile.fromBytes(
+                await _pickedFile!.readAsBytes(),
+                filename: 'medicine.jpg',
+              ),
+            ),
+          );
         } else {
-          formData.files.add(MapEntry(
-            'image',
-            await MultipartFile.fromFile(_pickedFile!.path, filename: 'medicine.jpg'),
-          ));
+          formData.files.add(
+            MapEntry(
+              'image',
+              await MultipartFile.fromFile(
+                _pickedFile!.path,
+                filename: 'medicine.jpg',
+              ),
+            ),
+          );
         }
       }
 
@@ -255,7 +273,11 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEdit ? 'Perubahan berhasil disimpan' : 'Obat berhasil ditambahkan'),
+            content: Text(
+              isEdit
+                  ? 'Perubahan berhasil disimpan'
+                  : 'Obat berhasil ditambahkan',
+            ),
             backgroundColor: AppColors.success,
           ),
         );
@@ -276,7 +298,10 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan: $errorMessage'), backgroundColor: AppColors.danger),
+          SnackBar(
+            content: Text('Gagal menyimpan: $errorMessage'),
+            backgroundColor: AppColors.danger,
+          ),
         );
       }
     } finally {
@@ -284,7 +309,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     }
   }
 
-  // ── BUILD ─────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -323,7 +347,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     );
   }
 
-  // ── SLIVER HEADER ─────────────────────────────
   Widget _buildSliverHeader(BuildContext context) {
     return SliverAppBar(
       expandedHeight: 130,
@@ -426,7 +449,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     );
   }
 
-  // ── IMAGE UPLOAD ──────────────────────────────
   Widget _buildImageUpload() {
     return MedicineFormCard(
       child: GestureDetector(
@@ -442,8 +464,8 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
             ),
             image: _pickedFile != null
                 ? DecorationImage(
-                    image: kIsWeb 
-                        ? NetworkImage(_pickedFile!.path) 
+                    image: kIsWeb
+                        ? NetworkImage(_pickedFile!.path)
                         : FileImage(File(_pickedFile!.path)) as ImageProvider,
                     fit: BoxFit.cover,
                     colorFilter: ColorFilter.mode(
@@ -452,15 +474,15 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
                     ),
                   )
                 : (isEdit && widget.medicine?.imageUrl != null)
-                    ? DecorationImage(
-                        image: NetworkImage(widget.medicine!.imageUrl!),
-                        fit: BoxFit.cover,
-                        colorFilter: ColorFilter.mode(
-                          Colors.black.withValues(alpha: 0.3),
-                          BlendMode.darken,
-                        ),
-                      )
-                    : null,
+                ? DecorationImage(
+                    image: NetworkImage(widget.medicine!.imageUrl!),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withValues(alpha: 0.3),
+                      BlendMode.darken,
+                    ),
+                  )
+                : null,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -469,14 +491,18 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: (_pickedFile != null || (isEdit && widget.medicine?.imageUrl != null))
+                  color:
+                      (_pickedFile != null ||
+                          (isEdit && widget.medicine?.imageUrl != null))
                       ? Colors.white.withValues(alpha: 0.2)
                       : AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.add_photo_alternate_rounded,
-                  color: (_pickedFile != null || (isEdit && widget.medicine?.imageUrl != null))
+                  color:
+                      (_pickedFile != null ||
+                          (isEdit && widget.medicine?.imageUrl != null))
                       ? Colors.white
                       : AppColors.primary,
                   size: 28,
@@ -484,12 +510,15 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
               ),
               const SizedBox(height: 12),
               Text(
-                (_pickedFile != null || (isEdit && widget.medicine?.imageUrl != null))
+                (_pickedFile != null ||
+                        (isEdit && widget.medicine?.imageUrl != null))
                     ? 'Ganti Foto Obat'
                     : 'Upload Foto Obat',
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
-                  color: (_pickedFile != null || (isEdit && widget.medicine?.imageUrl != null))
+                  color:
+                      (_pickedFile != null ||
+                          (isEdit && widget.medicine?.imageUrl != null))
                       ? Colors.white
                       : AppColors.textDark,
                   fontSize: 14,
@@ -499,11 +528,26 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _metaBadge('JPG', inverted: _pickedFile != null || (isEdit && widget.medicine?.imageUrl != null)),
+                  _metaBadge(
+                    'JPG',
+                    inverted:
+                        _pickedFile != null ||
+                        (isEdit && widget.medicine?.imageUrl != null),
+                  ),
                   const SizedBox(width: 5),
-                  _metaBadge('PNG', inverted: _pickedFile != null || (isEdit && widget.medicine?.imageUrl != null)),
+                  _metaBadge(
+                    'PNG',
+                    inverted:
+                        _pickedFile != null ||
+                        (isEdit && widget.medicine?.imageUrl != null),
+                  ),
                   const SizedBox(width: 5),
-                  _metaBadge('Max 2MB', inverted: _pickedFile != null || (isEdit && widget.medicine?.imageUrl != null)),
+                  _metaBadge(
+                    'Max 2MB',
+                    inverted:
+                        _pickedFile != null ||
+                        (isEdit && widget.medicine?.imageUrl != null),
+                  ),
                 ],
               ),
             ],
@@ -516,7 +560,9 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
   Widget _metaBadge(String label, {bool inverted = false}) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
     decoration: BoxDecoration(
-      color: inverted ? Colors.white.withValues(alpha: 0.2) : AppColors.primaryLight,
+      color: inverted
+          ? Colors.white.withValues(alpha: 0.2)
+          : AppColors.primaryLight,
       borderRadius: BorderRadius.circular(5),
     ),
     child: Text(
@@ -529,7 +575,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     ),
   );
 
-  // ── SECTION: INFORMASI UMUM ───────────────────
   Widget _buildInfoSection() {
     return MedicineFormCard(
       header: const MedicineFormSectionHeader(
@@ -594,7 +639,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     );
   }
 
-  // ── SECTION: HARGA & PENGATURAN ───────────────
   Widget _buildPriceSection() {
     return MedicineFormCard(
       header: const MedicineFormSectionHeader(
@@ -646,7 +690,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     );
   }
 
-  // ── SECTION: BATCH & STOK ─────────────────────
   Widget _buildBatchSection() {
     return MedicineFormCard(
       header: MedicineFormSectionHeader(
@@ -697,7 +740,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     );
   }
 
-  // ── SECTION: DESKRIPSI & DOSIS ────────────────
   Widget _buildDescSection() {
     return MedicineFormCard(
       header: const MedicineFormSectionHeader(
@@ -727,7 +769,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     );
   }
 
-  // ── SAVE BAR ──────────────────────────────────
   Widget _buildSaveBar(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -766,7 +807,9 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: AppButton(
-                  label: _isSaving ? 'Menyimpan...' : (isEdit ? 'Simpan Perubahan' : 'Simpan Obat Baru'),
+                  label: _isSaving
+                      ? 'Menyimpan...'
+                      : (isEdit ? 'Simpan Perubahan' : 'Simpan Obat Baru'),
                   isLoading: _isSaving,
                   onPressed: _saveMedicine,
                   icon: Icons.save_rounded,
@@ -779,23 +822,28 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     );
   }
 
-  // ── DELETE LOGIC ──────────────────────────────
   Future<void> _deleteMedicine() async {
     setState(() => _isSaving = true);
     try {
       await ref.read(staffServiceProvider).deleteMedicine(widget.medicine!.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Obat berhasil dihapus'), backgroundColor: AppColors.success),
+          const SnackBar(
+            content: Text('Obat berhasil dihapus'),
+            backgroundColor: AppColors.success,
+          ),
         );
         ref.invalidate(staffMedicinesProvider);
-        context.pop(); // Kembali ke detail
-        context.pop(); // Kembali ke list (karena detail akan error jika obat sudah dihapus)
+        context.pop();
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menghapus: $e'), backgroundColor: AppColors.danger),
+          SnackBar(
+            content: Text('Gagal menghapus: $e'),
+            backgroundColor: AppColors.danger,
+          ),
         );
       }
     } finally {
@@ -803,7 +851,6 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
     }
   }
 
-  // ── DELETE CONFIRM ────────────────────────────
   void _showDeleteConfirm(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -885,7 +932,7 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
                 Expanded(
                   child: GestureDetector(
                     onTap: () async {
-                      Navigator.pop(context); // Tutup bottom sheet
+                      Navigator.pop(context);
                       _deleteMedicine();
                     },
                     child: Container(

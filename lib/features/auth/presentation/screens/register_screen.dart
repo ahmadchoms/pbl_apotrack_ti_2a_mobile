@@ -15,7 +15,6 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen>
     with TickerProviderStateMixin {
-  // --- CONTROLLERS ---
   final PageController _pageController = PageController();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -25,17 +24,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   bool _isObscure = true;
   final _otpCtrl = TextEditingController();
 
-  // --- FOCUS NODES ---
   final _nameFocus = FocusNode();
   final _emailFocus = FocusNode();
   final _phoneFocus = FocusNode();
   final _otpFocus = FocusNode();
 
-  // --- STATE ---
   int _currentStep = 0;
   String? _emailError;
 
-  // --- ANIMATION ---
   late AnimationController _progressAnimCtrl;
 
   final _totalSteps = 3;
@@ -70,34 +66,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     super.dispose();
   }
 
-  // ─────────────────────────────────────────────
-  // NAVIGASI ANTAR STEP
-  // ─────────────────────────────────────────────
   void _animateToStep(int nextStep) {
     debugPrint("DEBUG: Mencoba berpindah ke Step Index $nextStep...");
-    
-    // 1. Update state
+
     if (mounted) {
       setState(() => _currentStep = nextStep);
     }
 
     try {
-      // 2. Update progress bar
       _progressAnimCtrl.animateTo(
         (nextStep + 1) / _totalSteps,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
 
-      // 3. Pindah halaman dengan animasi halus
       if (_pageController.hasClients) {
-        _pageController.animateToPage(
-          nextStep,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-        ).then((_) {
-          debugPrint("DEBUG: Berhasil berpindah ke halaman $nextStep");
-        });
+        _pageController
+            .animateToPage(
+              nextStep,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+            )
+            .then((_) {
+              debugPrint("DEBUG: Berhasil berpindah ke halaman $nextStep");
+            });
       } else {
         debugPrint("DEBUG ERROR: PageController tidak memiliki client!");
       }
@@ -106,11 +98,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     }
   }
 
-  /// Dipanggil saat tombol "Lanjut" ditekan.
-  /// Step 1 memanggil API, step lain hanya animasi.
   Future<void> _goToNextStep() async {
     if (_currentStep == 0) {
-      // Step 0 → 1: hanya validasi lokal + animasi
       _animateToStep(1);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         FocusScope.of(context).requestFocus(_emailFocus);
@@ -119,7 +108,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     }
 
     if (_currentStep == 1) {
-      // Step 1 → 2: validasi + panggil API requestOtp
       final email = _emailCtrl.text.trim();
       if (!email.endsWith('@gmail.com')) {
         setState(() => _emailError = 'Email harus menggunakan @gmail.com');
@@ -131,7 +119,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     }
 
     if (_currentStep == 2) {
-      // Step 2: panggil API verifyOtp
       await _handleVerifyOtp();
     }
   }
@@ -153,33 +140,29 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             _phoneCtrl.text.trim().isNotEmpty &&
             _passwordCtrl.text.isNotEmpty;
       case 2:
-        return _otpCtrl.text.trim().length ==
-            6; // OTP harus 6 digit sesuai backend
+        return _otpCtrl.text.trim().length == 6;
       default:
         return false;
     }
   }
 
-  // ─────────────────────────────────────────────
-  // API HANDLERS
-  // ─────────────────────────────────────────────
   Future<void> _handleRequestOtp() async {
     try {
-      debugPrint("DEBUG: Memulai Request OTP untuk ${ _emailCtrl.text.trim()}");
-      await ref.read(authNotifierProvider.notifier).requestOtp(
+      debugPrint("DEBUG: Memulai Request OTP untuk ${_emailCtrl.text.trim()}");
+      await ref
+          .read(authNotifierProvider.notifier)
+          .requestOtp(
             name: _nameCtrl.text.trim(),
             email: _emailCtrl.text.trim(),
             phone: _phoneCtrl.text.trim(),
             password: _passwordCtrl.text,
           );
-      
+
       debugPrint("DEBUG: Request OTP Berhasil, Berpindah ke Step 2 (OTP)");
       if (!mounted) return;
-      
-      // Sukses → animasi ke step OTP
+
       _animateToStep(2);
-      
-      // Beri sedikit delay sebelum request focus agar widget sempat render
+
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && _currentStep == 2) {
           FocusScope.of(context).requestFocus(_otpFocus);
@@ -242,9 +225,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     );
   }
 
-  // ─────────────────────────────────────────────
-  // BUILD
-  // ─────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(authLoadingProvider);
@@ -274,9 +254,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     );
   }
 
-  // ─────────────────────────────────────────────
-  // HEADER: Back + Progress bar + Dots
-  // ─────────────────────────────────────────────
   Widget _buildTopBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
@@ -392,9 +369,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     );
   }
 
-  // ─────────────────────────────────────────────
-  // STEP 0: Nama
-  // ─────────────────────────────────────────────
   Widget _buildStepName() {
     return _StepWrapper(
       child: Column(
@@ -437,9 +411,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     );
   }
 
-  // ─────────────────────────────────────────────
-  // STEP 1: Kontak (Email + Telepon)
-  // ─────────────────────────────────────────────
   Widget _buildStepContact() {
     return _StepWrapper(
       child: Column(
@@ -582,9 +553,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     );
   }
 
-  // ─────────────────────────────────────────────
-  // STEP 2: OTP
-  // ─────────────────────────────────────────────
   Widget _buildStepOtp() {
     return _StepWrapper(
       child: Column(
@@ -624,13 +592,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             ),
           ),
           const SizedBox(height: 40),
-          // Bungkus dengan GestureDetector agar saat kotak diklik, keyboard muncul
           GestureDetector(
             onTap: () => _otpFocus.requestFocus(),
             child: Stack(
               children: [
                 _buildOtpBoxes(),
-                // TextField Tersembunyi berada tepat di atas kotak agar mudah dipicu
                 Positioned.fill(
                   child: Opacity(
                     opacity: 0,
@@ -726,9 +692,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     );
   }
 
-  // ─────────────────────────────────────────────
-  // BOTTOM BAR
-  // ─────────────────────────────────────────────
   Widget _buildBottomBar(bool isLoading) {
     final buttonLabel = _currentStep == 2 ? 'Selesaikan Pendaftaran' : 'Lanjut';
     final buttonIcon = _currentStep == 2
@@ -751,7 +714,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // TextField dipindah ke _buildStepOtp
           AnimatedOpacity(
             opacity: _isNextEnabled ? 1.0 : 0.5,
             duration: const Duration(milliseconds: 200),
@@ -823,9 +785,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     );
   }
 
-  // ─────────────────────────────────────────────
-  // INPUT FIELD REUSABLE
-  // ─────────────────────────────────────────────
   Widget _buildInputField({
     required TextEditingController controller,
     required FocusNode focusNode,
@@ -933,10 +892,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     );
   }
 }
-
-// ─────────────────────────────────────────────
-// HELPER WIDGETS
-// ─────────────────────────────────────────────
 
 class _StepWrapper extends StatelessWidget {
   const _StepWrapper({required this.child});

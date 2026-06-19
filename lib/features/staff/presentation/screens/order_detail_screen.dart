@@ -206,68 +206,80 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   }
 
   void _showApproveCancelDialog() {
-  showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      title: const Text('Setujui Pembatalan?',
-          style: TextStyle(fontWeight: FontWeight.w900)),
-      content: const Text(
-          'Pesanan akan dibatalkan dan tidak dapat diproses lebih lanjut.'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Kembali'),
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text(
+          'Setujui Pembatalan?',
+          style: TextStyle(fontWeight: FontWeight.w900),
         ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.danger,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+        content: const Text(
+          'Pesanan akan dibatalkan dan tidak dapat diproses lebih lanjut.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Kembali'),
           ),
-          onPressed: () {
-            Navigator.pop(ctx);
-            _approveCancellation();
-          },
-          child: const Text('Ya, Batalkan',
-              style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    ),
-  );
-}
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _approveCancellation();
+            },
+            child: const Text(
+              'Ya, Batalkan',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-void _showRejectCancelDialog() {
-  showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      title: const Text('Tolak Pengajuan Batal?',
-          style: TextStyle(fontWeight: FontWeight.w900)),
-      content: const Text(
-          'Pesanan akan dikembalikan ke status menunggu dan dilanjutkan seperti biasa.'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Kembali'),
+  void _showRejectCancelDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text(
+          'Tolak Pengajuan Batal?',
+          style: TextStyle(fontWeight: FontWeight.w900),
         ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.success,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+        content: const Text(
+          'Pesanan akan dikembalikan ke status menunggu dan dilanjutkan seperti biasa.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Kembali'),
           ),
-          onPressed: () {
-            Navigator.pop(ctx);
-            _rejectCancellation();
-          },
-          child: const Text('Ya, Lanjutkan',
-              style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    ),
-  );
-}
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _rejectCancellation();
+            },
+            child: const Text(
+              'Ya, Lanjutkan',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -429,8 +441,11 @@ void _showRejectCancelDialog() {
       ),
       child: Row(
         children: [
-          const Icon(Icons.cloud_off_rounded,
-              color: AppColors.danger, size: 20),
+          const Icon(
+            Icons.cloud_off_rounded,
+            color: AppColors.danger,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -558,8 +573,7 @@ void _showRejectCancelDialog() {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
-                color:
-                    isHighlight ? AppColors.primary : AppColors.textDark,
+                color: isHighlight ? AppColors.primary : AppColors.textDark,
               ),
             ),
           ],
@@ -704,15 +718,13 @@ void _showRejectCancelDialog() {
       return const SizedBox.shrink();
     }
 
-    // Cancellation request — tampilkan approve/reject
     if (status == 'CANCEL_REQUESTED') {
       final reason = _order.cancellationReason;
       return Container(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         decoration: BoxDecoration(
           color: AppColors.white,
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(32)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           boxShadow: [
             BoxShadow(
               color: AppColors.black.withValues(alpha: 0.08),
@@ -733,7 +745,8 @@ void _showRejectCancelDialog() {
                   color: AppColors.dangerLight,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                      color: AppColors.danger.withValues(alpha: 0.2)),
+                    color: AppColors.danger.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -787,7 +800,6 @@ void _showRejectCancelDialog() {
       );
     }
 
-    // Flow normal
     String label = '';
     Color color = AppColors.primary;
 
@@ -846,20 +858,15 @@ void _showRejectCancelDialog() {
               borderRadius: BorderRadius.circular(16),
             ),
             child: IconButton(
-              icon:
-                  const Icon(Icons.close_rounded, color: AppColors.danger),
-              onPressed: _isUpdating
-                  ? null
-                  : () => _updateStatus('CANCELLED'),
+              icon: const Icon(Icons.close_rounded, color: AppColors.danger),
+              onPressed: _isUpdating ? null : () => _updateStatus('CANCELLED'),
             ),
           ),
         ],
       ),
     );
   }
-} // ← tutup _OrderDetailScreenState
-
-// ── SECTION TITLE ─────────────────────────────────────────────
+}
 
 class _SectionTitle extends StatelessWidget {
   final String title;
@@ -872,9 +879,7 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Row(
         children: [
-          Icon(icon,
-              size: 18,
-              color: AppColors.primary.withValues(alpha: 0.7)),
+          Icon(icon, size: 18, color: AppColors.primary.withValues(alpha: 0.7)),
           const SizedBox(width: 8),
           Text(
             title.toUpperCase(),
@@ -890,8 +895,6 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
-
-// ── METADATA CARD ─────────────────────────────────────────────
 
 class _MetadataCard extends StatelessWidget {
   final Order order;
@@ -924,13 +927,13 @@ class _MetadataCard extends StatelessWidget {
                     order.prescription?.isVerified == true
                         ? Icons.check_circle_rounded
                         : order.prescription?.isRejected == true
-                            ? Icons.cancel_rounded
-                            : Icons.verified_user_rounded,
+                        ? Icons.cancel_rounded
+                        : Icons.verified_user_rounded,
                     color: order.prescription?.isVerified == true
                         ? AppColors.success
                         : order.prescription?.isRejected == true
-                            ? AppColors.danger
-                            : AppColors.warning,
+                        ? AppColors.danger
+                        : AppColors.warning,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -939,16 +942,16 @@ class _MetadataCard extends StatelessWidget {
                       order.prescription?.isVerified == true
                           ? 'Resep sudah diverifikasi.'
                           : order.prescription?.isRejected == true
-                              ? 'Resep ditolak.'
-                              : 'Pesanan ini memerlukan verifikasi resep dokter.',
+                          ? 'Resep ditolak.'
+                          : 'Pesanan ini memerlukan verifikasi resep dokter.',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: order.prescription?.isVerified == true
                             ? const Color(0xFF166534)
                             : order.prescription?.isRejected == true
-                                ? const Color(0xFF991B1B)
-                                : const Color(0xFF92400E),
+                            ? const Color(0xFF991B1B)
+                            : const Color(0xFF92400E),
                       ),
                     ),
                   ),
@@ -997,27 +1000,39 @@ class _MetadataCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.dangerLight,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.danger.withOpacity(0.2)),
+                  border: Border.all(
+                    color: AppColors.danger.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.info_rounded,
-                        color: AppColors.danger, size: 20),
+                    const Icon(
+                      Icons.info_rounded,
+                      color: AppColors.danger,
+                      size: 20,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('ALASAN PENOLAKAN',
-                              style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.danger)),
+                          const Text(
+                            'ALASAN PENOLAKAN',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.danger,
+                            ),
+                          ),
                           const SizedBox(height: 4),
-                          Text(order.prescription!.rejectionNote!,
-                              style: const TextStyle(
-                                  fontSize: 13, color: AppColors.danger)),
+                          Text(
+                            order.prescription!.rejectionNote!,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.danger,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1066,7 +1081,8 @@ class _MetadataCard extends StatelessWidget {
                                         Text(
                                           'Gagal memuat gambar',
                                           style: TextStyle(
-                                              color: Colors.white54),
+                                            color: Colors.white54,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -1079,8 +1095,10 @@ class _MetadataCard extends StatelessWidget {
                             top: 8,
                             right: 8,
                             child: IconButton(
-                              icon: const Icon(Icons.close_rounded,
-                                  color: Colors.white),
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                              ),
                               onPressed: () => Navigator.of(ctx).pop(),
                             ),
                           ),
@@ -1104,8 +1122,7 @@ class _MetadataCard extends StatelessWidget {
                       loadingBuilder: (context, child, progress) {
                         if (progress == null) return child;
                         return const Center(
-                          child:
-                              CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         );
                       },
                       errorBuilder: (context, error, stackTrace) {
@@ -1163,8 +1180,6 @@ class _MetadataCard extends StatelessWidget {
   }
 }
 
-// ── SIMULATE TRACKING CARD ────────────────────────────────────
-
 class _SimulateTrackingCard extends StatelessWidget {
   final String orderStatus;
   final String selectedStatus;
@@ -1207,8 +1222,7 @@ class _SimulateTrackingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.science_rounded,
-                  size: 18, color: Colors.amber),
+              const Icon(Icons.science_rounded, size: 18, color: Colors.amber),
               const SizedBox(width: 8),
               const Text(
                 'SIMULASI TRACKING (SANDBOX)',
@@ -1223,7 +1237,7 @@ class _SimulateTrackingCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: selectedStatus,
+            initialValue: selectedStatus,
             isExpanded: true,
             decoration: InputDecoration(
               labelText: 'Pilih Status Tracking',
@@ -1239,8 +1253,10 @@ class _SimulateTrackingCard extends StatelessWidget {
                 .map(
                   (s) => DropdownMenuItem(
                     value: s['value'],
-                    child: Text(s['label']!,
-                        style: const TextStyle(fontSize: 13)),
+                    child: Text(
+                      s['label']!,
+                      style: const TextStyle(fontSize: 13),
+                    ),
                   ),
                 )
                 .toList(),
@@ -1256,11 +1272,12 @@ class _SimulateTrackingCard extends StatelessWidget {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.play_arrow_rounded, size: 18),
-              label: Text(
-                  isSimulating ? 'Memproses...' : 'Simulasikan Status'),
+              label: Text(isSimulating ? 'Memproses...' : 'Simulasikan Status'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber,
                 foregroundColor: Colors.white,
@@ -1277,8 +1294,6 @@ class _SimulateTrackingCard extends StatelessWidget {
     );
   }
 }
-
-// ── VERIFICATION CODE CARD ────────────────────────────────────
 
 class _VerificationCodeCard extends StatelessWidget {
   final Order order;
@@ -1324,8 +1339,6 @@ class _VerificationCodeCard extends StatelessWidget {
     );
   }
 }
-
-// ── HELPERS ───────────────────────────────────────────────────
 
 class _StatusCfg {
   final String label;
@@ -1414,15 +1427,19 @@ class _InfoRow extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: AppColors.textLight),
           const SizedBox(width: 8),
-          Text('$label: ',
-              style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textLight)),
+          Text(
+            '$label: ',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textLight,
+            ),
+          ),
           Expanded(
-            child: Text(value,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w700)),
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),

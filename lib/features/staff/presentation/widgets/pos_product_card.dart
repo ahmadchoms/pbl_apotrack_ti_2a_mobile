@@ -7,7 +7,7 @@ class PosProductCard extends StatelessWidget {
   final Medicine medicine;
   final int cartQty;
   final VoidCallback onAdd;
-  final VoidCallback onRemove; // Tambahkan callback untuk pengurangan stok
+  final VoidCallback onRemove;
 
   const PosProductCard({
     super.key,
@@ -49,7 +49,6 @@ class PosProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Image Section ---
             Expanded(
               flex: 4,
               child: Container(
@@ -84,7 +83,6 @@ class PosProductCard extends StatelessWidget {
                         left: 8,
                         child: _buildPrescriptionBadge(),
                       ),
-                    // Quantity Badge (Kiri Atas untuk info cepat)
                     if (isInCart)
                       Positioned(
                         top: 12,
@@ -96,7 +94,6 @@ class PosProductCard extends StatelessWidget {
               ),
             ),
 
-            // --- Content Section ---
             Expanded(
               flex: 5,
               child: Padding(
@@ -137,7 +134,6 @@ class PosProductCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Tombol Aksi (Tambah / Qty Selector)
                     _buildAddButton(),
                   ],
                 ),

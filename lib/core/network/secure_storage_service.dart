@@ -3,7 +3,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'web_storage_stub.dart' if (dart.library.html) 'web_storage_web.dart';
 
-/// Key constants untuk semua item yang disimpan di secure storage.
 abstract class StorageKeys {
   static const String authToken = 'auth_token';
   static const String userRole = 'user_role';
@@ -11,7 +10,6 @@ abstract class StorageKeys {
   static const String userData = 'user_data';
 }
 
-/// Platform-agnostic storage abstraction.
 abstract class StorageBackend {
   Future<String?> read(String key);
   Future<void> write(String key, String value);
@@ -19,7 +17,6 @@ abstract class StorageBackend {
   Future<void> deleteAll();
 }
 
-/// Native implementation using FlutterSecureStorage.
 class NativeStorageBackend implements StorageBackend {
   NativeStorageBackend(this._storage);
   final FlutterSecureStorage _storage;
@@ -38,8 +35,6 @@ class NativeStorageBackend implements StorageBackend {
   Future<void> deleteAll() => _storage.deleteAll();
 }
 
-
-/// Riverpod Provider untuk StorageBackend (auto-switch based on platform).
 final storageBackendProvider = Provider<StorageBackend>((ref) {
   if (kIsWeb) {
     return getWebStorage();
@@ -51,7 +46,6 @@ final storageBackendProvider = Provider<StorageBackend>((ref) {
   return NativeStorageBackend(storage);
 });
 
-/// Helper class untuk mengabstraksi operasi storage.
 class SecureStorageService {
   SecureStorageService(this._backend);
   final StorageBackend _backend;
@@ -70,13 +64,11 @@ class SecureStorageService {
       _backend.write(StorageKeys.userData, data);
 
   Future<String?> getUserId() => _backend.read(StorageKeys.userId);
-  Future<void> saveUserId(String id) =>
-      _backend.write(StorageKeys.userId, id);
+  Future<void> saveUserId(String id) => _backend.write(StorageKeys.userId, id);
 
   Future<void> clearAll() => _backend.deleteAll();
 }
 
-/// Provider untuk SecureStorageService.
 final secureStorageServiceProvider = Provider<SecureStorageService>((ref) {
   final backend = ref.watch(storageBackendProvider);
   return SecureStorageService(backend);

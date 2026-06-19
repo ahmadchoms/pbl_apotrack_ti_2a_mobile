@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/utils/location_helper.dart';
-import '../../widgets/profile/map_picker_dialog.dart';
-import '../../providers/customer_profile_provider.dart';
+import 'package:mobile/core/utils/location_helper.dart';
+import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/features/customer/presentation/providers/customer_profile_provider.dart';
+import 'package:mobile/features/customer/presentation/widgets/profile/map_picker_dialog.dart';
 import 'address_model.dart';
 import 'address_provider.dart';
 import 'address_form_screen.dart';
 
-/// Bottom sheet full-layar untuk memilih alamat pengiriman.
-/// Berisi: search, lokasimu saat ini, pilih lewat peta, dan list alamat tersimpan.
 void showAddressPickerSheet(
   BuildContext context,
   AddressProvider provider, {
@@ -100,13 +98,15 @@ class _AddressPickerSheetState extends ConsumerState<AddressPickerSheet> {
         position.longitude,
       );
 
-      final savedAddr = await ref.read(customerProfileProvider.notifier).addAddress(
-        label: 'Lokasi Sekarang',
-        addressDetail: addressText,
-        latitude: position.latitude,
-        longitude: position.longitude,
-        isPrimary: false,
-      );
+      final savedAddr = await ref
+          .read(customerProfileProvider.notifier)
+          .addAddress(
+            label: 'Lokasi Sekarang',
+            addressDetail: addressText,
+            latitude: position.latitude,
+            longitude: position.longitude,
+            isPrimary: false,
+          );
 
       final activeAddr = AddressModel.fromCustomerAddress(savedAddr);
       _selectAddress(activeAddr);
@@ -160,13 +160,15 @@ class _AddressPickerSheetState extends ConsumerState<AddressPickerSheet> {
               lng,
             );
 
-            final savedAddr = await ref.read(customerProfileProvider.notifier).addAddress(
-              label: 'Lokasi Terpilih',
-              addressDetail: addressText,
-              latitude: lat,
-              longitude: lng,
-              isPrimary: false,
-            );
+            final savedAddr = await ref
+                .read(customerProfileProvider.notifier)
+                .addAddress(
+                  label: 'Lokasi Terpilih',
+                  addressDetail: addressText,
+                  latitude: lat,
+                  longitude: lng,
+                  isPrimary: false,
+                );
 
             final mapAddr = AddressModel.fromCustomerAddress(savedAddr);
             _selectAddress(mapAddr);
@@ -863,9 +865,11 @@ class _FavoriteAddressScreenState extends State<FavoriteAddressScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.bookmark_border_rounded,
-                            size: 48,
-                            color: AppColors.textLight.withValues(alpha: 0.4)),
+                        Icon(
+                          Icons.bookmark_border_rounded,
+                          size: 48,
+                          color: AppColors.textLight.withValues(alpha: 0.4),
+                        ),
                         const SizedBox(height: 12),
                         const Text(
                           'Belum ada alamat favorit',

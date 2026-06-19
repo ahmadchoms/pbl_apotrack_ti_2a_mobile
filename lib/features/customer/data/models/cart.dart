@@ -1,11 +1,11 @@
 class CartItem {
-  final String id;          // medicine UUID
+  final String id;
   final String name;
   final int price;
   final String unit;
   final String imageUrl;
   final String pharmacyName;
-  final String pharmacyId;  // pharmacy UUID
+  final String pharmacyId;
   final bool requiresPrescription;
   final String? typeName;
   final int stock;
@@ -33,11 +33,6 @@ class CartState {
 
   final List<CartItem> items = [];
 
-  /// Menambahkan item ke keranjang.
-  /// Jika obat (id + apotek) sudah ada di keranjang, quantity-nya akan
-  /// DITAMBAHKAN dengan quantity dari [newItem] (bukan hanya +1), lalu
-  /// dibatasi maksimal sesuai stok terbaru (newItem.stock) supaya tidak
-  /// melebihi stok yang tersedia saat ini.
   void addItem(CartItem newItem) {
     final existingIndex = items.indexWhere(
       (e) => e.id == newItem.id && e.pharmacyId == newItem.pharmacyId,
