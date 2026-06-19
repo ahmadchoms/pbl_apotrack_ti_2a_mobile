@@ -26,15 +26,21 @@ bool get _supportsFcm {
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await LocalNotificationService.init();
-  final data = message.data;
-  await LocalNotificationService.show(
-    id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-    title: (data['title'] ?? 'Notifikasi Baru') as String,
-    body: (data['body'] ?? '') as String,
-    payload: data.toString(),
-  );
+  try {
+    if (DefaultFirebaseOptions.android.apiKey.isNotEmpty) {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      await LocalNotificationService.init();
+      final data = message.data;
+      await LocalNotificationService.show(
+        id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title: (data['title'] ?? 'Notifikasi Baru') as String,
+        body: (data['body'] ?? '') as String,
+        payload: data.toString(),
+      );
+    }
+  } catch (e) {
+    debugPrint('Error in background message handler: $e');
+  }
 }
 
 Future<void> main() async {
@@ -42,28 +48,42 @@ Future<void> main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
 
+      bool firebaseInitialized = false;
       if (_supportsFcm) {
-        await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        );
+        try {
+          if (DefaultFirebaseOptions.android.apiKey.isNotEmpty) {
+            await Firebase.initializeApp(
+              options: DefaultFirebaseOptions.currentPlatform,
+            );
 
-        FirebaseMessaging.onBackgroundMessage(
-          _firebaseMessagingBackgroundHandler,
-        );
+            FirebaseMessaging.onBackgroundMessage(
+              _firebaseMessagingBackgroundHandler,
+            );
 
-        final messaging = FirebaseMessaging.instance;
-        final settings = await messaging.requestPermission(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-        debugPrint('User granted permission: ${settings.authorizationStatus}');
+            final messaging = FirebaseMessaging.instance;
+            final settings = await messaging.requestPermission(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
+            debugPrint('User granted permission: ${settings.authorizationStatus}');
+            firebaseInitialized = true;
+          } else {
+            debugPrint('Firebase API Key is empty. Skipping Firebase initialization.');
+          }
+        } catch (e) {
+          debugPrint('Failed to initialize Firebase: $e');
+        }
       }
 
       await initializeDateFormatting('id_ID', null);
 
-      if (_supportsFcm) {
-        await LocalNotificationService.init();
+      if (_supportsFcm && firebaseInitialized) {
+        try {
+          await LocalNotificationService.init();
+        } catch (e) {
+          debugPrint('Failed to initialize Local Notification Service: $e');
+        }
       }
 
       FlutterError.onError = (details) {
