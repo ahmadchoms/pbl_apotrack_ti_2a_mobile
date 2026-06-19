@@ -12,90 +12,8 @@ import '../widgets/order_history/order_detail_timeline_card.dart';
 import '../../data/models/customer_order_extra.dart';
 import '../../data/services/customer_order_service.dart';
 
-
-// OLD CODE (ConsumerWidget with orderDetailProvider) — commented out
-// class CustomerOrderDetailScreen extends ConsumerWidget {
-//   final Order order;
-//
-//   const CustomerOrderDetailScreen({super.key, required this.order});
-//
-//   @override
-//   Widget build(BuildContext context, WidgetRef ref) {
-//     final detailAsync = ref.watch(orderDetailProvider(order.id));
-//
-//     return Scaffold(
-//       backgroundColor: AppColors.background,
-//       appBar: AppBar(
-//         backgroundColor: AppColors.white,
-//         elevation: 0,
-//         leading: IconButton(
-//           icon: const Icon(Icons.arrow_back_ios_new_rounded,
-//               color: AppColors.textDark, size: 20),
-//           onPressed: () => context.pop(),
-//         ),
-//         title: const Text(
-//           'Detail Pesanan',
-//           style: TextStyle(
-//             color: AppColors.textDark,
-//             fontWeight: FontWeight.w900,
-//             fontSize: 17,
-//           ),
-//         ),
-//         centerTitle: true,
-//       ),
-//       body: detailAsync.when(
-//         loading: () =>
-//             const Center(child: CircularProgressIndicator()),
-//         error: (e, _) => _buildErrorState(
-//           e.toString(),
-//           onRetry: () => ref.invalidate(orderDetailProvider(order.id)),
-//         ),
-//         data: (detail) => _buildContent(context, detail),
-//       ),
-//       bottomNavigationBar: _buildBottomBar(context),
-//     );
-//   }
-//
-//   Widget _buildContent(BuildContext context, Order detail) {
-//     final prescriptionData = detail.prescription;
-//     final parsedPrescription = prescriptionData != null
-//         ? CustomerPrescription.fromJson(prescriptionData)
-//         : null;
-//
-//     return ListView(
-//       padding: const EdgeInsets.all(16),
-//       children: [
-//         OrderDetailStatusCard(orderStatus: detail.orderStatus),
-//         const SizedBox(height: 12),
-//         _buildPharmacyCard(detail),
-//         const SizedBox(height: 12),
-//         _buildTransactionTimeCard(detail),
-//         const SizedBox(height: 12),
-//         _buildPaymentMethodCard(detail),
-//         const SizedBox(height: 12),
-//         if (parsedPrescription != null) ...[
-//           _buildPrescriptionCard(parsedPrescription),
-//           const SizedBox(height: 12),
-//         ],
-//         OrderDetailItemsCard(
-//           items: detail.items,
-//           totalItems: detail.items.length,
-//         ),
-//         const SizedBox(height: 12),
-//         OrderDetailSummaryCard(
-//           subtotal: detail.subtotalAmount,
-//           shippingCost: detail.shippingCost,
-//           grandTotal: detail.grandTotal,
-//         ),
-//         const SizedBox(height: 12),
-//         OrderDetailTimelineCard(statusLogs: detail.statusLogs),
-//         const SizedBox(height: 80),
-//       ],
-//     );
-//   }
-//
-//   Widget _buildErrorState(String error, {VoidCallback? onRetry}) {
-
+/// Screen untuk menampilkan detail pesanan pelanggan.
+/// Menampilkan status, apotek, waktu transaksi, metode pembayaran, resep dokter (jika ada), item, ringkasan harga, dan lini masa status.
 class CustomerOrderDetailScreen extends ConsumerStatefulWidget {
   final Order? order;
   final String? orderId;
@@ -310,49 +228,6 @@ class _CustomerOrderDetailScreenState
     );
   }
 
-  // OLD _buildErrorState — kept for reference
-  // Widget _buildErrorState(String error, {VoidCallback? onRetry}) {
-  //   return Center(
-  //     child: Padding(
-  //       padding: const EdgeInsets.all(24),
-  //       child: Column(
-  //         mainAxisAlignment: MainAxisAlignment.center,
-  //         children: [
-  //           const Icon(Icons.error_outline_rounded,
-  //               size: 56, color: AppColors.textMuted),
-  //           const SizedBox(height: 12),
-  //           Text(error,
-  //               textAlign: TextAlign.center,
-  //               style: const TextStyle(color: AppColors.textSlate)),
-  //           if (onRetry != null) ...[
-  //             const SizedBox(height: 20),
-  //             SizedBox(
-  //               width: double.infinity,
-  //               height: 48,
-  //               child: ElevatedButton(
-  //                 onPressed: onRetry,
-  //                 style: ElevatedButton.styleFrom(
-  //                   backgroundColor: AppColors.primary,
-  //                   shape: RoundedRectangleBorder(
-  //                     borderRadius: BorderRadius.circular(14),
-  //                   ),
-  //                 ),
-  //                 child: const Text(
-  //                   'Coba Lagi',
-  //                   style: TextStyle(
-  //                     color: Colors.white,
-  //                     fontWeight: FontWeight.w800,
-  //                     fontSize: 15,
-  //                   ),
-  //                 ),
-  //               ),
-  //             ),
-  //           ],
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildPharmacyCard(Order detail) {
     final pharmacyName =
@@ -949,39 +824,6 @@ class _CustomerOrderDetailScreenState
     );
   }
 
-  // OLD _buildBottomBar — kept for reference
-  // Widget _buildBottomBar(BuildContext context) {
-  //   return Container(
-  //     padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-  //     decoration: const BoxDecoration(
-  //       color: AppColors.white,
-  //       border:
-  //           Border(top: BorderSide(color: AppColors.surfaceLight)),
-  //     ),
-  //     child: SizedBox(
-  //       width: double.infinity,
-  //       child: OutlinedButton.icon(
-  //         onPressed: () {
-  //           // TODO: buka pusat bantuan
-  //         },
-  //         icon: const Icon(Icons.headset_mic_outlined,
-  //             size: 18, color: AppColors.primary),
-  //         label: const Text(
-  //           'Butuh Bantuan?',
-  //           style: TextStyle(
-  //               fontWeight: FontWeight.w700,
-  //               color: AppColors.primary),
-  //         ),
-  //         style: OutlinedButton.styleFrom(
-  //           padding: const EdgeInsets.symmetric(vertical: 14),
-  //           side: const BorderSide(color: AppColors.primary),
-  //           shape: RoundedRectangleBorder(
-  //               borderRadius: BorderRadius.circular(16)),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 
   BoxDecoration _cardDecoration({Color? color}) => BoxDecoration(
         color: color ?? AppColors.white,
