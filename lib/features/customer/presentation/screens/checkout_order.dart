@@ -783,7 +783,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           _selectedCourierCode = null;
           _selectedCourierService = null;
           _selectedCourierPrice = 0;
-          _distanceKm = 0;
           _ratesError = false;
         });
       },

@@ -109,6 +109,7 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
 
   void _setupForegroundListener() {
     FirebaseMessaging.onMessage.listen((message) {
+      final data = message.data;
       final title = data['title'] ?? message.notification?.title ?? 'Notifikasi Baru';
       final body = data['body'] ?? message.notification?.body ?? '';
 
