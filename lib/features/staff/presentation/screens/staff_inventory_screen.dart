@@ -456,7 +456,6 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
               ),
               const SizedBox(height: 12),
               SizedBox(
-                // maxHeight: 200,
                 child: SingleChildScrollView(
                   child: Wrap(
                     spacing: 10,

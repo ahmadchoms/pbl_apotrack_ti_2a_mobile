@@ -10,8 +10,6 @@ import 'secure_storage_service.dart';
 /// Override at build time: flutter run --dart-define=API_BASE_URL=https://api.example.com
 const String _kBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  // defaultValue: 'https://alpha-unsunk-retrogradingly.ngrok-free.dev/api',
-  // defaultValue: 'http://127.0.0.1:8000/api',
   defaultValue: 'http://192.168.18.14:8000/api',
 );
 
