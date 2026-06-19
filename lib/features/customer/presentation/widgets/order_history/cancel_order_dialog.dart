@@ -18,6 +18,7 @@ class CancelOrderDialog extends StatefulWidget {
 
 class _CancelOrderDialogState extends State<CancelOrderDialog> {
   String? _selectedReason;
+  final _otherController = TextEditingController();
   bool _isLoading = false;
 
   static const _reasons = [
@@ -31,10 +32,24 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
   ];
 
   @override
+  void dispose() {
+    _otherController.dispose();
+    super.dispose();
+  }
+
+  String? get _finalReason {
+    if (_selectedReason == null) return null;
+    if (_selectedReason == 'Lainnya') {
+      final custom = _otherController.text.trim();
+      return custom.isEmpty ? null : custom;
+    }
+    return _selectedReason;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -46,6 +61,10 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
             _buildReasonLabel(),
             const SizedBox(height: 10),
             _buildReasonList(),
+            if (_selectedReason == 'Lainnya') ...[
+              const SizedBox(height: 12),
+              _buildOtherInput(),
+            ],
             const SizedBox(height: 20),
             _buildButtons(context),
           ],
@@ -164,13 +183,53 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
     );
   }
 
+  Widget _buildOtherInput() {
+    return TextField(
+      controller: _otherController,
+      enabled: !_isLoading,
+      maxLines: 3,
+      minLines: 2,
+      onChanged: (_) => setState(() {}),
+      decoration: InputDecoration(
+        hintText: 'Tuliskan alasan pembatalan...',
+        hintStyle: const TextStyle(
+          fontSize: 13,
+          color: AppColors.textSubtle,
+        ),
+        filled: true,
+        fillColor: AppColors.surfaceLight,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.divider),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.divider),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
+      ),
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+      ),
+    );
+  }
+
   Widget _buildButtons(BuildContext context) {
+    final canSubmit = _finalReason != null && !_isLoading;
     return Row(
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed:
-                _isLoading ? null : () => Navigator.pop(context),
+            onPressed: _isLoading ? null : () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
               side: const BorderSide(color: AppColors.divider),
@@ -189,12 +248,11 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
         const SizedBox(width: 12),
         Expanded(
           child: ElevatedButton(
-            onPressed: (_selectedReason == null || _isLoading)
-                ? null
-                : () async {
+            onPressed: canSubmit
+                ? () async {
                     setState(() => _isLoading = true);
                     final success =
-                        await widget.onConfirm(_selectedReason!);
+                        await widget.onConfirm(_finalReason!);
                     if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -211,7 +269,8 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
                         ),
                       );
                     }
-                  },
+                  }
+                : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.danger,
               foregroundColor: AppColors.white,

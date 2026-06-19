@@ -23,6 +23,7 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
     {'status': 'PROCESSING', 'label': 'Proses'},
     {'status': 'READY_FOR_PICKUP', 'label': 'Siap'},
     {'status': 'SHIPPED', 'label': 'Kirim'},
+    {'status': 'CANCEL_REQUESTED', 'label': 'Minta Batal'},
     {'status': 'COMPLETED', 'label': 'Selesai'},
     {'status': 'CANCELLED', 'label': 'Batal'},
   ];
@@ -88,11 +89,6 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
       ),
       child: Row(
         children: [
-          _buildHeaderAction(
-            Icons.arrow_back_ios_new_rounded,
-            () => context.go("/staff"),
-          ),
-          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,8 +107,7 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
                   'Pesanan Pelanggan',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.95),
-                    fontSize:
-                        22, // Ukuran sedikit disesuaikan agar proporsional
+                    fontSize: 22,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
                   ),
@@ -153,7 +148,10 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
         children: [
           IconButton(
             onPressed: () => context.push('/staff/notifications'),
-            icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
+            icon: const Icon(
+                Icons.notifications_none_rounded,
+                color: Colors.white,
+                size: 22),
           ),
           if (unreadCount > 0)
             Positioned(
@@ -165,7 +163,8 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
                   color: AppColors.danger,
                   shape: BoxShape.circle,
                 ),
-                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                constraints:
+                    const BoxConstraints(minWidth: 16, minHeight: 16),
                 child: Text(
                   unreadCount > 99 ? '99+' : '$unreadCount',
                   style: const TextStyle(
@@ -186,77 +185,62 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
     return Container(
       color: AppColors.background,
       padding: const EdgeInsets.symmetric(vertical: 8),
-
       child: SizedBox(
         height: 48,
         width: double.infinity,
         child: Align(
           alignment: Alignment.centerLeft,
-
           child: TabBar(
             controller: _tabController,
-
             isScrollable: true,
-
             labelPadding: const EdgeInsets.symmetric(horizontal: 12),
-
             indicatorColor: AppColors.primary,
             indicatorWeight: 3,
-
             indicatorPadding: const EdgeInsets.symmetric(horizontal: 8),
-
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textLight,
-
             labelStyle: const TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 13,
             ),
-
             unselectedLabelStyle: const TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 13,
             ),
-
             dividerColor: Colors.transparent,
-
             tabs: _tabs.map((t) {
               final count = orders
                   .where((o) => o.orderStatus == t['status'])
                   .length;
+              final isCancelRequest =
+                  t['status'] == 'CANCEL_REQUESTED';
 
               return Tab(
                 child: Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
-
                   spacing: 6,
-
                   children: [
                     Text(t['label'] as String),
-
                     if (count > 0)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 6,
                           vertical: 2,
                         ),
-
                         decoration: BoxDecoration(
-                          color: t['status'] == 'PENDING'
+                          color: (t['status'] == 'PENDING' ||
+                                  isCancelRequest)
                               ? AppColors.danger
                               : AppColors.primary.withValues(alpha: 0.1),
-
                           borderRadius: BorderRadius.circular(6),
                         ),
-
                         child: Text(
                           count.toString(),
-
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
-
-                            color: t['status'] == 'PENDING'
+                            color: (t['status'] == 'PENDING' ||
+                                    isCancelRequest)
                                 ? Colors.white
                                 : AppColors.primary,
                           ),
@@ -277,25 +261,22 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.cloud_off_rounded,
-            size: 64,
-            color: AppColors.danger,
-          ),
+          const Icon(Icons.cloud_off_rounded,
+              size: 64, color: AppColors.danger),
           const SizedBox(height: 16),
           const Text(
             'Koneksi Terputus',
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
           ),
-          Text(error, style: const TextStyle(color: AppColors.textLight)),
+          Text(error,
+              style: const TextStyle(color: AppColors.textLight)),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => ref.refresh(staffOrdersProvider),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text(
-              'Coba Lagi',
-              style: TextStyle(color: Colors.white),
-            ),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary),
+            child: const Text('Coba Lagi',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -318,7 +299,7 @@ class _OrderListView extends StatelessWidget {
             Icon(Icons.inbox_rounded, size: 48, color: AppColors.divider),
             const SizedBox(height: 16),
             Text(
-              'Tidak ada pesanan $status',
+              'Tidak ada pesanan',
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 color: AppColors.textLight,
@@ -337,7 +318,8 @@ class _OrderListView extends StatelessWidget {
         final order = orders[i];
         return OrderListCard(
           order: order,
-          statusConfig: _statusMap[order.orderStatus] ?? _statusMap['PENDING']!,
+          statusConfig:
+              _statusMap[order.orderStatus] ?? _statusMap['PENDING']!,
           formatRupiah: (val) {
             final str = val.toStringAsFixed(0);
             final buf = StringBuffer();
@@ -386,9 +368,15 @@ final Map<String, dynamic> _statusMap = {
   },
   'COMPLETED': {
     'label': 'Selesai',
-    'color': AppColors.textMid,
-    'bgColor': AppColors.background,
+    'color': AppColors.success,
+    'bgColor': AppColors.successLight,
     'icon': Icons.done_all_rounded,
+  },
+  'CANCEL_REQUESTED': {
+    'label': 'Minta Batal',
+    'color': AppColors.danger,
+    'bgColor': AppColors.dangerLight,
+    'icon': Icons.cancel_outlined,
   },
   'CANCELLED': {
     'label': 'Batal',

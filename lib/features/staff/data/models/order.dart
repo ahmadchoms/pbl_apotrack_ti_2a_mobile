@@ -25,14 +25,11 @@ class DeliveryTracking {
     this.history = const [],
   });
 
-  // Helper getters untuk akses mudah dari courier JSON
   String? get driverName => courier?['driver_name']?.toString();
   String? get driverPhone => courier?['driver_phone']?.toString();
   String? get driverPhotoUrl => courier?['driver_photo_url']?.toString();
   String? get driverPlateNumber => courier?['driver_plate_number']?.toString();
   String? get courierCompany => courier?['company']?.toString();
-
-  // Helper getter untuk status terakhir dari history
   String? get latestHistoryStatus =>
       history.isNotEmpty ? history.last['status']?.toString() : null;
 
@@ -143,6 +140,7 @@ class Order {
   final num subtotalAmount;
   final num shippingCost;
   final String? notes;
+  final String? cancellationReason;
   final bool requiresPrescription;
   final String createdAt;
   final Map<String, dynamic> buyer;
@@ -165,6 +163,7 @@ class Order {
     required this.subtotalAmount,
     required this.shippingCost,
     this.notes,
+    this.cancellationReason,
     required this.requiresPrescription,
     required this.createdAt,
     required this.buyer,
@@ -177,10 +176,7 @@ class Order {
     this.prescription,
   });
 
-  // Getter untuk backward compatibility dengan kode staff yang pakai order.customer
   Map<String, dynamic> get customer => buyer;
-
-  // Getter untuk backward compatibility dengan kode staff yang pakai hasPrescription
   bool get hasPrescription => requiresPrescription;
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -202,6 +198,7 @@ class Order {
       shippingCost:
           num.tryParse(json['shipping_cost']?.toString() ?? '0') ?? 0,
       notes: json['notes']?.toString(),
+      cancellationReason: json['cancellation_reason']?.toString(),
       requiresPrescription: json['requires_prescription'] == true ||
           json['requires_prescription'] == 1,
       createdAt: json['created_at']?.toString() ?? '-',
@@ -215,8 +212,7 @@ class Order {
           .map((i) => OrderItem.fromJson(i as Map<String, dynamic>))
           .toList(),
       statusLogs: (json['status_logs'] as List<dynamic>? ?? [])
-          .map((e) =>
-              OrderStatusLog.fromJson(e as Map<String, dynamic>))
+          .map((e) => OrderStatusLog.fromJson(e as Map<String, dynamic>))
           .toList(),
       tracking: trackingData != null && trackingData is Map
           ? DeliveryTracking.fromJson(
@@ -266,10 +262,8 @@ class OrderItem {
       medicineName: json['medicine_name']?.toString() ?? '',
       unitName: json['unit_name']?.toString() ?? '',
       price: num.tryParse(json['price']?.toString() ?? '0') ?? 0,
-      quantity:
-          int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
-      subtotal:
-          num.tryParse(json['subtotal']?.toString() ?? '0') ?? 0,
+      quantity: int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
+      subtotal: num.tryParse(json['subtotal']?.toString() ?? '0') ?? 0,
       requiresPrescription: json['requires_prescription'] == true ||
           json['requires_prescription'] == 1,
       medicine: json['medicine'] is Map<String, dynamic>

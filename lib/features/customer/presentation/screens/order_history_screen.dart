@@ -9,6 +9,10 @@ import '../providers/customer_order_provider.dart';
 import '../widgets/order_history/cancel_order_dialog.dart';
 import '../widgets/order_history/cancellation_detail_sheet.dart';
 import '../widgets/order_history/order_history_card.dart';
+import '../../data/models/cart.dart';
+import '../../data/models/medicine_model.dart';
+import '../../data/services/medicine_service.dart';
+import 'cart_screen.dart';
 
 class OrderHistoryScreen extends ConsumerStatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -30,6 +34,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     'Diproses',
     'Siap Diambil',
     'Dikirim',
+    'Minta Batal',
     'Selesai',
     'Dibatalkan',
   ];
@@ -63,6 +68,9 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                   o.orderStatus == 'COMPLETED' || o.orderStatus == 'REVIEWED',
             )
             .toList();
+        break;
+      case 'Minta Batal':
+        result = all.where((o) => o.orderStatus == 'CANCEL_REQUESTED').toList();
         break;
       case 'Dibatalkan':
         result = all.where((o) => o.orderStatus == 'CANCELLED').toList();
@@ -113,17 +121,15 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     switch (order.orderStatus) {
       case 'PENDING':
         return () => _showCancelDialog(order);
+      case 'CANCEL_REQUESTED':
+        return () => CancellationDetailSheet.show(context, order);
       case 'SHIPPED':
         return () => context.push(AppRouter.customerTrackOrder, extra: order);
       case 'COMPLETED':
       case 'REVIEWED':
-        return () {
-          // TODO: beli lagi
-        };
+        return () => _handleBuyAgain(order);
       case 'CANCELLED':
-        return () {
-          // TODO: pesan lagi
-        };
+        return () => _handleBuyAgain(order);
       default:
         return null;
     }
@@ -133,24 +139,138 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     switch (order.orderStatus) {
       case 'COMPLETED':
         return () {
-          context.push(AppRouter.customerUlasan, extra: {
-            'orderNumber': order.orderNumber,
-            'pharmacyId': order.pharmacy['id']?.toString() ?? '',
-            'pharmacyName': order.pharmacy['name']?.toString() ?? '',
-            'items': order.items.map((item) => {
-              'id': item.id,
-              'medicine_id': item.medicine['id']?.toString() ?? item.id,
-              'medicine_name': item.medicineName,
-              'quantity': item.quantity,
-              'price': item.price,
-            }).toList(),
-          });
+          context.push(
+            AppRouter.customerUlasan,
+            extra: {
+              'orderNumber': order.orderNumber,
+              'pharmacyId': order.pharmacy['id']?.toString() ?? '',
+              'pharmacyName': order.pharmacy['name']?.toString() ?? '',
+              'items': order.items
+                  .map(
+                    (item) => {
+                      'id': item.id,
+                      'medicine_id': item.medicine['id']?.toString() ?? item.id,
+                      'medicine_name': item.medicineName,
+                      'quantity': item.quantity,
+                      'price': item.price,
+                    },
+                  )
+                  .toList(),
+            },
+          );
         };
       case 'CANCELLED':
         return () => CancellationDetailSheet.show(context, order);
       default:
         return null;
     }
+  }
+
+  Future<void> _handleBuyAgain(Order order) async {
+    final pharmacyId = order.pharmacy['id']?.toString() ?? '';
+    final pharmacyName = order.pharmacy['name']?.toString() ?? 'Apotek';
+
+    if (pharmacyId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Data apotek pada pesanan ini tidak lengkap.'),
+        ),
+      );
+      return;
+    }
+
+    // Loading kecil selagi ambil stok terbaru dari server
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    List<MedicineModel> currentMedicines = [];
+    try {
+      currentMedicines = await ref.read(medicinesProvider(pharmacyId).future);
+    } catch (_) {
+      currentMedicines = [];
+    }
+
+    if (!mounted) return;
+    Navigator.pop(context); // tutup loading
+
+    final List<String> outOfStockNames = [];
+    final List<CartItem> toAdd = [];
+
+    for (final item in order.items) {
+      final medicineId = item.medicine['id']?.toString() ?? '';
+
+      MedicineModel? medicine;
+      for (final m in currentMedicines) {
+        if (m.id == medicineId) {
+          medicine = m;
+          break;
+        }
+      }
+
+      final isAvailable =
+          medicine != null &&
+          medicine.isActive &&
+          medicine.totalActiveStock > 0;
+
+      if (!isAvailable) {
+        outOfStockNames.add(item.medicineName);
+        continue;
+      }
+
+      toAdd.add(
+        CartItem(
+          id: medicine.id,
+          name: medicine.name,
+          price: medicine.price.toInt(),
+          unit: medicine.unitName ?? item.unitName,
+          imageUrl: medicine.imageUrl ?? '',
+          pharmacyName: pharmacyName,
+          pharmacyId: pharmacyId,
+          quantity: item.quantity,
+          stock: medicine.totalActiveStock,
+        ),
+      );
+    }
+
+    for (final cartItem in toAdd) {
+      CartState().addItem(cartItem);
+    }
+
+    if (!mounted) return;
+
+    if (outOfStockNames.isNotEmpty) {
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('Stok Obat Habis'),
+          content: Text(
+            outOfStockNames.length == 1
+                ? '${outOfStockNames.first} sedang tidak tersedia atau stoknya habis.'
+                : 'Beberapa obat sedang tidak tersedia atau stoknya habis:\n• ${outOfStockNames.join('\n• ')}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Mengerti'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Kalau semua obat di pesanan itu habis, tidak usah pindah ke keranjang
+    if (toAdd.isEmpty || !mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CartScreen()),
+    );
   }
 
   @override

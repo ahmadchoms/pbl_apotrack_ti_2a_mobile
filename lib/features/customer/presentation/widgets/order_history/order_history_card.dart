@@ -98,15 +98,17 @@ class OrderHistoryCard extends StatelessWidget {
           secondaryLabel: 'Rincian Pembatalan',
           priceStrikethrough: true,
         );
-      case 'CANCEL_REQUESTED':
-        return _StatusConfig(
-          badgeLabel: 'Menunggu Konfirmasi',
-          badgeColor: AppColors.warning,
-          badgeBg: AppColors.warningLight,
-          iconColor: AppColors.warning,
-          iconBg: AppColors.warningLight,
-          icon: Icons.pending_rounded,
-        );
+        case 'CANCEL_REQUESTED':
+          return _StatusConfig(
+            badgeLabel: 'Menunggu Konfirmasi',
+            badgeColor: AppColors.textMid,
+            badgeBg: AppColors.background,
+            iconColor: AppColors.textMid,
+            iconBg: AppColors.background,
+            icon: Icons.pending_rounded,
+            primaryLabel: 'Rincian Pembatalan',
+            primarySolid: false,
+          );
       default:
         return _StatusConfig(
           badgeLabel: order.orderStatus,

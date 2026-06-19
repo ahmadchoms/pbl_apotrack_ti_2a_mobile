@@ -51,7 +51,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             duration: const Duration(seconds: 4),
             action: SnackBarAction(
               label: 'Ulang',
@@ -149,6 +151,124 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     }
   }
 
+  Future<void> _approveCancellation() async {
+    setState(() => _isUpdating = true);
+    try {
+      await ref.read(staffServiceProvider).approveCancellation(_order.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pembatalan disetujui'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        _refreshOrderDetail();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _rejectCancellation() async {
+    setState(() => _isUpdating = true);
+    try {
+      await ref.read(staffServiceProvider).rejectCancellation(_order.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pengajuan batal ditolak, pesanan dilanjutkan'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        _refreshOrderDetail();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  void _showApproveCancelDialog() {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: const Text('Setujui Pembatalan?',
+          style: TextStyle(fontWeight: FontWeight.w900)),
+      content: const Text(
+          'Pesanan akan dibatalkan dan tidak dapat diproses lebih lanjut.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Kembali'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.danger,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ),
+          onPressed: () {
+            Navigator.pop(ctx);
+            _approveCancellation();
+          },
+          child: const Text('Ya, Batalkan',
+              style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showRejectCancelDialog() {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: const Text('Tolak Pengajuan Batal?',
+          style: TextStyle(fontWeight: FontWeight.w900)),
+      content: const Text(
+          'Pesanan akan dikembalikan ke status menunggu dan dilanjutkan seperti biasa.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Kembali'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.success,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ),
+          onPressed: () {
+            Navigator.pop(ctx);
+            _rejectCancellation();
+          },
+          child: const Text('Ya, Lanjutkan',
+              style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    ),
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     final isDelivery = _order.serviceType == 'DELIVERY';
@@ -166,8 +286,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
-                      if (_refreshError)
-                        _buildRefreshErrorBanner(),
+                      if (_refreshError) _buildRefreshErrorBanner(),
                       const _SectionTitle(
                         title: 'Informasi Utama',
                         icon: Icons.analytics_outlined,
@@ -192,8 +311,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                             orderStatus: _order.orderStatus,
                             selectedStatus: _selectedSimulateStatus,
                             isSimulating: _isSimulating,
-                            onStatusChanged: (v) => setState(
-                                () => _selectedSimulateStatus = v!),
+                            onStatusChanged: (v) =>
+                                setState(() => _selectedSimulateStatus = v!),
                             onSimulate: _simulateTracking,
                           ),
                         ],
@@ -276,7 +395,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               ],
             ),
           ),
-          _buildHeaderAction(Icons.notifications_none_rounded, () => context.push('/staff/notifications')),
+          _buildHeaderAction(
+            Icons.notifications_none_rounded,
+            () => context.push('/staff/notifications'),
+          ),
         ],
       ),
     );
@@ -307,17 +429,25 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.cloud_off_rounded, color: AppColors.danger, size: 20),
+          const Icon(Icons.cloud_off_rounded,
+              color: AppColors.danger, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Gagal memuat data dari server. Menampilkan data tersimpan.',
-              style: const TextStyle(fontSize: 12, color: AppColors.danger, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.danger,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           TextButton(
             onPressed: _refreshOrderDetail,
-            child: const Text('Ulangi', style: TextStyle(fontWeight: FontWeight.w800)),
+            child: const Text(
+              'Ulangi',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
@@ -428,7 +558,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
-                color: isHighlight ? AppColors.primary : AppColors.textDark,
+                color:
+                    isHighlight ? AppColors.primary : AppColors.textDark,
               ),
             ),
           ],
@@ -568,10 +699,95 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
   Widget _buildStickyActionPanel(BuildContext context) {
     final status = _order.orderStatus;
+
     if (['SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED'].contains(status)) {
       return const SizedBox.shrink();
     }
 
+    // Cancellation request — tampilkan approve/reject
+    if (status == 'CANCEL_REQUESTED') {
+      final reason = _order.cancellationReason;
+      return Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(32)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.black.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (reason != null && reason.isNotEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.dangerLight,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                      color: AppColors.danger.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'ALASAN PEMBATALAN',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.danger,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      reason,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: AppButton(
+                    label: _isUpdating ? 'Memproses...' : 'Setujui Batal',
+                    backgroundColor: AppColors.danger,
+                    onPressed: _isUpdating ? null : _showApproveCancelDialog,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: AppButton(
+                    label: 'Tolak',
+                    backgroundColor: AppColors.textMid,
+                    onPressed: _isUpdating ? null : _showRejectCancelDialog,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Flow normal
     String label = '';
     Color color = AppColors.primary;
 
@@ -584,9 +800,6 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           ? 'Panggil Kurir'
           : 'Selesaikan Pesanan';
       if (_order.serviceType == 'DELIVERY') color = AppColors.accentIndigo;
-    } else if (status == 'CANCEL_REQUESTED') {
-      label = 'Setujui Pembatalan';
-      color = AppColors.danger;
     }
 
     return Container(
@@ -622,31 +835,29 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                         } else {
                           _updateStatus('COMPLETED');
                         }
-                      } else if (status == 'CANCEL_REQUESTED') {
-                        _updateStatus('CANCELLED');
                       }
                     },
             ),
           ),
           const SizedBox(width: 12),
-          if (status != 'CANCEL_REQUESTED')
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.dangerLight,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: IconButton(
-                icon:
-                    const Icon(Icons.close_rounded, color: AppColors.danger),
-                onPressed:
-                    _isUpdating ? null : () => _updateStatus('CANCELLED'),
-              ),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.dangerLight,
+              borderRadius: BorderRadius.circular(16),
             ),
+            child: IconButton(
+              icon:
+                  const Icon(Icons.close_rounded, color: AppColors.danger),
+              onPressed: _isUpdating
+                  ? null
+                  : () => _updateStatus('CANCELLED'),
+            ),
+          ),
         ],
       ),
     );
   }
-}
+} // ← tutup _OrderDetailScreenState
 
 // ── SECTION TITLE ─────────────────────────────────────────────
 
@@ -661,7 +872,9 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.primary.withValues(alpha: 0.7)),
+          Icon(icon,
+              size: 18,
+              color: AppColors.primary.withValues(alpha: 0.7)),
           const SizedBox(width: 8),
           Text(
             title.toUpperCase(),
@@ -701,8 +914,9 @@ class _MetadataCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.warningLight,
                 borderRadius: BorderRadius.circular(12),
-                border:
-                    Border.all(color: AppColors.warning.withValues(alpha: 0.2)),
+                border: Border.all(
+                  color: AppColors.warning.withValues(alpha: 0.2),
+                ),
               ),
               child: Row(
                 children: [
@@ -762,8 +976,9 @@ class _MetadataCard extends StatelessWidget {
                                   if (progress == null) return child;
                                   return const Center(
                                     child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white),
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   );
                                 },
                                 errorBuilder: (c, error, stackTrace) {
@@ -778,9 +993,11 @@ class _MetadataCard extends StatelessWidget {
                                           size: 48,
                                         ),
                                         SizedBox(height: 8),
-                                        Text('Gagal memuat gambar',
-                                            style: TextStyle(
-                                                color: Colors.white54)),
+                                        Text(
+                                          'Gagal memuat gambar',
+                                          style: TextStyle(
+                                              color: Colors.white54),
+                                        ),
                                       ],
                                     ),
                                   );
@@ -817,7 +1034,8 @@ class _MetadataCard extends StatelessWidget {
                       loadingBuilder: (context, child, progress) {
                         if (progress == null) return child;
                         return const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child:
+                              CircularProgressIndicator(strokeWidth: 2),
                         );
                       },
                       errorBuilder: (context, error, stackTrace) {
@@ -825,12 +1043,19 @@ class _MetadataCard extends StatelessWidget {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.image_not_supported_rounded,
-                                  color: AppColors.textLight, size: 32),
+                              Icon(
+                                Icons.image_not_supported_rounded,
+                                color: AppColors.textLight,
+                                size: 32,
+                              ),
                               SizedBox(height: 4),
-                              Text('Gagal memuat gambar',
-                                  style: TextStyle(
-                                      fontSize: 11, color: AppColors.textLight)),
+                              Text(
+                                'Gagal memuat gambar',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textLight,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -928,7 +1153,6 @@ class _SimulateTrackingCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            // ignore: deprecated_member_use
             value: selectedStatus,
             isExpanded: true,
             decoration: InputDecoration(
@@ -937,14 +1161,18 @@ class _SimulateTrackingCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 12),
+                horizontal: 14,
+                vertical: 12,
+              ),
             ),
             items: _statuses
-                .map((s) => DropdownMenuItem(
-                      value: s['value'],
-                      child: Text(s['label']!,
-                          style: const TextStyle(fontSize: 13)),
-                    ))
+                .map(
+                  (s) => DropdownMenuItem(
+                    value: s['value'],
+                    child: Text(s['label']!,
+                        style: const TextStyle(fontSize: 13)),
+                  ),
+                )
                 .toList(),
             onChanged: onStatusChanged,
           ),

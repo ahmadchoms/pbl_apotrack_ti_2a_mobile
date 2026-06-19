@@ -270,12 +270,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                     MenuSection(
                       title: 'LAINNYA',
                       items: [
-                        MenuItemTile(
-                          icon: Icons.help_outline_rounded,
-                          title: 'Pusat Bantuan',
-                          onTap: () {},
-                        ),
-
                         if (isCustomer)
                           MenuItemTile(
                             icon: Icons.delete_outline_rounded,

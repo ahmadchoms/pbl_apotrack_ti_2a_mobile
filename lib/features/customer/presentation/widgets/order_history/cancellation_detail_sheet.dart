@@ -152,7 +152,7 @@ class CancellationDetailSheet extends StatelessWidget {
                       color: AppColors.danger.withValues(alpha: 0.2)),
                 ),
                 child: Text(
-                  order.notes ?? 'Tidak ada alasan',
+                  order.cancellationReason ?? 'Tidak ada alasan',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,

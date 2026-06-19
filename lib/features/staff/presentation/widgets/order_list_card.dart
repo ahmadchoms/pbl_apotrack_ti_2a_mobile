@@ -37,116 +37,108 @@ class OrderListCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            context.push('/staff/order-detail', extra: order);
-          },
-          borderRadius: BorderRadius.circular(24),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      // Card sekarang BUKAN InkWell lagi -> tidak bisa diklik langsung.
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        _buildTimeIndicator(),
-                        const Spacer(),
-                        StatusBadge(
-                          label: statusConfig['label'],
-                          color: statusConfig['color'],
-                          backgroundColor: statusConfig['bgColor'],
-                          icon: statusConfig['icon'],
-                        ),
-                      ],
+                    _buildTimeIndicator(),
+                    const Spacer(),
+                    StatusBadge(
+                      label: statusConfig['label'],
+                      color: statusConfig['color'],
+                      backgroundColor: statusConfig['bgColor'],
+                      icon: statusConfig['icon'],
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        _buildCustomerAvatar(customerName),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                customerName,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.textDark,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              _buildOrderMeta(isDelivery),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _buildCustomerAvatar(customerName),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Total Pembayaran',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textMid,
-                            ),
-                          ),
                           Text(
-                            formatRupiah(order.grandTotal),
+                            customerName,
                             style: const TextStyle(
+                              fontSize: 17,
                               fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                              color: AppColors.primary,
+                              color: AppColors.textDark,
+                              letterSpacing: -0.5,
                             ),
                           ),
+                          const SizedBox(height: 6),
+                          _buildOrderMeta(isDelivery),
                         ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              const Divider(height: 1, color: AppColors.divider),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 12,
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      '#${order.orderNumber}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textSubtle,
-                        letterSpacing: 0.5,
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total Pembayaran',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textMid,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    _buildActionButton(status),
-                  ],
+                      Text(
+                        formatRupiah(order.grandTotal),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const Divider(height: 1, color: AppColors.divider),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 12,
+            ),
+            child: Row(
+              children: [
+                Text(
+                  '#${order.orderNumber}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textSubtle,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const Spacer(),
+                // Hanya tombol ini yang punya akses navigasi.
+                _buildActionButton(context, status),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -238,7 +230,8 @@ class OrderListCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(String status) {
+  // Sekarang menerima `context` dan punya navigasi sendiri.
+  Widget _buildActionButton(BuildContext context, String status) {
     final Map<String, String> actions = {
       'PENDING': 'Mulai Proses',
       'PROCESSING': 'Siapkan Order',
@@ -248,36 +241,55 @@ class OrderListCard extends StatelessWidget {
     final isCompleted =
         status == 'COMPLETED' || status == 'CANCELLED' || status == 'DELIVERED';
 
+    void goToDetail() {
+      HapticFeedback.selectionClick();
+      context.push('/staff/order-detail', extra: order);
+    }
+
     if (isCompleted) {
-      return const Text(
-        'Lihat Detail',
-        style: TextStyle(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w900,
-          fontSize: 13,
+      return InkWell(
+        onTap: goToDetail,
+        borderRadius: BorderRadius.circular(8),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Text(
+            'Lihat Detail',
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
+            ),
+          ),
         ),
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: goToDetail,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Text(
-        actions[status] ?? 'Kelola Order',
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w900,
-          fontSize: 12,
+          child: Text(
+            actions[status] ?? 'Kelola Order',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+            ),
+          ),
         ),
       ),
     );

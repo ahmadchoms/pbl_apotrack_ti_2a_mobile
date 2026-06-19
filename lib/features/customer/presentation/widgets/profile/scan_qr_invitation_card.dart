@@ -15,7 +15,6 @@ class ScanQrInvitationCard extends ConsumerWidget {
     return AppCard(
       child: ListTile(
         contentPadding: EdgeInsets.zero,
-
         leading: Container(
           width: 40,
           height: 40,
@@ -29,26 +28,22 @@ class ScanQrInvitationCard extends ConsumerWidget {
             size: 20,
           ),
         ),
-
         title: const Text(
-          'Scan QR Undangan',
+          'Scan QR / Kode Undangan',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
             color: AppColors.textDark,
           ),
         ),
-
         subtitle: const Text(
           'Masuk sebagai Staff Apotek',
           style: TextStyle(fontSize: 12, color: AppColors.textLight),
         ),
-
         trailing: const Icon(
           Icons.chevron_right_rounded,
           color: AppColors.textLight,
         ),
-
         onTap: () async {
           final result = await Navigator.push<String>(
             context,
@@ -56,7 +51,14 @@ class ScanQrInvitationCard extends ConsumerWidget {
           );
 
           if (result != null && context.mounted) {
-            _showConfirmDialog(context, ref, result);
+            // Deteksi: kalau result berupa URL (hasil scan QR), pakai flow URL.
+            // Kalau pendek (8 karakter, hasil input manual PIN), pakai flow PIN.
+            final isUrl = result.startsWith('http');
+            if (isUrl) {
+              _showConfirmDialog(context, ref, invitationUrl: result);
+            } else {
+              _showConfirmDialog(context, ref, pin: result);
+            }
           }
         },
       ),
@@ -65,40 +67,49 @@ class ScanQrInvitationCard extends ConsumerWidget {
 
   void _showConfirmDialog(
     BuildContext context,
-    WidgetRef ref,
-    String invitationUrl,
-  ) {
-    // Parse pharmacy name dari URL jika ada, fallback ke "apotek ini"
+    WidgetRef ref, {
+    String? invitationUrl,
+    String? pin,
+  }) {
+    assert(invitationUrl != null || pin != null);
+
     String pharmacyHint = 'apotek ini';
-    try {
-      final uri = Uri.parse(invitationUrl);
-      final pharmacyId = uri.queryParameters['pharmacy_id'];
-      if (pharmacyId != null) {
-        pharmacyHint = 'apotek (ID: ${pharmacyId.substring(0, 8)}...)';
-      }
-    } catch (_) {}
+    if (invitationUrl != null) {
+      try {
+        final uri = Uri.parse(invitationUrl);
+        final pharmacyId = uri.queryParameters['pharmacy_id'];
+        if (pharmacyId != null) {
+          pharmacyHint = 'apotek (ID: ${pharmacyId.substring(0, 8)}...)';
+        }
+      } catch (_) {}
+    } else if (pin != null) {
+      pharmacyHint = 'apotek dengan kode $pin';
+    }
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _InvitationConfirmDialog(
-        invitationUrl: invitationUrl,
         pharmacyHint: pharmacyHint,
         onConfirm: () async {
-          Navigator.pop(ctx); // tutup dialog konfirmasi
-          await _processJoin(context, ref, invitationUrl);
+          Navigator.pop(ctx);
+          if (invitationUrl != null) {
+            await _processJoinByUrl(context, ref, invitationUrl);
+          } else {
+            await _processJoinByPin(context, ref, pin!);
+          }
         },
         onCancel: () => Navigator.pop(ctx),
       ),
     );
   }
 
-  Future<void> _processJoin(
+  // ── Join via URL (scan QR) ───────────────────────────────────────────
+  Future<void> _processJoinByUrl(
     BuildContext context,
     WidgetRef ref,
     String invitationUrl,
   ) async {
-    // Tampilkan loading
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -109,7 +120,7 @@ class ScanQrInvitationCard extends ConsumerWidget {
       final repo = ref.read(customerRepositoryProvider);
       final response = await repo.joinStaffByInvitation(invitationUrl);
 
-      if (context.mounted) Navigator.pop(context); // tutup loading
+      if (context.mounted) Navigator.pop(context);
 
       final pharmacyName = response.data['pharmacy']?['name'] ?? 'apotek';
 
@@ -122,11 +133,56 @@ class ScanQrInvitationCard extends ConsumerWidget {
         );
       }
     } on DioException catch (e) {
-      if (context.mounted) Navigator.pop(context); // tutup loading
-
+      if (context.mounted) Navigator.pop(context);
       final msg =
           e.response?.data?['message'] ?? 'Terjadi kesalahan. Coba lagi.';
+      if (context.mounted) {
+        _showResultDialog(context, isSuccess: false, message: msg);
+      }
+    } catch (e) {
+      if (context.mounted) Navigator.pop(context);
+      if (context.mounted) {
+        _showResultDialog(
+          context,
+          isSuccess: false,
+          message: 'Terjadi kesalahan tidak terduga.',
+        );
+      }
+    }
+  }
 
+  // ── Join via PIN (input manual) ──────────────────────────────────────
+  Future<void> _processJoinByPin(
+    BuildContext context,
+    WidgetRef ref,
+    String pin,
+  ) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final repo = ref.read(customerRepositoryProvider);
+      final response = await repo.joinStaffByPin(pin);
+
+      if (context.mounted) Navigator.pop(context);
+
+      final pharmacyName = response.data['pharmacy']?['name'] ?? 'apotek';
+
+      if (context.mounted) {
+        _showResultDialog(
+          context,
+          isSuccess: true,
+          message:
+              'Kamu berhasil bergabung sebagai Staff di $pharmacyName!\n\nSilakan login ulang untuk mengakses fitur staff.',
+        );
+      }
+    } on DioException catch (e) {
+      if (context.mounted) Navigator.pop(context);
+      final msg =
+          e.response?.data?['message'] ?? 'Terjadi kesalahan. Coba lagi.';
       if (context.mounted) {
         _showResultDialog(context, isSuccess: false, message: msg);
       }
@@ -158,9 +214,8 @@ class ScanQrInvitationCard extends ConsumerWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: isSuccess
-                    ? AppColors.successLight
-                    : AppColors.dangerLight,
+                color:
+                    isSuccess ? AppColors.successLight : AppColors.dangerLight,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -196,9 +251,8 @@ class ScanQrInvitationCard extends ConsumerWidget {
             child: ElevatedButton(
               onPressed: () => Navigator.pop(ctx),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isSuccess
-                    ? AppColors.success
-                    : AppColors.primary,
+                backgroundColor:
+                    isSuccess ? AppColors.success : AppColors.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -219,16 +273,14 @@ class ScanQrInvitationCard extends ConsumerWidget {
   }
 }
 
-// ── Dialog Widget ────────────────────────────────────────────────────────────
+// ── Dialog Widget ─────────────────────────────────────────────────────────────
 
 class _InvitationConfirmDialog extends StatelessWidget {
-  final String invitationUrl;
   final String pharmacyHint;
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
 
   const _InvitationConfirmDialog({
-    required this.invitationUrl,
     required this.pharmacyHint,
     required this.onConfirm,
     required this.onCancel,
@@ -246,7 +298,7 @@ class _InvitationConfirmDialog extends StatelessWidget {
           Container(
             width: 64,
             height: 64,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.successLight,
               shape: BoxShape.circle,
             ),
@@ -268,7 +320,7 @@ class _InvitationConfirmDialog extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Kamu akan bergabung sebagai Staff di $pharmacyHint. Role akunmu akan berubah dari Customer menjadi Staff.',
+            'Kamu akan bergabung sebagai Staff di $pharmacyHint. Pastikan kamu yakin sebelum melanjutkan.',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 13,

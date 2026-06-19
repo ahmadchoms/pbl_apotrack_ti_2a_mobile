@@ -17,7 +17,7 @@ class StaffRepository {
       _dio.patch('/staff/orders/$id/status', data: {'status': status});
 
   Future<Response> shipOrder(String id) =>
-    _dio.post('/staff/orders/$id/ship');
+      _dio.post('/staff/orders/$id/ship');
 
   Future<Response> simulateTracking(String id, String status) =>
       _dio.post('/staff/orders/$id/simulate-tracking/$status');
@@ -25,6 +25,11 @@ class StaffRepository {
   Future<Response> verifyOrderByCode(String verificationCode) =>
       _dio.post('/staff/orders/verify', data: {'verification_code': verificationCode});
 
+  Future<Response> approveCancellation(String id) =>
+      _dio.post('/staff/orders/$id/approve-cancellation');
+
+  Future<Response> rejectCancellation(String id) =>
+      _dio.post('/staff/orders/$id/reject-cancellation');
 
   // --- INVENTARIS (MEDICINES) ---
   Future<Response> getMedicines(Map<String, dynamic>? queryParams) =>
@@ -58,7 +63,7 @@ class StaffRepository {
   Future<Response> storePosOrder(Map<String, dynamic> data) =>
       _dio.post('/staff/pos/orders', data: data);
 
-  // --- PROFIL & KEAMANAN (shared: Customer & Staff) ---
+  // --- PROFIL & KEAMANAN ---
   Future<Response> fetchMe() => _dio.get('/me');
 
   Future<Response> updateProfile(dynamic data) {
@@ -74,7 +79,7 @@ class StaffRepository {
 
   Future<Response> logout() => _dio.post('/auth/logout');
 
-  // --- ALAMAT CUSTOMER ---
+  // --- ALAMAT ---
   Future<Response> getAddresses() => _dio.get('/user/addresses');
 
   Future<Response> addAddress(Map<String, dynamic> data) =>

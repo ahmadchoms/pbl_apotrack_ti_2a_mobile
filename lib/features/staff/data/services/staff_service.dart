@@ -41,6 +41,13 @@ class StaffService {
     return Order.fromJson(response.data['data']);
   }
 
+  Future<void> approveCancellation(String orderId) async {
+    await _repository.approveCancellation(orderId);
+  }
+
+  Future<void> rejectCancellation(String orderId) async {
+    await _repository.rejectCancellation(orderId);
+  }
 
   // --- INVENTARIS (MEDICINES) ---
 
@@ -96,7 +103,7 @@ class StaffService {
     return list.map((e) => AuditLog.fromJson(e)).toList();
   }
 
-  // --- PROFIL & KEAMANAN (shared: Customer & Staff) ---
+  // --- PROFIL & KEAMANAN ---
 
   Future<UserModel> getProfile() async {
     try {
@@ -167,7 +174,7 @@ class StaffService {
     } catch (_) {}
   }
 
-  // --- ALAMAT CUSTOMER ---
+  // --- ALAMAT ---
 
   Future<List<CustomerAddress>> getAddresses() async {
     try {

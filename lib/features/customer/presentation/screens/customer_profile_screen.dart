@@ -144,11 +144,6 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
                       title: 'LAINNYA',
                       items: [
                         MenuItemTile(
-                          icon: Icons.help_outline_rounded,
-                          title: 'Pusat Bantuan',
-                          onTap: () {},
-                        ),
-                        MenuItemTile(
                           icon: Icons.delete_outline_rounded,
                           title: 'Hapus Akun',
                           isDestructive: true,

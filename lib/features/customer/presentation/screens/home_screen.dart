@@ -193,7 +193,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        ),
                         Row(
                           children: [
                             const Icon(

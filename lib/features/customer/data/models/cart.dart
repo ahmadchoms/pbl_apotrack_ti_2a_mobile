@@ -1,4 +1,3 @@
-// ─── Simple Cart State (gunakan Provider/Riverpod di production) ───
 class CartItem {
   final String id;          // medicine UUID
   final String name;
@@ -30,21 +29,22 @@ class CartState {
 
   final List<CartItem> items = [];
 
+  /// Menambahkan item ke keranjang.
+  /// Jika obat (id + apotek) sudah ada di keranjang, quantity-nya akan
+  /// DITAMBAHKAN dengan quantity dari [newItem] (bukan hanya +1), lalu
+  /// dibatasi maksimal sesuai stok terbaru (newItem.stock) supaya tidak
+  /// melebihi stok yang tersedia saat ini.
   void addItem(CartItem newItem) {
-    final existing = items.firstWhere(
+    final existingIndex = items.indexWhere(
       (e) => e.id == newItem.id && e.pharmacyId == newItem.pharmacyId,
-      orElse: () => CartItem(
-          id: '',
-          name: '',
-          price: 0,
-          unit: '',
-          imageUrl: '',
-          pharmacyName: '',
-          pharmacyId: '',
-          stock: 0),
     );
-    if (existing.id.isNotEmpty) {
-      existing.quantity++;
+
+    if (existingIndex != -1) {
+      final existing = items[existingIndex];
+      existing.quantity += newItem.quantity;
+      if (existing.quantity > newItem.stock) {
+        existing.quantity = newItem.stock;
+      }
     } else {
       items.add(newItem);
     }

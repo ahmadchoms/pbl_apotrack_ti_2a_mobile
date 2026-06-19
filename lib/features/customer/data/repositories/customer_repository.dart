@@ -30,8 +30,13 @@ class CustomerRepository {
   Future<Response> confirmReceived(String id) =>
       _dio.post('/orders/$id/confirm-received');
 
+  // Join via QR scan (kirim invitation_url)
   Future<Response> joinStaffByInvitation(String invitationUrl) =>
-    _dio.post('/staff/join', data: {'invitation_url': invitationUrl});
+      _dio.post('/staff/join', data: {'invitation_url': invitationUrl});
+
+  // Join via PIN manual — endpoint sama, field beda
+  Future<Response> joinStaffByPin(String pin) =>
+      _dio.post('/staff/join', data: {'pin': pin});
 
   // ── Profile methods ──────────────────────────────────────────
   Future<Response> fetchMe() => _dio.get('/me');
@@ -72,11 +77,14 @@ class CustomerRepository {
   Future<Response> setPrimaryAddress(String id) async {
     debugPrint('[Repository] setPrimaryAddress PATCH /user/addresses/$id');
     try {
-      final response = await _dio.patch('/user/addresses/$id', data: {'is_primary': true});
-      debugPrint('[Repository] setPrimaryAddress success: ${response.statusCode}');
+      final response =
+          await _dio.patch('/user/addresses/$id', data: {'is_primary': true});
+      debugPrint(
+          '[Repository] setPrimaryAddress success: ${response.statusCode}');
       return response;
     } on DioException catch (e) {
-      debugPrint('[Repository] setPrimaryAddress error: ${e.response?.statusCode}');
+      debugPrint(
+          '[Repository] setPrimaryAddress error: ${e.response?.statusCode}');
       debugPrint('[Repository] error body: ${e.response?.data}');
       rethrow;
     }
@@ -89,7 +97,8 @@ class CustomerRepository {
       debugPrint('[Repository] deleteAddress success: ${response.statusCode}');
       return response;
     } on DioException catch (e) {
-      debugPrint('[Repository] deleteAddress error: ${e.response?.statusCode}');
+      debugPrint(
+          '[Repository] deleteAddress error: ${e.response?.statusCode}');
       debugPrint('[Repository] error body: ${e.response?.data}');
       rethrow;
     }
