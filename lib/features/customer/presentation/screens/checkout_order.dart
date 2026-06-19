@@ -60,6 +60,72 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final profileState = ref.read(customerProfileProvider);
     if (profileState.addresses.isEmpty && !profileState.isLoading) {
       ref.read(customerProfileProvider.notifier).loadAll();
+    } else if (profileState.addresses.isNotEmpty) {
+      _addressesLoaded = true;
+      final converted =
+          profileState.addresses.map(AddressModel.fromCustomerAddress).toList();
+      _addressProvider.loadFromApi(converted);
+      _initializeDefaultAddress();
+    }
+  }
+
+  Future<void> _initializeDefaultAddress() async {
+    if (_addressProvider.selectedAddress != null) return;
+
+    final profileState = ref.read(customerProfileProvider);
+
+    // 1. Check if there is a temp GPS address active from the home screen
+    if (profileState.tempGpsAddress != null) {
+      final gpsAddr = profileState.tempGpsAddress!;
+      if (gpsAddr.id == 'gps_session') {
+        // Automatically save the temporary GPS location to the DB for checkout
+        try {
+          setState(() {
+            _isLoadingRates = true;
+          });
+          final savedAddr = await ref.read(customerProfileProvider.notifier).addAddress(
+            label: 'Lokasi Sekarang',
+            addressDetail: gpsAddr.addressDetail,
+            latitude: gpsAddr.latitude,
+            longitude: gpsAddr.longitude,
+            isPrimary: false,
+          );
+          final activeAddr = AddressModel.fromCustomerAddress(savedAddr);
+          _addressProvider.selectAddress(activeAddr);
+          
+          // Refresh list of addresses in provider
+          final updatedProfileState = ref.read(customerProfileProvider);
+          final converted = updatedProfileState.addresses
+              .map(AddressModel.fromCustomerAddress)
+              .toList();
+          _addressProvider.loadFromApi(converted);
+          
+          _fetchRates();
+        } catch (e) {
+          debugPrint('Failed to save temp GPS location on checkout: $e');
+          setState(() {
+            _isLoadingRates = false;
+          });
+        }
+      } else {
+        _addressProvider.selectAddress(AddressModel.fromCustomerAddress(gpsAddr));
+        _fetchRates();
+      }
+      return;
+    }
+
+    // 2. Otherwise, check if there is a primary address
+    final primaryAddr = profileState.addresses.where((a) => a.isPrimary).firstOrNull;
+    if (primaryAddr != null) {
+      _addressProvider.selectAddress(AddressModel.fromCustomerAddress(primaryAddr));
+      _fetchRates();
+      return;
+    }
+
+    // 3. Fallback to first address if no primary
+    if (profileState.addresses.isNotEmpty) {
+      _addressProvider.selectAddress(AddressModel.fromCustomerAddress(profileState.addresses.first));
+      _fetchRates();
     }
   }
 
@@ -212,6 +278,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         final converted =
             next.addresses.map(AddressModel.fromCustomerAddress).toList();
         _addressProvider.loadFromApi(converted);
+        _initializeDefaultAddress();
       }
     });
 
@@ -789,7 +856,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     showAddressPickerSheet(
       context,
       _addressProvider,
-      onSelected: () => setState(() {}),
+      onSelected: () {
+        setState(() {
+          _courierRates = [];
+          _selectedCourierCode = null;
+          _selectedCourierService = null;
+          _selectedCourierPrice = 0;
+          _distanceKm = 0;
+          _ratesError = false;
+        });
+      },
       onSetPrimary: (address) {
         ref.read(customerProfileProvider.notifier).setPrimaryAddress(address.id);
         _addressProvider.updatePrimaryFlags(address.id);

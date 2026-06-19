@@ -100,23 +100,15 @@ class _AddressPickerSheetState extends ConsumerState<AddressPickerSheet> {
         position.longitude,
       );
 
-      ref
-          .read(customerProfileProvider.notifier)
-          .updateCurrentGpsLocation(
-            latitude: position.latitude,
-            longitude: position.longitude,
-            addressDetail: addressText,
-          );
-
-      final activeAddr = AddressModel(
-        id: 'gps_session',
-        name: 'Lokasi Sekarang',
-        fullAddress: addressText,
+      final savedAddr = await ref.read(customerProfileProvider.notifier).addAddress(
+        label: 'Lokasi Sekarang',
+        addressDetail: addressText,
         latitude: position.latitude,
         longitude: position.longitude,
         isPrimary: false,
       );
 
+      final activeAddr = AddressModel.fromCustomerAddress(savedAddr);
       _selectAddress(activeAddr);
     } catch (e) {
       if (mounted) {
@@ -168,23 +160,15 @@ class _AddressPickerSheetState extends ConsumerState<AddressPickerSheet> {
               lng,
             );
 
-            ref
-                .read(customerProfileProvider.notifier)
-                .updateCurrentGpsLocation(
-                  latitude: lat,
-                  longitude: lng,
-                  addressDetail: addressText,
-                );
-
-            final mapAddr = AddressModel(
-              id: 'gps_session',
-              name: 'Lokasi Terpilih',
-              fullAddress: addressText,
+            final savedAddr = await ref.read(customerProfileProvider.notifier).addAddress(
+              label: 'Lokasi Terpilih',
+              addressDetail: addressText,
               latitude: lat,
               longitude: lng,
               isPrimary: false,
             );
 
+            final mapAddr = AddressModel.fromCustomerAddress(savedAddr);
             _selectAddress(mapAddr);
           } catch (e) {
             if (mounted) {

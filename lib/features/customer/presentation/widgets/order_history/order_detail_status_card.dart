@@ -93,6 +93,13 @@ class OrderDetailStatusCard extends StatelessWidget {
           iconContainerColor: Colors.white24,
         );
 
+      case 'DELIVERED':
+        return const _StatusThemeData(
+          backgroundColor: AppColors.successLight,
+          textColor: AppColors.mapGrid,
+          iconContainerColor: Colors.white24,
+        );
+
       case 'COMPLETED':
       case 'REVIEWED':
         return const _StatusThemeData(
