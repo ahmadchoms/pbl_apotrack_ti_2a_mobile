@@ -6,11 +6,21 @@ class AppColors {
   static const Color primaryLight = Color(0xFFEEF4FF);
   static const Color primaryDark = Color(0xFF1557C0);
 
+  // Base Colors
+  static const Color black = Colors.black;
+  static const Color white = Colors.white;
+
   // Neutral Colors
   static const Color background = Color(0xFFF4F7FE);
   static const Color surface = Colors.white;
   static const Color divider = Color(0xFFE5EAF2);
-  
+  static const Color textPrimary = Color(0xFF1E293B);
+  static const Color textSlate = Color(0xFF64748B);
+  static const Color textMuted = Color(0xFF94A3B8);
+  static const Color mapGreen = Color(0xFFD4E9D3);
+  static const Color mapGreenBorder = Color(0xFFBBD9B9);
+  static const Color mapGrid = Color(0xFFA8C8A8);
+
   // Text Colors
   static const Color textDark = Color(0xFF0F1828);
   static const Color textMid = Color(0xFF4B5563);
@@ -26,10 +36,17 @@ class AppColors {
   static const Color dangerLight = Color(0xFFFEF2F2);
   static const Color info = Color(0xFF3B82F6);
   static const Color infoLight = Color(0xFFEFF6FF);
+  static const Color surfaceLight = Color(0xFFF8FAFC);
 
-  // Accent Colors (used in cards/icons)
+  // Accent Colors
   static const Color accentIndigo = Color(0xFF6366F1);
   static const Color accentOrange = Color(0xFFF97316);
   static const Color accentPurple = Color(0xFF8B5CF6);
   static const Color accentPink = Color(0xFFEC4899);
+
+  // Status tracking colors
+  static const Color stepDone = Color(0xFF1E293B);
+  static const Color stepInactive = Color(0xFF94A3B8);
+  static const Color stepInactiveBg = Color(0xFFF1F5F9);
+  static const Color stepLine = Color(0xFFE2E8F0);
 }

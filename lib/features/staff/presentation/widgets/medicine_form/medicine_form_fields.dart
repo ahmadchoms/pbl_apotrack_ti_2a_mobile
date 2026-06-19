@@ -72,10 +72,14 @@ class _MedicineFormFieldState extends State<MedicineFormField> {
           AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             decoration: BoxDecoration(
-              color: _focused ? AppColors.primaryLight.withOpacity(0.5) : AppColors.background,
+              color: _focused
+                  ? AppColors.primaryLight.withValues(alpha: 0.5)
+                  : AppColors.background,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _focused ? AppColors.primary.withOpacity(0.5) : Colors.transparent,
+                color: _focused
+                    ? AppColors.primary.withValues(alpha: 0.5)
+                    : Colors.transparent,
                 width: 1.5,
               ),
             ),
@@ -103,22 +107,28 @@ class _MedicineFormFieldState extends State<MedicineFormField> {
                         child: Text(
                           widget.prefix!,
                           style: TextStyle(
-                            color: _focused ? AppColors.primary : AppColors.textMid,
+                            color: _focused
+                                ? AppColors.primary
+                                : AppColors.textMid,
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
                           ),
                         ),
                       )
                     : widget.prefixIcon != null
-                        ? Container(
-                            padding: EdgeInsets.only(top: widget.maxLines > 1 ? 14 : 0),
-                            child: Icon(
-                              widget.prefixIcon,
-                              color: _focused ? AppColors.primary : AppColors.textLight,
-                              size: 18,
-                            ),
-                          )
-                        : null,
+                    ? Container(
+                        padding: EdgeInsets.only(
+                          top: widget.maxLines > 1 ? 14 : 0,
+                        ),
+                        child: Icon(
+                          widget.prefixIcon,
+                          color: _focused
+                              ? AppColors.primary
+                              : AppColors.textLight,
+                          size: 18,
+                        ),
+                      )
+                    : null,
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 14,
@@ -166,10 +176,14 @@ class MedicineFormDropdown extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryLight.withOpacity(0.5) : AppColors.background,
+            color: isSelected
+                ? AppColors.primaryLight.withValues(alpha: 0.5)
+                : AppColors.background,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? AppColors.primary.withOpacity(0.4) : Colors.transparent,
+              color: isSelected
+                  ? AppColors.primary.withValues(alpha: 0.4)
+                  : Colors.transparent,
               width: 1.5,
             ),
           ),
@@ -265,7 +279,9 @@ class MedicineFormSwitch extends StatelessWidget {
           color: value ? activeBg : AppColors.background,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: value ? activeColor.withOpacity(0.25) : Colors.transparent,
+            color: value
+                ? activeColor.withValues(alpha: 0.25)
+                : Colors.transparent,
             width: 1.5,
           ),
         ),
@@ -275,7 +291,9 @@ class MedicineFormSwitch extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: value ? activeColor.withOpacity(0.15) : AppColors.surface,
+                color: value
+                    ? activeColor.withValues(alpha: 0.15)
+                    : AppColors.surface,
                 borderRadius: BorderRadius.circular(9),
               ),
               child: Icon(
@@ -316,8 +334,8 @@ class MedicineFormSwitch extends StatelessWidget {
                   HapticFeedback.selectionClick();
                   onChanged(v);
                 },
-                activeColor: activeColor,
-                activeTrackColor: activeColor.withOpacity(0.25),
+                activeThumbColor: activeColor,
+                activeTrackColor: activeColor.withValues(alpha: 0.25),
                 inactiveThumbColor: AppColors.textLight,
                 inactiveTrackColor: AppColors.divider,
               ),

@@ -1,28 +1,23 @@
+// lib/features/staff/presentation/screens/edit_address_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/models/customer_address.dart';
-import '../providers/customer_profile_provider.dart';
-import '../widgets/profile/map_picker_dialog.dart';
+import '../../../customer/data/models/customer_address.dart';
+import '../providers/staff_provider.dart';
+import '../../../customer/presentation/widgets/profile/map_picker_dialog.dart';
 
-class CustomerEditAddressScreen extends ConsumerStatefulWidget {
+class EditAddressScreen extends ConsumerStatefulWidget {
   final bool isAdd;
   final CustomerAddress? address;
 
-  const CustomerEditAddressScreen({
-    super.key,
-    this.isAdd = false,
-    this.address,
-  });
+  const EditAddressScreen({super.key, this.isAdd = false, this.address});
 
   @override
-  ConsumerState<CustomerEditAddressScreen> createState() =>
-      _CustomerEditAddressScreenState();
+  ConsumerState<EditAddressScreen> createState() => _EditAddressScreenState();
 }
 
-class _CustomerEditAddressScreenState
-    extends ConsumerState<CustomerEditAddressScreen> {
+class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
   late final TextEditingController _labelController;
   late final TextEditingController _addressController;
   bool _isPrimary = false;
@@ -76,7 +71,7 @@ class _CustomerEditAddressScreenState
     try {
       if (widget.isAdd) {
         await ref
-            .read(customerProfileProvider.notifier)
+            .read(profileProvider.notifier)
             .addAddress(
               label: _labelController.text.trim(),
               addressDetail: _addressController.text.trim(),
@@ -86,7 +81,7 @@ class _CustomerEditAddressScreenState
             );
       } else {
         await ref
-            .read(customerProfileProvider.notifier)
+            .read(profileProvider.notifier)
             .updateAddress(
               id: widget.address!.id,
               label: _labelController.text.trim(),
@@ -111,16 +106,15 @@ class _CustomerEditAddressScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  // REVISI: ganti showDialog return value ke callback langsung
   void _showMapPicker() {
     showDialog(
       context: context,
@@ -139,17 +133,15 @@ class _CustomerEditAddressScreenState
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF1D70F5);
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.black,
+            color: AppColors.textDark,
             size: 20,
           ),
           onPressed: () => context.pop(),
@@ -157,7 +149,7 @@ class _CustomerEditAddressScreenState
         title: Text(
           widget.isAdd ? 'Tambah Alamat' : 'Edit Alamat',
           style: const TextStyle(
-            color: Colors.black,
+            color: AppColors.textDark,
             fontWeight: FontWeight.w900,
             fontSize: 17,
           ),
@@ -169,31 +161,29 @@ class _CustomerEditAddressScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Map picker thumbnail
+            // ── Map picker ────────────────────────────────────
             const Text(
               'LOKASI PRESISI',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF64748B),
+                color: AppColors.textLight,
                 letterSpacing: 0.8,
               ),
             ),
             const SizedBox(height: 10),
-            // REVISI: tampilan thumbnail peta tanpa koordinat, lebih bersih
             GestureDetector(
               onTap: _showMapPicker,
               child: Container(
                 height: 140,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD4E9D3),
+                  color: AppColors.mapGreen,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFBBD9B9)),
+                  border: Border.all(color: AppColors.mapGreenBorder),
                 ),
                 child: Stack(
                   children: [
-                    // Background grid peta simulasi
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: CustomPaint(
@@ -201,7 +191,6 @@ class _CustomerEditAddressScreenState
                         painter: _MapGridPainter(),
                       ),
                     ),
-                    // Icon dan teks tengah
                     Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -209,11 +198,13 @@ class _CustomerEditAddressScreenState
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.white,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.12),
+                                  color: AppColors.black.withValues(
+                                    alpha: 0.12,
+                                  ),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -222,7 +213,7 @@ class _CustomerEditAddressScreenState
                             child: const Icon(
                               Icons.location_on_rounded,
                               size: 28,
-                              color: Color(0xFF1D70F5),
+                              color: AppColors.primary,
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -232,14 +223,14 @@ class _CustomerEditAddressScreenState
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
+                              color: AppColors.white.withValues(alpha: 0.9),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Text(
                               'Ketuk untuk pilih lokasi',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF1D70F5),
+                                color: AppColors.primary,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -253,7 +244,7 @@ class _CustomerEditAddressScreenState
             ),
             const SizedBox(height: 24),
 
-            // Label field
+            // ── Label field ───────────────────────────────────
             _buildFieldLabel('Label Alamat', _labelError),
             const SizedBox(height: 8),
             _buildTextField(
@@ -268,17 +259,17 @@ class _CustomerEditAddressScreenState
             if (_labelError != null) _buildErrorText(_labelError!),
             const SizedBox(height: 16),
 
-            // Address field
+            // ── Alamat lengkap ────────────────────────────────
             _buildFieldLabel('Alamat Lengkap', _addressError),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _addressError != null
                       ? AppColors.danger
-                      : const Color(0xFFF1F5F9),
+                      : AppColors.divider,
                   width: _addressError != null ? 1.5 : 1,
                 ),
               ),
@@ -293,29 +284,33 @@ class _CustomerEditAddressScreenState
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
                 ),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.all(16),
                   hintText: 'Jl. Nama Jalan No. X, Kelurahan, Kecamatan...',
-                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFFCBD5E1)),
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textLight,
+                  ),
                 ),
               ),
             ),
             if (_addressError != null) _buildErrorText(_addressError!),
             const SizedBox(height: 16),
 
-            // Toggle Primary
+            // ── Toggle primary ────────────────────────────────
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFF1F5F9)),
+                border: Border.all(color: AppColors.divider),
               ),
               child: SwitchListTile(
                 value: _isPrimary,
                 onChanged: (v) => setState(() => _isPrimary = v),
-                activeColor: primaryColor,
+                activeThumbColor: AppColors.primary,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 4,
@@ -325,22 +320,22 @@ class _CustomerEditAddressScreenState
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1E293B),
+                    color: AppColors.textDark,
                   ),
                 ),
                 subtitle: const Text(
                   'Digunakan sebagai default pengiriman',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                  style: TextStyle(fontSize: 12, color: AppColors.textLight),
                 ),
               ),
             ),
             const SizedBox(height: 12),
 
-            // Info box
+            // ── Info box ──────────────────────────────────────
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF4FF),
+                color: AppColors.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -349,7 +344,7 @@ class _CustomerEditAddressScreenState
                   const Icon(
                     Icons.info_outline_rounded,
                     size: 16,
-                    color: primaryColor,
+                    color: AppColors.primary,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -359,7 +354,7 @@ class _CustomerEditAddressScreenState
                           : 'Perubahan akan langsung diterapkan.',
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF0055a5),
+                        color: AppColors.primary,
                         height: 1.4,
                         fontWeight: FontWeight.w600,
                       ),
@@ -370,14 +365,15 @@ class _CustomerEditAddressScreenState
             ),
             const SizedBox(height: 40),
 
-            // Tombol Simpan
+            // ── Tombol simpan ─────────────────────────────────
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _isSaving ? null : _onSave,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -388,15 +384,15 @@ class _CustomerEditAddressScreenState
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
+                          color: AppColors.white,
                           strokeWidth: 2,
-                          color: Colors.white,
                         ),
                       )
                     : Text(
                         widget.isAdd ? 'Tambah Alamat' : 'Simpan Alamat',
                         style: const TextStyle(
-                          color: Colors.white,
                           fontWeight: FontWeight.w900,
+                          fontSize: 16,
                         ),
                       ),
               ),
@@ -414,7 +410,7 @@ class _CustomerEditAddressScreenState
       style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w800,
-        color: error != null ? AppColors.danger : const Color(0xFF64748B),
+        color: error != null ? AppColors.danger : AppColors.textLight,
       ),
     ),
   );
@@ -427,26 +423,30 @@ class _CustomerEditAddressScreenState
     required ValueChanged<String> onChanged,
   }) => Container(
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppColors.white,
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: hasError ? AppColors.danger : const Color(0xFFF1F5F9),
+        color: hasError ? AppColors.danger : AppColors.divider,
         width: hasError ? 1.5 : 1,
       ),
     ),
     child: TextField(
       controller: controller,
       onChanged: onChanged,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textDark,
+      ),
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: const Color(0xFF94A3B8), size: 20),
+        prefixIcon: Icon(icon, color: AppColors.textMid, size: 20),
         border: InputBorder.none,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
         ),
         hintText: hint,
-        hintStyle: const TextStyle(fontSize: 13, color: Color(0xFFCBD5E1)),
+        hintStyle: const TextStyle(fontSize: 13, color: AppColors.textLight),
       ),
     ),
   );
@@ -474,16 +474,13 @@ class _CustomerEditAddressScreenState
   );
 }
 
-// REVISI: custom painter untuk background grid peta simulasi
 class _MapGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFA8C8A8).withOpacity(0.5)
+      ..color = AppColors.mapGrid.withValues(alpha: 0.5)
       ..strokeWidth = 1;
-
     const spacing = 30.0;
-
     for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }

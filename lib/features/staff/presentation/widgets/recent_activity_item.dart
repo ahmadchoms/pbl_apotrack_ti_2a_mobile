@@ -59,8 +59,11 @@ class RecentActivityItem extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded,
-                  color: AppColors.textSubtle, size: 20),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textSubtle,
+                size: 20,
+              ),
             ],
           ),
         ),

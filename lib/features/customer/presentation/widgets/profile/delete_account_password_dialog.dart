@@ -45,10 +45,9 @@ class _DeleteAccountPasswordDialogState
       _errorText = null;
     });
 
-    // TODO: Ganti dengan DELETE /api/customer/account setelah
-    // endpoint tersedia di backend. Untuk sementara hanya logout.
     try {
-      await ref.read(customerProfileProvider.notifier).logout();
+      await (ref.read(customerProfileProvider.notifier) as dynamic)
+          .deleteAccount(password);
       if (mounted) {
         Navigator.pop(context);
         context.go(AppRouter.login);
@@ -57,7 +56,7 @@ class _DeleteAccountPasswordDialogState
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorText = e.toString();
+          _errorText = e.toString().replaceAll('Exception: ', '');
         });
       }
     }
@@ -75,7 +74,7 @@ class _DeleteAccountPasswordDialogState
             Container(
               width: 64,
               height: 64,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.dangerLight,
                 shape: BoxShape.circle,
               ),
@@ -91,7 +90,7 @@ class _DeleteAccountPasswordDialogState
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF1E293B),
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -100,7 +99,7 @@ class _DeleteAccountPasswordDialogState
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF64748B),
+                color: AppColors.textSlate,
                 height: 1.5,
               ),
             ),
@@ -114,23 +113,23 @@ class _DeleteAccountPasswordDialogState
               decoration: InputDecoration(
                 hintText: 'Masukkan password',
                 hintStyle: const TextStyle(
-                  color: Color(0xFFCBD5E1),
+                  color: AppColors.textSubtle,
                   fontSize: 14,
                 ),
                 errorText: _errorText,
                 filled: true,
-                fillColor: const Color(0xFFF8FAFC),
+                fillColor: AppColors.surfaceLight,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderSide: const BorderSide(color: AppColors.divider),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderSide: const BorderSide(color: AppColors.divider),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -139,12 +138,16 @@ class _DeleteAccountPasswordDialogState
                     width: 1.5,
                   ),
                 ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: AppColors.danger),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscure
                         ? Icons.visibility_off_outlined
                         : Icons.visibility_outlined,
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.textMuted,
                     size: 20,
                   ),
                   onPressed: () => setState(() => _obscure = !_obscure),
@@ -159,7 +162,7 @@ class _DeleteAccountPasswordDialogState
                     onPressed: _isLoading ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      side: const BorderSide(color: AppColors.divider),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -167,7 +170,7 @@ class _DeleteAccountPasswordDialogState
                     child: const Text(
                       'Batal',
                       style: TextStyle(
-                        color: Color(0xFF64748B),
+                        color: AppColors.textSlate,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -179,7 +182,7 @@ class _DeleteAccountPasswordDialogState
                     onPressed: _isLoading ? null : _onConfirm,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.danger,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -192,7 +195,7 @@ class _DeleteAccountPasswordDialogState
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: AppColors.white,
                             ),
                           )
                         : const Text(

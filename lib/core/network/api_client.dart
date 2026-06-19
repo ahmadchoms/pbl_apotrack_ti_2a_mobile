@@ -2,44 +2,49 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../auth/auth_state_provider.dart';
+import 'app_exception.dart';
 import 'secure_storage_service.dart';
 
 /// Base URL server Laravel.
 /// Override at build time: flutter run --dart-define=API_BASE_URL=https://api.example.com
 const String _kBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
+  // defaultValue: 'https://alpha-unsunk-retrogradingly.ngrok-free.dev/api',
   defaultValue: 'http://127.0.0.1:8000/api',
 );
 
 /// Riverpod Provider untuk instance Dio yang sudah terkonfigurasi penuh.
 final dioProvider = Provider<Dio>((ref) {
   final storageService = ref.watch(secureStorageServiceProvider);
-  
+
   // Penanganan otomatis untuk Android Emulator
   String baseUrl = _kBaseUrl;
   if (!kIsWeb && Platform.isAndroid && baseUrl.contains('127.0.0.1')) {
     baseUrl = baseUrl.replaceFirst('127.0.0.1', '10.0.2.2');
   }
 
-  return _buildDio(storageService, baseUrl);
+  return _buildDio(storageService, ref, baseUrl);
 });
 
 /// Factory function yang membangun Dio dengan semua konfigurasi.
-Dio _buildDio(SecureStorageService storageService, String baseUrl) {
+Dio _buildDio(SecureStorageService storageService, Ref ref, String baseUrl) {
   final dio = Dio(
     BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
       headers: {
         'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
       },
     ),
   );
 
   // Pasang interceptor autentikasi & logging
   dio.interceptors.addAll([
-    _AuthInterceptor(storageService),
+    _AuthInterceptor(storageService, ref),
     if (kDebugMode) _LoggingInterceptor(),
   ]);
 
@@ -51,8 +56,10 @@ Dio _buildDio(SecureStorageService storageService, String baseUrl) {
 // Otomatis menyisipkan Bearer token ke setiap request
 // ─────────────────────────────────────────────
 class _AuthInterceptor extends Interceptor {
-  _AuthInterceptor(this._storageService);
+  _AuthInterceptor(this._storageService, this._ref);
   final SecureStorageService _storageService;
+  final Ref _ref;
+  bool _isHandling401 = false;
 
   @override
   Future<void> onRequest(
@@ -68,9 +75,22 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (err.response?.statusCode == 401 && !_isHandling401) {
+      _isHandling401 = true;
+      _ref.read(authExpiredProvider.notifier).state = true;
+      _isHandling401 = false;
+    }
+
     // Transformasi error menjadi pesan yang lebih ramah
     final appError = _mapDioError(err);
-    return handler.next(appError);
+    final appException = AppException.fromDioException(appError);
+    final wrappedError = appError.copyWith(
+      message: appError.message,
+      error: appException,
+    );
+
+    // Layer di atas (seperti ApiService) sebaiknya menangkap AppException yang dibungkus dalam DioException
+    return handler.next(wrappedError);
   }
 
   DioException _mapDioError(DioException err) {
@@ -89,26 +109,30 @@ class _AuthInterceptor extends Interceptor {
         final statusCode = err.response?.statusCode;
         final responseData = err.response?.data;
         if (statusCode == 401) {
-          message = 'Sesi tidak valid atau telah berakhir. Silakan masuk kembali.';
-          // Auto-clear invalid token so router redirects to login
-          _storageService.clearAll();
+          message =
+              'Sesi tidak valid atau telah berakhir. Silakan masuk kembali.';
+          // Jangan clearAll di sini — biarkan service layer yang handle
         } else if (statusCode == 422) {
           // Laravel validation error — ambil pesan pertama dari errors map
           final errors = responseData?['errors'];
           if (errors is Map && errors.isNotEmpty) {
             message = (errors.values.first as List).first.toString();
           } else {
-            message = responseData?['message'] ?? 'Data yang dikirim tidak valid.';
+            message =
+                responseData?['message'] ?? 'Data yang dikirim tidak valid.';
           }
         } else if (statusCode == 403) {
           message = 'Anda tidak memiliki izin untuk melakukan aksi ini.';
         } else if (statusCode == 404) {
           message = 'Data atau endpoint tidak ditemukan.';
         } else if (statusCode != null && statusCode >= 500) {
-          message = 'Terjadi kesalahan pada server. Coba lagi nanti.';
+          message =
+              responseData?['message'] as String? ??
+              'Terjadi kesalahan pada server. Coba lagi nanti.';
         } else {
           message =
-              responseData?['message'] ?? 'Terjadi kesalahan yang tidak diketahui.';
+              responseData?['message'] ??
+              'Terjadi kesalahan yang tidak diketahui.';
         }
         break;
       default:
@@ -150,8 +174,3 @@ class _LoggingInterceptor extends Interceptor {
     handler.next(err);
   }
 }
-
-/// Legacy ApiClient singleton has been REMOVED.
-/// All code should use `dioProvider` which includes auth interceptor.
-/// If you were importing this file for ApiClient, use dioProvider instead:
-///   final dio = ref.watch(dioProvider);

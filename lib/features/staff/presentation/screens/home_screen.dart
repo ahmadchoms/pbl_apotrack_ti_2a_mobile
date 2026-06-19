@@ -6,8 +6,11 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/staff_provider.dart';
+import '../providers/staff_notification_provider.dart';
+import '../../data/services/staff_service.dart';
 import '../../data/models/medicine.dart';
 import '../../data/models/order.dart';
+import 'package:mobile/features/staff/presentation/screens/scanner_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -118,7 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -162,7 +165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               right: -20,
               child: CircleAvatar(
                 radius: 100,
-                backgroundColor: Colors.white.withOpacity(0.05),
+                backgroundColor: Colors.white.withValues(alpha: 0.05),
               ),
             ),
             SafeArea(
@@ -205,15 +208,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 16),
-          child: IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.notifications_active_outlined,
-              color: Colors.white,
-            ),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.15),
-            ),
+          child: _NotifBadgeIcon(
+            unreadCountAsync: ref.watch(staffUnreadNotifProvider),
+            onPressed: () => context.push('/staff/notifications'),
           ),
         ),
       ],
@@ -224,9 +221,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -258,10 +255,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           _ActionCard(
             title: 'Scan QR',
-            subtitle: 'Check-in Pesanan',
+            subtitle: 'Verifikasi Pengambilan',
             icon: Icons.qr_code_scanner_rounded,
             color: AppColors.primary,
-            onTap: () => context.push('/staff/scanner'),
+            onTap: () async {
+              final code = await Navigator.push<String>(
+                context,
+                MaterialPageRoute(builder: (_) => const ScannerScreen()),
+              );
+              if (code == null || code.isEmpty) return;
+
+              if (!context.mounted) return;
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) =>
+                    const Center(child: CircularProgressIndicator()),
+              );
+
+              try {
+                final order = await ref
+                    .read(staffServiceProvider)
+                    .verifyOrderByCode(code);
+                if (!context.mounted) return;
+                Navigator.pop(context); // tutup loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Verifikasi berhasil!'),
+                    backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
+                    margin: EdgeInsets.all(16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
+                  ),
+                );
+                context.push('/staff/order-detail', extra: order);
+              } catch (e) {
+                if (!context.mounted) return;
+                Navigator.pop(context); // tutup loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Verifikasi gagal: $e'),
+                    backgroundColor: AppColors.danger,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
+                  ),
+                );
+              }
+            },
           ),
           const SizedBox(width: 16),
           _ActionCard(
@@ -335,12 +380,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   itemCount: orders.take(5).length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, i) =>
                       _RecentOrderTile(order: orders[i]),
                 ),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
         ),
       ],
     );
@@ -425,7 +470,7 @@ class _ActionCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.3),
+                color: color.withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -447,7 +492,7 @@ class _ActionCard extends StatelessWidget {
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
@@ -481,7 +526,7 @@ class _KPICard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+        border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,7 +534,7 @@ class _KPICard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 18),
@@ -528,7 +573,7 @@ class _RecentOrderTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider.withOpacity(0.5)),
+        border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -632,9 +677,12 @@ class _RecentOrderTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: config.color.withOpacity(0.12),
+        color: config.color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: config.color.withOpacity(0.2), width: 1),
+        border: Border.all(
+          color: config.color.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -650,6 +698,63 @@ class _RecentOrderTile extends StatelessWidget {
               letterSpacing: 0.3,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NotifBadgeIcon extends ConsumerWidget {
+  final AsyncValue<int> unreadCountAsync;
+  final VoidCallback onPressed;
+
+  const _NotifBadgeIcon({
+    required this.unreadCountAsync,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadCount = unreadCountAsync.whenOrNull(data: (c) => c) ?? 0;
+
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          IconButton(
+            onPressed: onPressed,
+            icon: const Icon(
+              Icons.notifications_active_outlined,
+              color: Colors.white,
+            ),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.15),
+            ),
+          ),
+          if (unreadCount > 0)
+            Positioned(
+              right: 4,
+              top: 4,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: AppColors.danger,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                child: Text(
+                  unreadCount > 99 ? '99+' : '$unreadCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
         ],
       ),
     );

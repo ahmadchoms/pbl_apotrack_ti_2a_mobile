@@ -1,97 +1,103 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/models/notification_model.dart';
+import '../../../customer/data/services/notification_service.dart';
 
-class NotificationScreen extends StatelessWidget {
-  const NotificationScreen({super.key});
+class NotificationScreen extends ConsumerStatefulWidget {
+  final bool showBack;
 
-  // Dummy notifications
-  static const List<Map<String, dynamic>> _notifications = [
-    {
-      'id': 1,
-      'title': 'Pesanan Baru Masuk',
-      'body': 'Pesanan #ORD-0925 menunggu konfirmasi Anda.',
-      'time': '2 Menit lalu',
-      'is_read': false,
-      'type': 'ORDER',
-    },
-    {
-      'id': 2,
-      'title': 'Stok Hampir Habis',
-      'body': 'Obat Paracetamol 500mg sisa 5 strip.',
-      'time': '1 Jam lalu',
-      'is_read': false,
-      'type': 'STOCK',
-    },
-    {
-      'id': 3,
-      'title': 'Sesi Berakhir',
-      'body': 'Sesi login Anda akan berakhir dalam 30 menit.',
-      'time': '5 Jam lalu',
-      'is_read': true,
-      'type': 'SYSTEM',
-    },
-  ];
+  const NotificationScreen({super.key, this.showBack = true});
+
+  @override
+  ConsumerState<NotificationScreen> createState() => _NotificationScreenState();
+}
+
+class _NotificationScreenState extends ConsumerState<NotificationScreen> {
+  late final NotificationService _notificationService;
+  List<NotificationModel> _notifications = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationService = NotificationService(ref.read(dioProvider));
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    try {
+      final data = await _notificationService.getNotifications();
+      if (mounted) {
+        setState(() {
+          _notifications = data
+              .map((e) => NotificationModel.fromJson(e))
+              .toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memuat notifikasi: $e')));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF1D70F5);
-    const Color backgroundColor = Color(0xFFF9FAFB);
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black, size: 20),
-          onPressed: () => context.pop(),
-        ),
+        leading: widget.showBack
+            ? IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.textDark,
+                  size: 18,
+                ),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: const Text(
           'Notifikasi',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 17),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 17,
+            color: AppColors.textDark,
+          ),
         ),
         centerTitle: true,
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text('Tandai Dibaca', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w700, fontSize: 12)),
-          ),
-          const SizedBox(width: 8),
-        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: Colors.grey.shade100),
+        ),
       ),
-      body: _notifications.isEmpty
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _notifications.isEmpty
           ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              itemCount: _notifications.length,
-              itemBuilder: (context, index) {
-                final notification = _notifications[index];
-                return _buildNotificationItem(context, notification);
-              },
+          : RefreshIndicator(
+              onRefresh: _loadNotifications,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                itemCount: _notifications.length,
+                itemBuilder: (context, index) {
+                  final notif = _notifications[index];
+                  return _buildNotificationItem(context, notif);
+                },
+              ),
             ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.notifications_none_rounded, size: 80, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          const Text(
-            'Belum ada notifikasi',
-            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w700, fontSize: 16),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotificationItem(BuildContext context, Map<String, dynamic> item) {
-    final bool isRead = item['is_read'] ?? true;
-    const Color primaryColor = Color(0xFF1D70F5);
-
+  Widget _buildNotificationItem(BuildContext context, NotificationModel notif) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
@@ -99,7 +105,7 @@ class NotificationScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -108,14 +114,7 @@ class NotificationScreen extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            // Handle notification tap
-            if (item['type'] == 'ORDER') {
-              context.push('/staff/orders');
-            } else if (item['type'] == 'STOCK') {
-              context.push('/staff/inventory');
-            }
-          },
+          onTap: () => _handleNotificationTap(context, notif),
           borderRadius: BorderRadius.circular(20),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -125,13 +124,13 @@ class NotificationScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _getIconBgColor(item['type']),
+                    color: _getIconBgColor(notif.type),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    _getIcon(item['type']), 
-                    color: _getIconColor(item['type']), 
-                    size: 20
+                    _getIcon(notif.type),
+                    color: _getIconColor(notif.type),
+                    size: 20,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -144,20 +143,22 @@ class NotificationScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              item['title'],
+                              notif.title,
                               style: TextStyle(
-                                fontWeight: isRead ? FontWeight.w700 : FontWeight.w900,
+                                fontWeight: notif.isRead
+                                    ? FontWeight.w700
+                                    : FontWeight.w900,
                                 fontSize: 14,
                                 color: const Color(0xFF1E293B),
                               ),
                             ),
                           ),
-                          if (!isRead)
+                          if (!notif.isRead)
                             Container(
                               width: 8,
                               height: 8,
                               decoration: const BoxDecoration(
-                                color: primaryColor,
+                                color: AppColors.primary,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -165,7 +166,7 @@ class NotificationScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        item['body'],
+                        notif.message,
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 12,
@@ -175,7 +176,7 @@ class NotificationScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        item['time'],
+                        _formatTime(notif.createdAt),
                         style: const TextStyle(
                           color: Color(0xFF94A3B8),
                           fontSize: 11,
@@ -193,23 +194,108 @@ class NotificationScreen extends StatelessWidget {
     );
   }
 
+  void _handleNotificationTap(BuildContext context, NotificationModel notif) {
+    if (!notif.isRead) {
+      _notificationService.markAsRead(notif.id);
+      setState(() {
+        notif = NotificationModel(
+          id: notif.id,
+          title: notif.title,
+          message: notif.message,
+          type: notif.type,
+          isRead: true,
+          referenceId: notif.referenceId,
+          createdAt: notif.createdAt,
+        );
+        final index = _notifications.indexWhere((n) => n.id == notif.id);
+        if (index != -1) _notifications[index] = notif;
+      });
+    }
+    if (notif.referenceId != null && notif.referenceId!.isNotEmpty) {
+      context.push('/staff/orders');
+      context.push(
+        '/staff/order-detail',
+        extra: <String, dynamic>{'id': notif.referenceId},
+      );
+    }
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.notifications_none_rounded,
+              size: 80,
+              color: Colors.grey[300],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Belum ada notifikasi',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Anda akan melihat notifikasi di sini',
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getIconBgColor(String type) {
+    switch (type) {
+      case 'ORDER':
+        return AppColors.primary.withValues(alpha: 0.1);
+      case 'SYSTEM':
+        return Colors.orange.withValues(alpha: 0.1);
+      case 'PROMO':
+        return Colors.purple.withValues(alpha: 0.1);
+      default:
+        return Colors.blue.withValues(alpha: 0.1);
+    }
+  }
+
   IconData _getIcon(String type) {
     switch (type) {
-      case 'ORDER': return Icons.shopping_bag_outlined;
-      case 'STOCK': return Icons.inventory_2_outlined;
-      default: return Icons.info_outline_rounded;
+      case 'ORDER':
+        return Icons.shopping_bag_rounded;
+      case 'SYSTEM':
+        return Icons.info_rounded;
+      case 'PROMO':
+        return Icons.discount_rounded;
+      default:
+        return Icons.notifications_rounded;
     }
   }
 
   Color _getIconColor(String type) {
     switch (type) {
-      case 'ORDER': return const Color(0xFF1D70F5);
-      case 'STOCK': return const Color(0xFFF59E0B);
-      default: return const Color(0xFF64748B);
+      case 'ORDER':
+        return AppColors.primary;
+      case 'SYSTEM':
+        return Colors.orange;
+      case 'PROMO':
+        return Colors.purple;
+      default:
+        return Colors.blue;
     }
   }
 
-  Color _getIconBgColor(String type) {
-    return _getIconColor(type).withOpacity(0.1);
+  String _formatTime(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
   }
 }

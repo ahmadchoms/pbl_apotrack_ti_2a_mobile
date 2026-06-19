@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String name;
@@ -18,14 +19,11 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF1D70F5);
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(
-          top: 80, bottom: 40, left: 24, right: 24),
+      padding: const EdgeInsets.only(top: 80, bottom: 40, left: 24, right: 24),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(32),
           bottomRight: Radius.circular(32),
@@ -35,7 +33,7 @@ class ProfileHeader extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 50,
-            backgroundColor: const Color(0xFFF1F5F9),
+            backgroundColor: AppColors.surfaceLight,
             backgroundImage: avatarUrl != null
                 ? NetworkImage(avatarUrl!)
                 : null,
@@ -45,32 +43,38 @@ class ProfileHeader extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
-                      color: primaryColor,
+                      color: AppColors.primary,
                     ),
                   )
                 : null,
           ),
           const SizedBox(height: 20),
-          Text(name,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF1E293B),
-              )),
+          Text(
+            name,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textPrimary,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text(phone,
-              style: const TextStyle(
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              )),
+          Text(
+            phone,
+            style: const TextStyle(
+              color: AppColors.textSlate,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(email,
-              style: const TextStyle(
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              )),
+          Text(
+            email,
+            style: const TextStyle(
+              color: AppColors.textSlate,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );

@@ -36,10 +36,10 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
       // 2. Invalidate auth provider agar trigger GoRouter redirect logic
       ref.invalidate(authNotifierProvider);
 
-      print('✅ Logout complete, redirecting to login...');
+      debugPrint('✅ Logout complete, redirecting to login...');
     } catch (e) {
       // Tetap lanjut redirect meski ada error
-      print('⚠️ Logout error: $e');
+      debugPrint('⚠️ Logout error: $e');
     } finally {
       // 3. Direct redirect ke login (failsafe jika GoRouter redirect tidak trigger)
       if (mounted) {
@@ -133,7 +133,7 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
 
                     // ── Join Staff ──────────────────
                     MenuSection(
-                      title: 'JOIN SEBAGAI STAFF APOTEK',
+                      title: 'GABUNG SEBAGAI STAFF APOTEK',
                       items: [
                         MenuItemCustom(child: const ScanQrInvitationCard()),
                       ],
@@ -173,19 +173,19 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
                         ),
                         MenuItemTile(
                           icon: Icons.logout_rounded,
-                          title: 'Keluar / Logout',
+                          title: 'Keluar',
                           isDestructive: true,
                           onTap: () => ConfirmDialog.show(
                             context,
                             icon: Icons.logout_rounded,
-                            iconColor: AppColors.warning,
-                            iconBgColor: AppColors.warningLight,
+                            iconColor: AppColors.danger,
+                            iconBgColor: AppColors.dangerLight,
                             title: 'Keluar Akun?',
                             message:
                                 'Kamu akan keluar dari akunmu. '
                                 'Kamu bisa login kembali kapan saja.',
                             confirmLabel: 'Ya, Keluar',
-                            confirmColor: AppColors.warning,
+                            confirmColor: AppColors.danger,
                             onConfirm: () {
                               Navigator.pop(context);
                               _handleLogout();

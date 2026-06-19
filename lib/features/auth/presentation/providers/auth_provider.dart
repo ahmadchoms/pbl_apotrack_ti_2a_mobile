@@ -35,7 +35,7 @@ class AuthState {
 // ─────────────────────────────────────────────
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._authService) : super(const AuthState()) {
+  AuthNotifier(this._authService) : super(const AuthState(isLoading: true)) {
     Future.delayed(Duration.zero, () => restoreSession());
   }
 
@@ -165,6 +165,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final formData = FormData.fromMap({
         'username': username,
         'email': email,
+        // ignore: use_null_aware_elements
         if (phone != null) 'phone': phone,
         '_method': 'PUT', // Penting untuk Laravel Multipart Update
       });

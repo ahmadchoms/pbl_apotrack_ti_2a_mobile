@@ -5,11 +5,7 @@ class MedicineFormCard extends StatelessWidget {
   final Widget child;
   final Widget? header;
 
-  const MedicineFormCard({
-    super.key,
-    required this.child,
-    this.header,
-  });
+  const MedicineFormCard({super.key, required this.child, this.header});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +16,7 @@ class MedicineFormCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_colors.dart';
 
 class ConfirmDialog extends StatelessWidget {
   final IconData icon;
@@ -72,7 +73,7 @@ class ConfirmDialog extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF1E293B),
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 10),
@@ -81,7 +82,7 @@ class ConfirmDialog extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 14,
-                color: Color(0xFF64748B),
+                color: AppColors.textSlate,
                 height: 1.5,
               ),
             ),
@@ -93,7 +94,7 @@ class ConfirmDialog extends StatelessWidget {
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      side: const BorderSide(color: AppColors.divider),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -101,7 +102,7 @@ class ConfirmDialog extends StatelessWidget {
                     child: const Text(
                       'Batal',
                       style: TextStyle(
-                        color: Color(0xFF64748B),
+                        color: AppColors.textSlate,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -113,7 +114,7 @@ class ConfirmDialog extends StatelessWidget {
                     onPressed: onConfirm,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: confirmColor,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(

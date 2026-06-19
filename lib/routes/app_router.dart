@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile/features/staff/presentation/screens/staff_orders_screen.dart';
 import '../features/staff/data/models/medicine.dart';
 import '../features/staff/data/models/order.dart';
 import '../features/staff/data/models/audit_log.dart';
 
-// Auth & General
+// Auth
+import '../core/auth/auth_state_provider.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
@@ -14,32 +14,47 @@ import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 
 // Customer
-import '../features/customer/presentation/screens/home_screen.dart';
+import '../features/customer/presentation/screens/main_screen.dart';
 import '../features/customer/presentation/screens/customer_profile_screen.dart';
-import '../features/customer/presentation/screens/edit_profile_screen.dart';
-import '../features/customer/presentation/screens/change_password_screen.dart';
-import '../features/customer/presentation/screens/edit_address_screen.dart';
+import '../features/customer/presentation/screens/order_detail_screen.dart'
+    as customer_order;
+import '../features/customer/presentation/screens/track_order_screen.dart';
 import '../features/customer/data/models/customer_address.dart';
+import '../features/customer/presentation/screens/pharma_scan_map_screen.dart';
+import '../features/customer/presentation/screens/medicine_list_screen.dart';
+import '../features/customer/presentation/screens/qris_payment_screen.dart';
+import '../features/customer/presentation/screens/beri_ulasan_screen.dart';
 
 // Staff
-import '../features/staff/presentation/screens/main_screen.dart';
-import '../features/staff/presentation/screens/order_detail_screen.dart';
+import '../features/staff/presentation/screens/main_screen.dart' as staff_main;
+import '../features/staff/presentation/screens/edit_profile_screen.dart'
+    as staff_edit_profile;
+import '../features/staff/presentation/screens/change_password_screen.dart'
+    as staff_change_password;
+import '../features/staff/presentation/screens/edit_address_screen.dart'
+    as staff_edit_address;
+import '../features/staff/presentation/screens/order_detail_screen.dart'
+    as staff_order_detail;
 import '../features/staff/presentation/screens/medicine_detail_screen.dart';
 import '../features/staff/presentation/screens/medicine_form_screen.dart';
 import '../features/staff/presentation/screens/notification_screen.dart';
 import '../features/staff/presentation/screens/pos_screen.dart';
 import '../features/staff/presentation/screens/audit_log_detail_screen.dart';
-import '../features/staff/presentation/screens/edit_profile_screen.dart';
-import '../features/staff/presentation/screens/change_password_screen.dart';
 import '../features/staff/presentation/screens/activity_history_screen.dart';
 import '../features/staff/presentation/screens/staff_inventory_screen.dart';
+import '../features/staff/presentation/screens/scanner_screen.dart';
+import '../features/staff/presentation/screens/staff_orders_screen.dart';
 
 class AppRouter {
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
   static const String customerHome = '/customer';
+  static const String customerPharmacySearch = '/customer/pharmacy-search';
   static const String staffHome = '/staff';
 
   static const String customerAccountHub = '/customer/account-hub';
@@ -48,6 +63,9 @@ class AppRouter {
   static const String customerEditAddress = '/customer/edit-address';
   static const String customerOrderDetail = '/customer/order-detail';
   static const String customerTrackOrder = '/customer/track-order';
+  static const String customerMedicineList = '/customer/medicine-list';
+  static const String customerPayment = '/customer/payment';
+  static const String customerUlasan = '/customer/ulasan';
 
   static const String staffInventory = '/staff/inventory';
   static const String staffOrderDetail = '/staff/order-detail';
@@ -57,17 +75,16 @@ class AppRouter {
   static const String staffNotifications = '/staff/notifications';
   static const String staffPos = '/staff/pos';
   static const String staffAuditLogDetail = '/staff/audit-log-detail';
-
   static const String staffEditProfile = '/staff/edit-profile';
   static const String staffChangePassword = '/staff/change-password';
   static const String staffActivityHistory = '/staff/activity-history';
+  static const String staffScanner = '/staff/scanner';
 
   static final routerProvider = Provider<GoRouter>((ref) {
-    // Gunakan ref.read agar GoRouter tidak di-rebuild saat notifier berubah.
-    // GoRouter akan merespon perubahan lewat refreshListenable secara internal.
     final notifier = ref.read(routerNotifierProvider);
 
-    return GoRouter(
+    final router = GoRouter(
+      navigatorKey: navigatorKey,
       initialLocation: splash,
       refreshListenable: notifier,
 
@@ -76,33 +93,22 @@ class AppRouter {
         final isAuthenticated = authState.user != null;
         final isLoading = authState.isLoading;
 
+        if (isLoading) return null;
+
         final matchedLoc = state.matchedLocation;
         final isLoggingIn = matchedLoc == login;
         final isRegistering = matchedLoc == register;
         final isForgotPw = matchedLoc == forgotPassword;
         final isSplash = matchedLoc == splash;
-
         final isAuthPage = isLoggingIn || isRegistering || isForgotPw;
 
-        // 1. Jika BELUM Login
         if (!isAuthenticated) {
-          // A. Jika di halaman Auth (Login/Register/Lupa Password), tetap di sana
-          if (isAuthPage) return null;
-
-          // B. Jika di Splash: tetap di sana jika sedang loading (cek session), ke login jika sudah selesai
-          if (isSplash) {
-            return isLoading ? null : login;
-          }
-
-          // C. Jika di halaman internal lain, lempar ke login
+          if (isLoggingIn || isRegistering || isForgotPw) return null;
           return login;
         }
 
-        // 2. Jika SUDAH Login
-        if (isAuthenticated) {
-          if (isSplash || isAuthPage) {
-            return authState.user?.role == 'STAFF' ? staffHome : customerHome;
-          }
+        if (isSplash || isAuthPage) {
+          return authState.user?.role == 'STAFF' ? staffHome : customerHome;
         }
 
         return null;
@@ -122,45 +128,135 @@ class AppRouter {
           path: forgotPassword,
           builder: (context, state) => const ForgotPasswordScreen(),
         ),
+
+        // ── Customer ──────────────────────────────────────────────
         GoRoute(
           path: customerHome,
-          builder: (context, state) => const CustomerHomeScreen(),
-        ),
-
-        // Dashboard Utama (MainScreen mengelola tab Pesanan & Profile)
-        GoRoute(
-          path: staffHome,
-          builder: (context, state) => const MainScreen(),
+          builder: (context, state) => const CustomerMainScreen(),
         ),
         GoRoute(
           path: customerAccountHub,
           builder: (context, state) => const AccountHubScreen(),
         ),
-
         GoRoute(
           path: customerEditProfile,
-          builder: (context, state) => const CustomerEditProfileScreen(),
+          builder: (context, state) =>
+              const staff_edit_profile.EditProfileScreen(),
         ),
-
         GoRoute(
           path: customerChangePassword,
-          builder: (context, state) => const CustomerChangePasswordScreen(),
+          builder: (context, state) =>
+              const staff_change_password.ChangePasswordScreen(),
         ),
-
         GoRoute(
           path: customerEditAddress,
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>?;
-
             final isAdd = extra?['isAdd'] as bool? ?? false;
-
             final address = extra?['address'] as CustomerAddress?;
-
-            return CustomerEditAddressScreen(isAdd: isAdd, address: address);
+            return staff_edit_address.EditAddressScreen(
+              isAdd: isAdd,
+              address: address,
+            );
+          },
+        ),
+        GoRoute(
+          path: customerOrderDetail,
+          builder: (context, state) {
+            final extra = state.extra;
+            if (extra is Order) {
+              return customer_order.CustomerOrderDetailScreen(order: extra);
+            }
+            if (extra is String) {
+              return customer_order.CustomerOrderDetailScreen(orderId: extra);
+            }
+            final queryId = state.uri.queryParameters['id'];
+            if (queryId != null) {
+              return customer_order.CustomerOrderDetailScreen(orderId: queryId);
+            }
+            if (extra is Map<String, dynamic>) {
+              return customer_order.CustomerOrderDetailScreen(
+                order: Order.fromJson(extra),
+              );
+            }
+            return const Scaffold(
+              body: Center(child: Text('Pesanan tidak ditemukan')),
+            );
+          },
+        ),
+        GoRoute(
+          path: customerTrackOrder,
+          builder: (context, state) {
+            final extra = state.extra;
+            if (extra is Order) return TrackOrderScreen(order: extra);
+            return TrackOrderScreen(
+              order: Order.fromJson(extra as Map<String, dynamic>),
+            );
+          },
+        ),
+        GoRoute(
+          path: customerPharmacySearch,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return PharmaScanMapScreen(
+              categoryId: extra?['categoryId'] as String?,
+              categoryName: extra?['categoryName'] as String?,
+            );
+          },
+        ),
+        GoRoute(
+          path: customerMedicineList,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return MedicineListScreen(
+              pharmacyId: extra['pharmacyId'] as String,
+              pharmacyName: extra['pharmacyName'] as String,
+              pharmacyRating:
+                  (extra['pharmacyRating'] as num?)?.toDouble() ?? 4.5,
+              pharmacyDistance: extra['pharmacyDistance'] as String? ?? '-',
+              pharmacyArea: extra['pharmacyArea'] as String? ?? '-',
+              categoryId: extra['categoryId'] as String?,
+            );
+          },
+        ),
+        GoRoute(
+          path: customerPayment,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return QrisPaymentScreen(
+              pharmacyId: extra['pharmacyId'] as String,
+              pharmacyName: extra['pharmacyName'] as String,
+              items: List<Map<String, dynamic>>.from(extra['items'] as List),
+              subtotal: extra['subtotal'] as int,
+              shippingCost: extra['shippingCost'] as int? ?? 0,
+              deliveryMethod: extra['deliveryMethod'] as String,
+              addressId: extra['addressId'] as String?,
+              notes: extra['notes'] as String?,
+              courierCode: extra['courierCode'] as String?,
+              courierService: extra['courierService'] as String?,
+            );
+          },
+        ),
+        GoRoute(
+          path: customerUlasan,
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return BeriUlasanScreen(
+              orderNumber: extra['orderNumber'] as String,
+              pharmacyId: extra['pharmacyId'] as String,
+              pharmacyName: extra['pharmacyName'] as String,
+              items: extra['items'] != null
+                  ? List<Map<String, dynamic>>.from(extra['items'] as List)
+                  : [],
+            );
           },
         ),
 
-        // Halaman yang berdiri sendiri
+        // ── Staff ─────────────────────────────────────────────────
+        GoRoute(
+          path: staffHome,
+          builder: (context, state) => const staff_main.MainScreen(),
+        ),
         GoRoute(
           path: staffInventory,
           builder: (context, state) => const StaffInventoryScreen(),
@@ -173,8 +269,10 @@ class AppRouter {
           path: staffOrderDetail,
           builder: (context, state) {
             final extra = state.extra;
-            if (extra is Order) return OrderDetailScreen(order: extra);
-            return OrderDetailScreen(
+            if (extra is Order) {
+              return staff_order_detail.OrderDetailScreen(order: extra);
+            }
+            return staff_order_detail.OrderDetailScreen(
               order: Order.fromJson(extra as Map<String, dynamic>),
             );
           },
@@ -183,7 +281,9 @@ class AppRouter {
           path: staffMedicineDetail,
           builder: (context, state) {
             final extra = state.extra;
-            if (extra is Medicine) return MedicineDetailScreen(medicine: extra);
+            if (extra is Medicine) {
+              return MedicineDetailScreen(medicine: extra);
+            }
             return MedicineDetailScreen(
               medicine: Medicine.fromJson(extra as Map<String, dynamic>),
             );
@@ -193,8 +293,12 @@ class AppRouter {
           path: staffMedicineForm,
           builder: (context, state) {
             final extra = state.extra;
-            if (extra == null) return const MedicineFormScreen(medicine: null);
-            if (extra is Medicine) return MedicineFormScreen(medicine: extra);
+            if (extra == null) {
+              return const MedicineFormScreen(medicine: null);
+            }
+            if (extra is Medicine) {
+              return MedicineFormScreen(medicine: extra);
+            }
             return MedicineFormScreen(
               medicine: Medicine.fromJson(extra as Map<String, dynamic>),
             );
@@ -209,41 +313,54 @@ class AppRouter {
           path: staffAuditLogDetail,
           builder: (context, state) {
             final extra = state.extra;
-            if (extra is AuditLog) return AuditLogDetailScreen(activity: extra);
+            if (extra is AuditLog) {
+              return AuditLogDetailScreen(activity: extra);
+            }
             return AuditLogDetailScreen(
               activity: AuditLog.fromJson(extra as Map<String, dynamic>),
             );
           },
         ),
-
         GoRoute(
           path: staffEditProfile,
-          builder: (context, state) => const EditProfileScreen(),
+          builder: (context, state) =>
+              const staff_edit_profile.EditProfileScreen(),
         ),
         GoRoute(
           path: staffChangePassword,
-          builder: (context, state) => const ChangePasswordScreen(),
+          builder: (context, state) =>
+              const staff_change_password.ChangePasswordScreen(),
         ),
         GoRoute(
           path: staffActivityHistory,
           builder: (context, state) => const ActivityHistoryScreen(),
         ),
+        GoRoute(
+          path: staffScanner,
+          builder: (context, state) => const ScannerScreen(),
+        ),
       ],
     );
+
+    ref.listen<bool>(authExpiredProvider, (_, expired) {
+      if (expired) {
+        ref.read(authExpiredProvider.notifier).state = false;
+        router.go(login);
+      }
+    });
+
+    return router;
   });
 }
 
 final routerNotifierProvider = ChangeNotifierProvider((ref) {
   final notifier = RouterNotifier();
 
-  // Hanya picu refresh navigasi jika objek user berubah (Login/Logout)
-  // Abaikan perubahan status isLoading agar halaman tidak ter-reset saat API bekerja
   ref.listen(authNotifierProvider, (previous, next) {
-    if (previous?.user != next.user) {
+    if (previous?.user != next.user || previous?.isLoading != next.isLoading) {
       notifier.notify();
     }
   });
-
   return notifier;
 });
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 
 class ProfileInputField extends StatelessWidget {
   final String label;
@@ -32,20 +33,16 @@ class ProfileInputField extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: hasError
-                  ? const Color(0xFFEF4444)
-                  : const Color(0xFF64748B),
+              color: hasError ? AppColors.danger : AppColors.textSlate,
             ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: hasError
-                  ? const Color(0xFFEF4444)
-                  : const Color(0xFFF1F5F9),
+              color: hasError ? AppColors.danger : AppColors.surfaceLight,
               width: hasError ? 1.5 : 1,
             ),
           ),
@@ -57,9 +54,7 @@ class ProfileInputField extends StatelessWidget {
             decoration: InputDecoration(
               prefixIcon: Icon(
                 icon,
-                color: hasError
-                    ? const Color(0xFFEF4444)
-                    : const Color(0xFF94A3B8),
+                color: hasError ? AppColors.danger : AppColors.textMuted,
                 size: 20,
               ),
               border: InputBorder.none,
@@ -79,14 +74,14 @@ class ProfileInputField extends StatelessWidget {
                 const Icon(
                   Icons.error_outline_rounded,
                   size: 13,
-                  color: Color(0xFFEF4444),
+                  color: AppColors.danger,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   errorText!,
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Color(0xFFEF4444),
+                    color: AppColors.danger,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

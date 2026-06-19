@@ -20,6 +20,9 @@ class OrderDetailScreen extends ConsumerStatefulWidget {
 
 class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   bool _isUpdating = false;
+  bool _refreshError = false;
+  bool _isSimulating = false;
+  String _selectedSimulateStatus = 'confirmed';
   late Order _order;
 
   @override
@@ -33,9 +36,33 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     try {
       final service = ref.read(staffServiceProvider);
       final updatedOrder = await service.getOrderDetail(_order.id);
-      if (mounted) setState(() => _order = updatedOrder);
+      if (mounted) {
+        setState(() {
+          _order = updatedOrder;
+          _refreshError = false;
+        });
+      }
     } catch (e) {
-      debugPrint('Gagal refresh detail: $e');
+      if (mounted) {
+        setState(() => _refreshError = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat detail: ${e.toString()}'),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Ulang',
+              textColor: Colors.white,
+              onPressed: _refreshOrderDetail,
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -55,15 +82,72 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         _refreshOrderDetail();
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal update: $e'),
             backgroundColor: AppColors.danger,
           ),
         );
+      }
     } finally {
       if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _shipOrder() async {
+    setState(() => _isUpdating = true);
+    try {
+      await ref.read(staffServiceProvider).shipOrder(_order.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kurir berhasil dipanggil!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        _refreshOrderDetail();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memanggil kurir: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _simulateTracking() async {
+    setState(() => _isSimulating = true);
+    try {
+      await ref
+          .read(staffServiceProvider)
+          .simulateTracking(_order.id, _selectedSimulateStatus);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Status tracking: $_selectedSimulateStatus'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        _refreshOrderDetail();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal simulasi: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSimulating = false);
     }
   }
 
@@ -75,10 +159,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // Header Statis (Fixed)
           _buildModernHeader(context),
-
-          // Area Konten yang dapat di-scroll
           Expanded(
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
@@ -87,32 +168,41 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
+                      if (_refreshError) _buildRefreshErrorBanner(),
                       const _SectionTitle(
                         title: 'Informasi Utama',
                         icon: Icons.analytics_outlined,
                       ),
                       _buildOrderInfoCard(_order),
                       const SizedBox(height: 24),
-
                       const _SectionTitle(
                         title: 'Progres Operasional',
                         icon: Icons.timeline_rounded,
                       ),
                       OrderStatusTimeline(currentStatus: _order.orderStatus),
                       const SizedBox(height: 24),
-
                       if (isDelivery) ...[
                         const _SectionTitle(
                           title: 'Logistik & Lokasi',
                           icon: Icons.local_shipping_outlined,
                         ),
                         DeliveryInfoCard(order: _order),
+                        if (_order.tracking != null) ...[
+                          const SizedBox(height: 16),
+                          _SimulateTrackingCard(
+                            orderStatus: _order.orderStatus,
+                            selectedStatus: _selectedSimulateStatus,
+                            isSimulating: _isSimulating,
+                            onStatusChanged: (v) =>
+                                setState(() => _selectedSimulateStatus = v!),
+                            onSimulate: _simulateTracking,
+                          ),
+                        ],
                         const SizedBox(height: 24),
                       ] else if (_order.verificationCode != null) ...[
                         _VerificationCodeCard(order: _order),
                         const SizedBox(height: 24),
                       ],
-
                       const _SectionTitle(
                         title: 'Rincian Pesanan',
                         icon: Icons.receipt_long_outlined,
@@ -122,10 +212,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                         formatRupiah: _formatRupiah,
                       ),
                       const SizedBox(height: 16),
-
                       _buildPaymentSummaryCard(_order),
                       const SizedBox(height: 16),
-
                       if (_order.hasPrescription ||
                           (_order.notes ?? '').isNotEmpty)
                         _MetadataCard(order: _order),
@@ -141,10 +229,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     );
   }
 
-  // Header menggunakan Container agar tetap diam di atas (Fixed)
   Widget _buildModernHeader(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.primaryDark],
@@ -181,7 +268,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 Text(
                   'Detail Pesanan',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.95),
+                    color: Colors.white.withValues(alpha: 0.95),
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
@@ -190,7 +277,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               ],
             ),
           ),
-          _buildHeaderAction(Icons.notifications_none_rounded, () {}),
+          _buildHeaderAction(
+            Icons.notifications_none_rounded,
+            () => context.push('/staff/notifications'),
+          ),
         ],
       ),
     );
@@ -199,7 +289,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   Widget _buildHeaderAction(IconData icon, VoidCallback onTap) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
       ),
       child: IconButton(
@@ -210,13 +300,50 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     );
   }
 
+  Widget _buildRefreshErrorBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.dangerLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.cloud_off_rounded,
+            color: AppColors.danger,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Gagal memuat data dari server. Menampilkan data tersimpan.',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.danger,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _refreshOrderDetail,
+            child: const Text(
+              'Ulangi',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOrderInfoCard(Order order) {
     final cfg = _statusMap[order.orderStatus] ?? _statusMap['PENDING']!;
     final serviceConfig = {
       'DELIVERY': {'label': 'Antar ke Rumah'},
-
       'PICK_UP': {'label': 'Ambil di Apotek'},
-
       'WALK_IN': {'label': 'Pembelian Langsung'},
     };
     final config =
@@ -228,7 +355,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -456,31 +583,35 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
   Widget _buildStickyActionPanel(BuildContext context) {
     final status = _order.orderStatus;
-    if (['SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED'].contains(status))
+    if (['SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED'].contains(status)) {
       return const SizedBox.shrink();
+    }
 
     String label = '';
     Color color = AppColors.primary;
 
-    if (status == 'PENDING')
+    if (status == 'PENDING') {
       label = 'Terima & Proses';
-    else if (status == 'PROCESSING')
+    } else if (status == 'PROCESSING') {
       label = 'Siap Diambil/Kirim';
-    else if (status == 'READY_FOR_PICKUP') {
+    } else if (status == 'READY_FOR_PICKUP') {
       label = _order.serviceType == 'DELIVERY'
           ? 'Panggil Kurir'
           : 'Selesaikan Pesanan';
       if (_order.serviceType == 'DELIVERY') color = AppColors.accentIndigo;
+    } else if (status == 'CANCEL_REQUESTED') {
+      label = 'Setujui Pembatalan';
+      color = AppColors.danger;
     }
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: AppColors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -496,33 +627,43 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               onPressed: _isUpdating
                   ? null
                   : () {
-                      if (status == 'PENDING')
+                      if (status == 'PENDING') {
                         _updateStatus('PROCESSING');
-                      else if (status == 'PROCESSING')
+                      } else if (status == 'PROCESSING') {
                         _updateStatus('READY_FOR_PICKUP');
-                      else if (status == 'READY_FOR_PICKUP') {
-                        if (_order.serviceType == 'PICKUP')
+                      } else if (status == 'READY_FOR_PICKUP') {
+                        if (_order.serviceType == 'DELIVERY') {
+                          _shipOrder();
+                        } else {
                           _updateStatus('COMPLETED');
+                        }
+                      } else if (status == 'CANCEL_REQUESTED') {
+                        _updateStatus('CANCELLED');
                       }
                     },
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.dangerLight,
-              borderRadius: BorderRadius.circular(16),
+          if (status != 'CANCEL_REQUESTED')
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.dangerLight,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, color: AppColors.danger),
+                onPressed: _isUpdating
+                    ? null
+                    : () => _updateStatus('CANCELLED'),
+              ),
             ),
-            child: IconButton(
-              icon: const Icon(Icons.close_rounded, color: AppColors.danger),
-              onPressed: _isUpdating ? null : () => _updateStatus('CANCELLED'),
-            ),
-          ),
         ],
       ),
     );
   }
 }
+
+// ── SECTION TITLE ─────────────────────────────────────────────
 
 class _SectionTitle extends StatelessWidget {
   final String title;
@@ -535,7 +676,7 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.primary.withOpacity(0.7)),
+          Icon(icon, size: 18, color: AppColors.primary.withValues(alpha: 0.7)),
           const SizedBox(width: 8),
           Text(
             title.toUpperCase(),
@@ -551,6 +692,8 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
+
+// ── METADATA CARD ─────────────────────────────────────────────
 
 class _MetadataCard extends StatelessWidget {
   final Order order;
@@ -573,30 +716,160 @@ class _MetadataCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.warningLight,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.warning.withOpacity(0.2)),
+                border: Border.all(
+                  color: AppColors.warning.withValues(alpha: 0.2),
+                ),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(
-                    Icons.verified_user_rounded,
-                    color: AppColors.warning,
+                    order.prescription?.isVerified == true
+                        ? Icons.check_circle_rounded
+                        : order.prescription?.isRejected == true
+                        ? Icons.cancel_rounded
+                        : Icons.verified_user_rounded,
+                    color: order.prescription?.isVerified == true
+                        ? AppColors.success
+                        : order.prescription?.isRejected == true
+                        ? AppColors.danger
+                        : AppColors.warning,
                     size: 20,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Pesanan ini memerlukan verifikasi resep dokter.',
+                      order.prescription?.isVerified == true
+                          ? 'Resep sudah diverifikasi.'
+                          : order.prescription?.isRejected == true
+                          ? 'Resep ditolak.'
+                          : 'Pesanan ini memerlukan verifikasi resep dokter.',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF92400E),
+                        color: order.prescription?.isVerified == true
+                            ? const Color(0xFF166534)
+                            : order.prescription?.isRejected == true
+                            ? const Color(0xFF991B1B)
+                            : const Color(0xFF92400E),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            if (order.prescription?.imageUrl != null) ...[
+              GestureDetector(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => Dialog(
+                      backgroundColor: Colors.transparent,
+                      insetPadding: const EdgeInsets.all(16),
+                      child: Stack(
+                        children: [
+                          InteractiveViewer(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.network(
+                                order.prescription!.imageUrl ?? '',
+                                fit: BoxFit.contain,
+                                loadingBuilder: (c, child, progress) {
+                                  if (progress == null) return child;
+                                  return const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (c, error, stackTrace) {
+                                  return const Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.image_not_supported_rounded,
+                                          color: Colors.white54,
+                                          size: 48,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Gagal memuat gambar',
+                                          style: TextStyle(
+                                            color: Colors.white54,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                              ),
+                              onPressed: () => Navigator.of(ctx).pop(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      order.prescription!.imageUrl ?? '',
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.image_not_supported_rounded,
+                                color: AppColors.textLight,
+                                size: 32,
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Gagal memuat gambar',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textLight,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
           ],
           if ((order.notes ?? '').isNotEmpty) ...[
             const Text(
@@ -624,6 +897,126 @@ class _MetadataCard extends StatelessWidget {
   }
 }
 
+// ── SIMULATE TRACKING CARD ────────────────────────────────────
+
+class _SimulateTrackingCard extends StatelessWidget {
+  final String orderStatus;
+  final String selectedStatus;
+  final bool isSimulating;
+  final void Function(String?) onStatusChanged;
+  final VoidCallback onSimulate;
+
+  const _SimulateTrackingCard({
+    required this.orderStatus,
+    required this.selectedStatus,
+    required this.isSimulating,
+    required this.onStatusChanged,
+    required this.onSimulate,
+  });
+
+  static const List<Map<String, String>> _statuses = [
+    {'value': 'confirmed', 'label': 'Confirmed - Cari Kurir'},
+    {'value': 'allocated', 'label': 'Allocated - Kurir Ditemukan'},
+    {'value': 'pickingUp', 'label': 'Picking Up - Menuju Apotek'},
+    {'value': 'picked', 'label': 'Picked - Paket Diambil'},
+    {'value': 'inTransit', 'label': 'In Transit - Dalam Perjalanan'},
+    {'value': 'droppingOff', 'label': 'Dropping Off - Sedang Diantar'},
+    {'value': 'delivered', 'label': 'Delivered - Sampai Tujuan'},
+    {'value': 'onHold', 'label': 'On Hold - Ditahan'},
+    {'value': 'cancelled', 'label': 'Cancelled - Dibatalkan'},
+    {'value': 'rejected', 'label': 'Rejected - Ditolak Kurir'},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.science_rounded, size: 18, color: Colors.amber),
+              const SizedBox(width: 8),
+              const Text(
+                'SIMULASI TRACKING (SANDBOX)',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.amber,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            // ignore: deprecated_member_use
+            value: selectedStatus,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: 'Pilih Status Tracking',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+            ),
+            items: _statuses
+                .map(
+                  (s) => DropdownMenuItem(
+                    value: s['value'],
+                    child: Text(
+                      s['label']!,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: onStatusChanged,
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: isSimulating ? null : onSimulate,
+              icon: isSimulating
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.play_arrow_rounded, size: 18),
+              label: Text(isSimulating ? 'Memproses...' : 'Simulasikan Status'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── VERIFICATION CODE CARD ────────────────────────────────────
+
 class _VerificationCodeCard extends StatelessWidget {
   final Order order;
   const _VerificationCodeCard({required this.order});
@@ -635,7 +1028,7 @@ class _VerificationCodeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.successLight,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.success.withOpacity(0.1)),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
@@ -669,7 +1062,7 @@ class _VerificationCodeCard extends StatelessWidget {
   }
 }
 
-// ── HELPERS ──────────────────────────────────────────────────
+// ── HELPERS ───────────────────────────────────────────────────
 
 class _StatusCfg {
   final String label;
@@ -704,6 +1097,12 @@ final _statusMap = {
     AppColors.primaryLight,
     Icons.local_shipping_rounded,
   ),
+  'DELIVERED': _StatusCfg(
+    'Terkirim',
+    AppColors.success,
+    AppColors.successLight,
+    Icons.check_circle_rounded,
+  ),
   'COMPLETED': _StatusCfg(
     'Selesai',
     AppColors.textMid,
@@ -715,6 +1114,12 @@ final _statusMap = {
     AppColors.danger,
     AppColors.dangerLight,
     Icons.cancel_rounded,
+  ),
+  'CANCEL_REQUESTED': _StatusCfg(
+    'Minta Batal',
+    AppColors.danger,
+    AppColors.dangerLight,
+    Icons.cancel_outlined,
   ),
 };
 

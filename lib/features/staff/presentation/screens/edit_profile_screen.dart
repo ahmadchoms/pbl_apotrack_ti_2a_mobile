@@ -1,12 +1,12 @@
+// lib/features/staff/presentation/screens/edit_profile_screen.dart
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mobile/features/auth/data/models/user_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../providers/staff_provider.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -24,20 +24,32 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   XFile? _pickedFile;
   bool _isLoading = false;
 
+  String? _nameError;
+  String? _emailError;
+  String? _phoneError;
+
+  String _initials(String username) {
+    final parts = username.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return username.substring(0, username.length >= 2 ? 2 : 1).toUpperCase();
+  }
+
   @override
   void initState() {
     super.initState();
-    // Gunakan postFrameCallback untuk memastikan provider sudah siap jika dibutuhkan,
-    // tapi untuk read di initState biasanya aman.
-    final user = ref.read(authNotifierProvider).user;
-    debugPrint("DEBUG INITIAL USER: $user");
-    _initControllers(user);
-  }
-
-  void _initControllers(UserModel? user) {
-    _nameController.text = user?.username ?? '';
-    _emailController.text = user?.email ?? '';
-    _phoneController.text = user?.phone ?? '';
+    final profileUser = ref.read(profileProvider).profile;
+    if (profileUser != null) {
+      _nameController.text = profileUser.username;
+      _emailController.text = profileUser.email;
+      _phoneController.text = profileUser.phone ?? '';
+    } else {
+      final authUser = ref.read(authNotifierProvider).user;
+      _nameController.text = authUser?.username ?? '';
+      _emailController.text = authUser?.email ?? '';
+      _phoneController.text = authUser?.phone ?? '';
+    }
   }
 
   @override
@@ -48,15 +60,48 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  bool _validate() {
+    bool valid = true;
+
+    if (_nameController.text.trim().isEmpty) {
+      _nameError = 'Nama tidak boleh kosong';
+      valid = false;
+    } else {
+      _nameError = null;
+    }
+
+    if (_emailController.text.trim().isEmpty) {
+      _emailError = 'Email tidak boleh kosong';
+      valid = false;
+    } else if (!RegExp(
+      r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$',
+    ).hasMatch(_emailController.text.trim())) {
+      _emailError = 'Format email tidak valid';
+      valid = false;
+    } else {
+      _emailError = null;
+    }
+
+    if (_phoneController.text.trim().isEmpty) {
+      _phoneError = 'Nomor telepon tidak boleh kosong';
+      valid = false;
+    } else {
+      _phoneError = null;
+    }
+
+    setState(() {});
+    return valid;
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    Navigator.pop(context);
     try {
       final picked = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 70,
+        source: source,
+        imageQuality: 80,
+        maxWidth: 600,
       );
-      if (picked != null) {
-        setState(() => _pickedFile = picked);
-      }
+      if (picked != null) setState(() => _pickedFile = picked);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -69,25 +114,111 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
-  Future<void> _save() async {
-    final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final phone = _phoneController.text.trim();
+  void _showImageSourceSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              const Text(
+                'Foto Profil',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_rounded,
+                    color: AppColors.primary,
+                  ),
+                ),
+                title: const Text(
+                  'Ambil Foto',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                onTap: () => _pickImage(ImageSource.camera),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.photo_library_rounded,
+                    color: AppColors.success,
+                  ),
+                ),
+                title: const Text(
+                  'Pilih dari Galeri',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                onTap: () => _pickImage(ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-    if (name.isEmpty || email.isEmpty) {
-      _showSnack('Nama dan Email tidak boleh kosong', isError: true);
-      return;
-    }
+  Future<void> _save() async {
+    if (!_validate()) return;
 
     setState(() => _isLoading = true);
     try {
-      // Panggil metode update di AuthNotifier (Provider)
+      await ref
+          .read(profileProvider.notifier)
+          .updateProfile(
+            username: _nameController.text.trim(),
+            email: _emailController.text.trim(),
+            phone: _phoneController.text.trim().isEmpty
+                ? null
+                : _phoneController.text.trim(),
+            imageFile: _pickedFile,
+          );
+
       await ref
           .read(authNotifierProvider.notifier)
           .updateProfileData(
-            username: name,
-            email: email,
-            phone: phone.isEmpty ? null : phone,
+            username: _nameController.text.trim(),
+            email: _emailController.text.trim(),
+            phone: _phoneController.text.trim().isEmpty
+                ? null
+                : _phoneController.text.trim(),
             imageFile: _pickedFile,
           );
 
@@ -97,10 +228,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        // Ambil pesan error ramah pengguna jika ada
         final errorMsg = e.toString().contains('DioException')
             ? 'Gagal terhubung ke server. Periksa koneksi Anda.'
-            : e.toString().replaceAll('Exception:', '');
+            : e.toString().replaceAll('Exception:', '').trim();
         _showSnack(errorMsg, isError: true);
       }
     } finally {
@@ -120,26 +250,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen to user changes to keep controllers in sync if data refreshes
-    ref.listen(authNotifierProvider.select((s) => s.user), (prev, next) {
+    ref.listen(profileProvider.select((s) => s.profile), (prev, next) {
       if (next != null && prev != next) {
-        _initControllers(next);
+        _nameController.text = next.username;
+        _emailController.text = next.email;
+        _phoneController.text = next.phone ?? '';
       }
     });
 
-    final user = ref.watch(authNotifierProvider).user;
-    final initials = (user?.username.isNotEmpty == true)
-        ? user!.username
-              .split(' ')
-              .take(2)
-              .map((w) => w[0].toUpperCase())
-              .join()
-        : 'ST';
+    final profile = ref.watch(profileProvider).profile;
+    final initials = profile != null ? _initials(profile.username) : 'ST';
+    final avatarUrl = profile?.avatarUrl;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
@@ -150,7 +276,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          'Edit Profil',
+          'Ubah Profil',
           style: TextStyle(
             color: AppColors.textDark,
             fontWeight: FontWeight.w900,
@@ -163,10 +289,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            // --- AVATAR ---
+            // ── Avatar ───────────────────────────────────────
             Center(
               child: GestureDetector(
-                onTap: _pickImage,
+                onTap: _showImageSourceSheet,
                 child: Stack(
                   children: [
                     Container(
@@ -177,17 +303,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                       child: CircleAvatar(
                         radius: 55,
-                        backgroundColor: const Color(0xFFF1F5F9),
+                        backgroundColor: AppColors.surfaceLight,
                         backgroundImage: _pickedFile != null
                             ? FileImage(File(_pickedFile!.path))
-                            : (user?.avatarUrl != null &&
-                                  user!.avatarUrl!.isNotEmpty)
-                            ? NetworkImage(user.avatarUrl!) as ImageProvider
+                                  as ImageProvider
+                            : (avatarUrl != null && avatarUrl.isNotEmpty)
+                            ? NetworkImage(avatarUrl) as ImageProvider
                             : null,
                         child:
                             (_pickedFile == null &&
-                                (user?.avatarUrl == null ||
-                                    user!.avatarUrl!.isEmpty))
+                                (avatarUrl == null || avatarUrl.isEmpty))
                             ? Text(
                                 initials,
                                 style: const TextStyle(
@@ -207,11 +332,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                          border: Border.all(color: AppColors.white, width: 2),
                         ),
                         child: const Icon(
                           Icons.camera_alt_rounded,
-                          color: Colors.white,
+                          color: AppColors.white,
                           size: 18,
                         ),
                       ),
@@ -222,27 +347,38 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
             const SizedBox(height: 32),
 
-            // --- FORM ---
+            // ── Form fields ───────────────────────────────────
             _buildInputField(
-              'Nama Lengkap',
-              _nameController,
-              Icons.person_outline_rounded,
+              label: 'Nama Lengkap',
+              controller: _nameController,
+              icon: Icons.person_outline_rounded,
+              errorText: _nameError,
+              onChanged: (_) {
+                if (_nameError != null) setState(() => _nameError = null);
+              },
             ),
             const SizedBox(height: 16),
             _buildInputField(
-              'Email',
-              _emailController,
-              Icons.email_outlined,
+              label: 'Email',
+              controller: _emailController,
+              icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
+              errorText: _emailError,
+              onChanged: (_) {
+                if (_emailError != null) setState(() => _emailError = null);
+              },
             ),
             const SizedBox(height: 16),
             _buildInputField(
-              'Nomor Telepon',
-              _phoneController,
-              Icons.phone_android_rounded,
+              label: 'Nomor Telepon',
+              controller: _phoneController,
+              icon: Icons.phone_android_rounded,
               keyboardType: TextInputType.phone,
+              errorText: _phoneError,
+              onChanged: (_) {
+                if (_phoneError != null) setState(() => _phoneError = null);
+              },
             ),
-
             const SizedBox(height: 40),
 
             SizedBox(
@@ -251,7 +387,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 onPressed: _isLoading ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.white,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -263,7 +399,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: AppColors.white,
                           strokeWidth: 2,
                         ),
                       )
@@ -282,11 +418,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  Widget _buildInputField(
-    String label,
-    TextEditingController controller,
-    IconData icon, {
+  Widget _buildInputField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    String? errorText,
+    ValueChanged<String>? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,22 +433,26 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: AppColors.textLight,
+              color: errorText != null ? AppColors.danger : AppColors.textLight,
             ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.divider),
+            border: Border.all(
+              color: errorText != null ? AppColors.danger : AppColors.divider,
+              width: errorText != null ? 1.5 : 1,
+            ),
           ),
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
+            onChanged: onChanged,
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -326,6 +468,28 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
           ),
         ),
+        if (errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 4, top: 6),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 13,
+                  color: AppColors.danger,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  errorText,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.danger,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
