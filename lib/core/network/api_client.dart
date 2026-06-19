@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +11,7 @@ import 'secure_storage_service.dart';
 /// Override at build time: flutter run --dart-define=API_BASE_URL=https://api.example.com
 const String _kBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://192.168.18.14:8000/api',
+  defaultValue: 'http://127.0.0.1:8000/api',
 );
 
 /// Riverpod Provider untuk instance Dio yang sudah terkonfigurasi penuh.
@@ -60,11 +61,42 @@ class _AuthInterceptor extends Interceptor {
   final Ref _ref;
   bool _isHandling401 = false;
 
+  static String? _resolvedBaseUrl;
+  static bool _isResolving = false;
+  static Completer<String>? _resolutionCompleter;
+
   @override
   Future<void> onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    // Dynamic IP discovery for local development in debug mode on physical devices/emulators
+    if (kDebugMode &&
+        !kIsWeb &&
+        (options.baseUrl.contains('localhost') ||
+            options.baseUrl.contains('127.0.0.1') ||
+            options.baseUrl.contains('10.0.2.2'))) {
+      if (_resolvedBaseUrl != null) {
+        options.baseUrl = _resolvedBaseUrl!;
+      } else {
+        if (_isResolving) {
+          final res = await _resolutionCompleter!.future;
+          options.baseUrl = res;
+        } else {
+          _isResolving = true;
+          _resolutionCompleter = Completer<String>();
+
+          final discovered = await _discoverLocalServerIp();
+          final finalUrl = discovered ?? options.baseUrl;
+
+          _resolvedBaseUrl = finalUrl;
+          _isResolving = false;
+          _resolutionCompleter!.complete(finalUrl);
+          options.baseUrl = finalUrl;
+        }
+      }
+    }
+
     final token = await _storageService.getToken();
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
@@ -172,4 +204,58 @@ class _LoggingInterceptor extends Interceptor {
     debugPrint('└────────────────────────────────');
     handler.next(err);
   }
+}
+
+/// Menemukan IP lokal komputer host yang menjalankan server Laravel pada port 8000.
+/// Melakukan scanning terhadap seluruh subnet /24 secara parallel dengan timeout singkat.
+Future<String?> _discoverLocalServerIp() async {
+  try {
+    final interfaces = await NetworkInterface.list(
+      includeLinkLocal: false,
+      type: InternetAddressType.IPv4,
+    );
+
+    for (final interface in interfaces) {
+      for (final address in interface.addresses) {
+        final ip = address.address;
+        if (ip.startsWith('127.') || ip.startsWith('169.254')) continue;
+
+        final parts = ip.split('.');
+        if (parts.length != 4) continue;
+        final prefix = '${parts[0]}.${parts[1]}.${parts[2]}.';
+
+        // Scan seluruh subnet (1-254) secara parallel
+        final futures = <Future<String?>>[];
+        for (int i = 1; i < 255; i++) {
+          final targetIp = '$prefix$i';
+          if (targetIp == ip) continue; // Lewati IP perangkat sendiri
+
+          futures.add(() async {
+            try {
+              final socket = await Socket.connect(
+                targetIp,
+                8000,
+                timeout: const Duration(milliseconds: 200),
+              );
+              socket.destroy();
+              return targetIp;
+            } catch (_) {
+              return null;
+            }
+          }());
+        }
+
+        final results = await Future.wait(futures);
+        for (final res in results) {
+          if (res != null) {
+            debugPrint('Auto-discovered Laravel server at: http://$res:8000/api');
+            return 'http://$res:8000/api';
+          }
+        }
+      }
+    }
+  } catch (e) {
+    debugPrint('Gagal melakukan scanning IP lokal: $e');
+  }
+  return null;
 }
