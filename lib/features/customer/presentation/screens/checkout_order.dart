@@ -41,6 +41,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   int get _shippingCost =>
       _deliveryMethod == 'kirim' ? _selectedCourierPrice : 0;
   int get _total => _subtotal + _shippingCost;
+  bool get _requiresPrescription =>
+      _cartItems.any((item) => item.requiresPrescription);
 
   @override
   void initState() {
@@ -326,9 +328,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               _buildNoteField(),
               _buildDivider(),
               _buildPaymentMethod(),
-              _buildDivider(),
-              _buildPrescriptionUpload(),
-              _buildDivider(),
+              if (_requiresPrescription) ...[
+                _buildDivider(),
+                _buildPrescriptionUpload(),
+                _buildDivider(),
+              ],
               _buildPaymentDetails(),
             ],
           ),
@@ -1043,13 +1047,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: const Color(0xFFFEE2E2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text(
-                  'OPTIONAL',
+                  'WAJIB',
                   style: TextStyle(
-                    color: AppColors.textLight,
+                    color: Color(0xFFEF4444),
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
@@ -1248,11 +1252,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Widget _buildBottomBar() {
     final bool hasAddress = _addressProvider.selectedAddress != null;
     final bool hasCourier = _selectedCourierCode != null;
+    final bool hasPrescription =
+        !_requiresPrescription || _prescriptionFile != null;
     final bool canProceed =
-        _deliveryMethod == 'ambil' || (hasAddress && hasCourier);
+        (_deliveryMethod == 'ambil' || (hasAddress && hasCourier)) &&
+        hasPrescription;
 
     String? errorMsg;
-    if (_deliveryMethod == 'kirim') {
+    if (_requiresPrescription && !hasPrescription) {
+      errorMsg = 'Upload resep dokter terlebih dahulu';
+    } else if (_deliveryMethod == 'kirim') {
       if (!hasAddress) {
         errorMsg = 'Pilih alamat pengiriman terlebih dahulu';
       } else if (!hasCourier) {

@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/order_model.dart';
 import '../../data/services/order_service.dart';
-import 'verifikasi_pengambilan_screen.dart';
+import 'order_detail_screen.dart';
 
 class QrisPaymentScreen extends ConsumerStatefulWidget {
   final String pharmacyId;
@@ -46,7 +46,6 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
   Timer? _timer;
 
   String _orderNumber = '';
-  String _verificationCode = '';
 
   @override
   void initState() {
@@ -142,59 +141,32 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
       );
 
       if (widget.prescriptionFile != null) {
-        await _orderService.uploadPrescription(
-          order.id,
-          widget.prescriptionFile!,
-        );
+        try {
+          await _orderService.uploadPrescription(
+            order.id,
+            widget.prescriptionFile!,
+          );
+        } catch (_) {
+          debugPrint('Prescription upload gagal, bisa diupload nanti');
+        }
       }
 
       _orderNumber = order.orderNumber;
 
-      String verificationCode = order.verificationCode;
       try {
-        final paymentResult = await _orderService.simulatePayment(order.id);
-        verificationCode =
-            paymentResult['verification_code']?.toString() ??
-            order.verificationCode;
+        await _orderService.simulatePayment(order.id);
       } catch (_) {
-        // simulatePayment gagal (server error), tetap lanjut pakai kode dari order
+        // simulatePayment gagal bukan failure fatal
       }
-      _verificationCode = verificationCode;
 
       if (!mounted) return;
 
-      if (isDelivery) {
-        // QRIS + Kurir: tanpa QR Code, balik ke home
-        Navigator.of(context).popUntil((route) => route.isFirst);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Pesanan berhasil dibuat! Pembayaran sebesar ${_rupiah(widget.subtotal + widget.shippingCost)} telah dikonfirmasi.',
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      } else {
-        // QRIS + Diambil: tampilkan QR Code
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => VerifikasiPengambilanScreen(
-              orderId: order.id,
-              orderNumber: _orderNumber,
-              verificationCode: _verificationCode,
-              pharmacyName: widget.pharmacyName,
-              pharmacyId: widget.pharmacyId,
-              items: widget.items,
-              total: widget.subtotal + widget.shippingCost,
-            ),
-          ),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CustomerOrderDetailScreen(orderId: order.id),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _paying = false);

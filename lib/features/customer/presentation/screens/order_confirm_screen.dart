@@ -6,8 +6,8 @@ import '../../data/models/cart.dart';
 import '../../data/models/order_model.dart';
 import '../../data/services/order_service.dart';
 import 'address/address_model.dart';
+import 'order_detail_screen.dart';
 import 'qris_payment_screen.dart';
-import 'verifikasi_pengambilan_screen.dart';
 
 class OrderConfirmationScreen extends ConsumerStatefulWidget {
   final List<CartItem> cartItems;
@@ -129,7 +129,7 @@ class _OrderConfirmationScreenState
               medicineId: item.id,
               medicineName: item.name,
               unitName: item.unit,
-              requiresPrescription: false,
+              requiresPrescription: item.requiresPrescription,
               quantity: item.quantity,
               price: item.price,
               subtotal: item.price * item.quantity,
@@ -151,56 +151,26 @@ class _OrderConfirmationScreenState
       );
 
       if (widget.prescriptionFile != null) {
-        await service.uploadPrescription(order.id, widget.prescriptionFile!);
+        try {
+          await service.uploadPrescription(
+            order.id,
+            widget.prescriptionFile!,
+          );
+        } catch (_) {
+          debugPrint('Prescription upload gagal, bisa diupload nanti');
+        }
       }
 
       if (!mounted) return;
 
-      final itemsForNext = order.items
-          .map(
-            (item) => {
-              'medicine_name': item.medicineName,
-              'medicine_id': item.medicineId,
-              'quantity': item.quantity,
-              'price': item.price.toInt(),
-              'subtotal': item.subtotal.toInt(),
-            },
-          )
-          .toList();
-
-      if (isDelivery) {
-        // Cash + Delivery: go home with success
-        CartState().clear();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Pesanan berhasil dibuat!'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      } else {
-        // Cash + Pickup: show QR langsung
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => VerifikasiPengambilanScreen(
-              orderId: order.id,
-              orderNumber: order.orderNumber,
-              verificationCode: order.verificationCode,
-              pharmacyName: widget.cartItems.isNotEmpty
-                  ? widget.cartItems.first.pharmacyName
-                  : 'Apotek',
-              pharmacyId: widget.pharmacyId,
-              items: itemsForNext,
-              total: widget.total,
-            ),
-          ),
-        );
-      }
+      CartState().clear();
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CustomerOrderDetailScreen(orderId: order.id),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
