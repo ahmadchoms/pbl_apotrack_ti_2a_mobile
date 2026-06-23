@@ -100,12 +100,12 @@ class OrderService {
   }
 
   Future<Map<String, dynamic>> submitReview({
-    required String medicineId,
+    required String orderId,
     required int rating,
     String? comment,
   }) async {
     final response = await _dio.post('/reviews', data: {
-      'medicine_id': medicineId,
+      'order_id': orderId,
       'rating': rating,
       // ignore: use_null_aware_elements
       if (comment != null) 'comment': comment,

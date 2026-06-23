@@ -117,41 +117,43 @@ class OrderDetailTimelineCard extends StatelessWidget {
           ],
         ),
         const SizedBox(width: 14),
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: isCancelled
-                      ? AppColors.danger
-                      : AppColors.textPrimary,
-                ),
-              ),
-              if (description != null && description.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    description,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSlate,
-                    ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: isCancelled
+                        ? AppColors.danger
+                        : AppColors.textPrimary,
                   ),
                 ),
-              Text(
-                time,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textMuted,
+                if (description != null && description.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      description,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSlate,
+                      ),
+                    ),
+                  ),
+                Text(
+                  time,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textMuted,
+                  ),
                 ),
-              ),
-              if (!isLast) const SizedBox(height: 8),
-            ],
+                if (!isLast) const SizedBox(height: 8),
+              ],
+            ),
           ),
         ),
       ],

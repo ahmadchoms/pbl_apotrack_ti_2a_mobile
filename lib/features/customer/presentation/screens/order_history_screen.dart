@@ -122,7 +122,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       case 'SHIPPED':
         return () => context.push(AppRouter.customerTrackOrder, extra: order);
       case 'COMPLETED':
-      case 'REVIEWED':
         return () => _handleBuyAgain(order);
       case 'CANCELLED':
         return () => _handleBuyAgain(order);
@@ -134,10 +133,12 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   VoidCallback? _getSecondaryAction(BuildContext context, Order order) {
     switch (order.orderStatus) {
       case 'COMPLETED':
+        if (order.isReviewed) return null;
         return () {
           context.push(
             AppRouter.customerUlasan,
             extra: {
+              'orderId': order.id,
               'orderNumber': order.orderNumber,
               'pharmacyId': order.pharmacy['id']?.toString() ?? '',
               'pharmacyName': order.pharmacy['name']?.toString() ?? '',

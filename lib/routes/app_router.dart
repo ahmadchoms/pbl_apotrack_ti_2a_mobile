@@ -251,6 +251,7 @@ class AppRouter {
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>;
             return BeriUlasanScreen(
+              orderId: extra['orderId'] as String,
               orderNumber: extra['orderNumber'] as String,
               pharmacyId: extra['pharmacyId'] as String,
               pharmacyName: extra['pharmacyName'] as String,

@@ -163,6 +163,7 @@ class Order {
   final Map<String, dynamic>? address;
   final String? verificationCode;
   final PrescriptionData? prescription;
+  final bool isReviewed;
 
   Order({
     required this.id,
@@ -186,6 +187,7 @@ class Order {
     this.address,
     this.verificationCode,
     this.prescription,
+    this.isReviewed = false,
   });
 
   Map<String, dynamic> get customer => buyer;
@@ -238,6 +240,9 @@ class Order {
           ? PrescriptionData.fromJson(
               json['prescription'] as Map<String, dynamic>)
           : null,
+      isReviewed: json['is_reviewed'] == true ||
+          json['is_reviewed'] == 1 ||
+          json['is_reviewed'] == 'true',
     );
   }
 

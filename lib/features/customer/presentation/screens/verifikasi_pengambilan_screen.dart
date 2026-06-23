@@ -82,7 +82,7 @@ class _VerifikasiPengambilanScreenState
         (m) => '${m[1]}.',
       )}';
 
-  bool get _bisaUlas => _order?.orderStatus == 'COMPLETED';
+  bool get _bisaUlas => _order?.orderStatus == 'COMPLETED' || _order?.orderStatus == 'REVIEWED';
 
   @override
   Widget build(BuildContext context) {
@@ -357,23 +357,30 @@ class _VerifikasiPengambilanScreenState
   }
 
   Widget _buildReviewButton({required bool enabled}) {
+    final isReviewed = _order?.isReviewed ?? false;
+    final buttonEnabled = enabled && !isReviewed;
+    final labelText = isReviewed
+        ? 'Sudah Diulas'
+        : (enabled ? 'Beri Ulasan' : 'Tunggu verifikasi apoteker...');
+
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: enabled ? AppColors.primary : Colors.grey.shade300,
+          color: buttonEnabled ? AppColors.primary : Colors.grey.shade300,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: enabled
+          boxShadow: buttonEnabled
               ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8))]
               : [],
         ),
         child: ElevatedButton.icon(
-          onPressed: enabled
+          onPressed: buttonEnabled
               ? () => Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => BeriUlasanScreen(
+                        orderId: widget.orderId,
                         orderNumber: widget.orderNumber,
                         pharmacyId: widget.pharmacyId,
                         pharmacyName: widget.pharmacyName,
@@ -382,14 +389,14 @@ class _VerifikasiPengambilanScreenState
                     ),
                   )
               : null,
-          icon: Icon(Icons.star_rounded, size: 20, color: enabled ? Colors.white : Colors.grey.shade400),
+          icon: Icon(Icons.star_rounded, size: 20, color: buttonEnabled ? Colors.white : Colors.grey.shade400),
           label: Text(
-            enabled ? 'Beri Ulasan' : 'Tunggu verifikasi apoteker...',
+            labelText,
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 16,
               letterSpacing: 0.3,
-              color: enabled ? Colors.white : Colors.grey.shade400,
+              color: buttonEnabled ? Colors.white : Colors.grey.shade400,
             ),
           ),
           style: ElevatedButton.styleFrom(

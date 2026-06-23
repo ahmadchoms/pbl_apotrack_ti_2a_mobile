@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +31,35 @@ class CustomerOrderDetailScreen extends ConsumerStatefulWidget {
 class _CustomerOrderDetailScreenState
     extends ConsumerState<CustomerOrderDetailScreen> {
   Order? _order;
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startRefreshTimer();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startRefreshTimer() {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      _silentRefresh();
+    });
+  }
+
+  Future<void> _silentRefresh() async {
+    final id = _order?.id ?? widget.orderId ?? widget.order?.id;
+    if (id == null) return;
+    try {
+      final fresh = await ref.refresh(orderDetailProvider(id).future);
+      if (!mounted) return;
+      setState(() => _order = fresh);
+    } catch (_) {}
+  }
 
   Future<void> _refresh() async {
     final id = _order?.id ?? widget.orderId ?? widget.order?.id;
@@ -195,7 +225,10 @@ class _CustomerOrderDetailScreenState
               centerTitle: true,
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.refresh_rounded, color: AppColors.textDark),
+                  icon: const Icon(
+                    Icons.refresh_rounded,
+                    color: AppColors.textDark,
+                  ),
                   onPressed: _refresh,
                 ),
               ],
@@ -233,7 +266,6 @@ class _CustomerOrderDetailScreenState
             order.verificationCode != null &&
             order.verificationCode!.isNotEmpty &&
             order.orderStatus != 'COMPLETED' &&
-            order.orderStatus != 'REVIEWED' &&
             order.orderStatus != 'CANCELLED') ...[
           _buildQrCard(context, order),
           const SizedBox(height: 12),

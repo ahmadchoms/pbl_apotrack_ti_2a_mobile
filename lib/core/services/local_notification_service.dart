@@ -6,7 +6,7 @@ class LocalNotificationService {
   static bool _initialized = false;
   static int _notificationId = 0;
 
-  static const String _channelId = 'apotrack_notifications';
+  static const String _channelId = 'apotrack_notifications_v2';
   static const String _channelName = 'ApoTrack Notifications';
   static const String _channelDescription = 'Notifikasi pesanan dan resep ApoTrack';
 
@@ -30,12 +30,13 @@ class LocalNotificationService {
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
+      await androidPlugin.requestNotificationsPermission();
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
           _channelId,
           _channelName,
           description: _channelDescription,
-          importance: Importance.high,
+          importance: Importance.max,
           playSound: true,
           enableVibration: true,
         ),
@@ -60,8 +61,8 @@ class LocalNotificationService {
       _channelId,
       _channelName,
       channelDescription: _channelDescription,
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
       showWhen: true,
       enableVibration: true,
       playSound: true,

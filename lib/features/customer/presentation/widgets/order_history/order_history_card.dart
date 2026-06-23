@@ -81,20 +81,7 @@ class OrderHistoryCard extends StatelessWidget {
           icon: Icons.check_circle_rounded,
           primaryLabel: 'Pesan Lagi',
           primarySolid: true,
-          secondaryLabel: 'Ulasan',
-        );
-      case 'REVIEWED':
-        return _StatusConfig(
-          badgeLabel: 'Selesai',
-          badgeColor: AppColors.success,
-          badgeBg: AppColors.successLight,
-          iconColor: AppColors.success,
-          iconBg: AppColors.successLight,
-          icon: Icons.check_circle_rounded,
-          primaryLabel: 'Pesan Lagi',
-          primarySolid: true,
-          secondaryLabel: 'Sudah Diulas',
-          secondaryDisabled: true,
+          secondaryLabel: order.isReviewed ? null : 'Ulasan',
         );
       case 'CANCELLED':
         return _StatusConfig(
@@ -109,17 +96,17 @@ class OrderHistoryCard extends StatelessWidget {
           secondaryLabel: 'Rincian Pembatalan',
           priceStrikethrough: true,
         );
-        case 'CANCEL_REQUESTED':
-          return _StatusConfig(
-            badgeLabel: 'Menunggu Konfirmasi',
-            badgeColor: AppColors.textMid,
-            badgeBg: AppColors.background,
-            iconColor: AppColors.textMid,
-            iconBg: AppColors.background,
-            icon: Icons.pending_rounded,
-            primaryLabel: 'Rincian Pembatalan',
-            primarySolid: false,
-          );
+      case 'CANCEL_REQUESTED':
+        return _StatusConfig(
+          badgeLabel: 'Menunggu Konfirmasi',
+          badgeColor: AppColors.textMid,
+          badgeBg: AppColors.background,
+          iconColor: AppColors.textMid,
+          iconBg: AppColors.background,
+          icon: Icons.pending_rounded,
+          primaryLabel: 'Rincian Pembatalan',
+          primarySolid: false,
+        );
       default:
         return _StatusConfig(
           badgeLabel: order.orderStatus,
@@ -137,8 +124,7 @@ class OrderHistoryCard extends StatelessWidget {
     final cfg = _config;
     final bool hasActions = cfg.primaryLabel != null;
     final bool hasTwoActions =
-        cfg.secondaryLabel != null &&
-        (onSecondaryActionTap != null || cfg.secondaryDisabled);
+        cfg.secondaryLabel != null && onSecondaryActionTap != null;
 
     final pharmacyName = order.pharmacy['name']?.toString() ?? '—';
     final pharmacyLogoUrl = order.pharmacy['logo_url']?.toString() ?? '';
@@ -311,10 +297,8 @@ class OrderHistoryCard extends StatelessWidget {
                     child: _actionBtn(
                       label: cfg.secondaryLabel!,
                       solid: false,
-                      disabled: cfg.secondaryDisabled,
-                      onTap: cfg.secondaryDisabled
-                          ? null
-                          : onSecondaryActionTap,
+                      disabled: false,
+                      onTap: onSecondaryActionTap,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -410,7 +394,6 @@ class _StatusConfig {
   final String? primaryLabel;
   final bool primarySolid;
   final String? secondaryLabel;
-  final bool secondaryDisabled;
   final bool priceStrikethrough;
 
   const _StatusConfig({
@@ -423,7 +406,6 @@ class _StatusConfig {
     this.primaryLabel,
     this.primarySolid = false,
     this.secondaryLabel,
-    this.secondaryDisabled = false,
     this.priceStrikethrough = false,
   });
 }

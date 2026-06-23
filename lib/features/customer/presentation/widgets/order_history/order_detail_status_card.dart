@@ -101,7 +101,6 @@ class OrderDetailStatusCard extends StatelessWidget {
         );
 
       case 'COMPLETED':
-      case 'REVIEWED':
         return const _StatusThemeData(
           backgroundColor: AppColors.success,
           textColor: AppColors.white,
@@ -139,7 +138,6 @@ class OrderDetailStatusCard extends StatelessWidget {
         return 'Dikirim';
 
       case 'COMPLETED':
-      case 'REVIEWED':
         return 'Selesai';
 
       case 'CANCELLED':
@@ -165,7 +163,6 @@ class OrderDetailStatusCard extends StatelessWidget {
         return Icons.local_shipping_outlined;
 
       case 'COMPLETED':
-      case 'REVIEWED':
         return Icons.check_circle_outline_rounded;
 
       case 'CANCELLED':

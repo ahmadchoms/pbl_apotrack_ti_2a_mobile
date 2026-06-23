@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/services/order_service.dart';
 import '../../data/services/pharmacy_service.dart';
+import '../providers/customer_order_provider.dart';
 
 class BeriUlasanScreen extends ConsumerStatefulWidget {
+  final String orderId;
   final String orderNumber;
   final String pharmacyId;
   final String pharmacyName;
@@ -12,6 +14,7 @@ class BeriUlasanScreen extends ConsumerStatefulWidget {
 
   const BeriUlasanScreen({
     super.key,
+    required this.orderId,
     required this.orderNumber,
     required this.pharmacyId,
     required this.pharmacyName,
@@ -24,8 +27,8 @@ class BeriUlasanScreen extends ConsumerStatefulWidget {
 
 class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
   late final OrderService _orderService;
-  int _rating = 4;
-  final Set<String> _selectedTags = {'Pelayanan Ramah'};
+  int _rating = 0;
+  final Set<String> _selectedTags = {};
   final TextEditingController _controller = TextEditingController();
   final FocusNode _fieldFocus = FocusNode();
   bool _sending = false;
@@ -56,6 +59,13 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
   }
 
   Future<void> _kirim() async {
+    if (_rating == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih rating terlebih dahulu')),
+      );
+      return;
+    }
+
     if (_controller.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tulis ulasan terlebih dahulu')),
@@ -73,15 +83,8 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
     setState(() => _sending = true);
 
     try {
-      final medicineId = widget.items.first['medicine_id'] as String? ??
-          widget.items.first['id'] as String?;
-
-      if (medicineId == null) {
-        throw Exception('ID obat tidak ditemukan');
-      }
-
       await _orderService.submitReview(
-        medicineId: medicineId,
+        orderId: widget.orderId,
         rating: _rating,
         comment: _controller.text.trim(),
       );
@@ -89,6 +92,7 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
       ref.invalidate(activePharmaciesProvider(null));
       ref.invalidate(myOrdersProvider);
       ref.invalidate(activeOrdersProvider);
+      ref.invalidate(customerOrderProvider);
 
       if (!mounted) return;
       setState(() {
@@ -340,7 +344,7 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
                     scale: i < _rating ? 1.1 : 1.0,
                     child: Icon(
                       i < _rating ? Icons.star_rounded : Icons.star_outline_rounded,
-                      color: Colors.amber,
+                      color: i < _rating ? Colors.amber : Colors.grey[300],
                       size: 38,
                     ),
                   ),
@@ -348,22 +352,24 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Container(
-              key: ValueKey(_ratingLabel),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.warningLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                _ratingLabel,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.warning),
+          if (_rating > 0) ...[
+            const SizedBox(height: 8),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Container(
+                key: ValueKey(_ratingLabel),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.warningLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _ratingLabel,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.warning),
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

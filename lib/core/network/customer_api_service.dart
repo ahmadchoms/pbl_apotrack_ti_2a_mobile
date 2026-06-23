@@ -182,7 +182,7 @@ class CustomerApiService {
   }
 
   Future<ReviewResponse> submitReview({
-    required String medicineId,
+    required String orderId,
     required int rating,
     String? comment,
   }) async {
@@ -190,7 +190,7 @@ class CustomerApiService {
       final response = await _dio.post(
         '/reviews',
         data: {
-          'medicine_id': medicineId,
+          'order_id': orderId,
           'rating': rating,
           if (comment != null && comment.isNotEmpty) 'comment': comment,
         },
@@ -207,13 +207,13 @@ class CustomerApiService {
 
 class ReviewResponse {
   final String id;
-  final String medicineId;
+  final String orderId;
   final int rating;
   final String? comment;
 
   const ReviewResponse({
     required this.id,
-    required this.medicineId,
+    required this.orderId,
     required this.rating,
     this.comment,
   });
@@ -221,7 +221,7 @@ class ReviewResponse {
   factory ReviewResponse.fromJson(Map<String, dynamic> json) {
     return ReviewResponse(
       id: json['id']?.toString() ?? '',
-      medicineId: json['medicine_id']?.toString() ?? '',
+      orderId: json['order_id']?.toString() ?? '',
       rating: (json['rating'] as num?)?.toInt() ?? 0,
       comment: json['comment']?.toString(),
     );
