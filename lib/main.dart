@@ -29,6 +29,11 @@ bool get _supportsFcm {
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
     if (DefaultFirebaseOptions.android.apiKey.isNotEmpty) {
+      if (message.notification != null) {
+        // OS will automatically display notifications containing a notification block.
+        // Avoid creating a duplicate local notification.
+        return;
+      }
       await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
       await LocalNotificationService.init();
       final data = message.data;
@@ -124,6 +129,13 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
         _setupBackgroundTapListener();
         _checkInitialMessage();
         _setupTokenRefresh();
+
+        // Register token if user is already logged in at startup
+        final user = ref.read(currentUserProvider);
+        if (user != null) {
+          final dio = ref.read(dioProvider);
+          PushNotificationService.updateDeviceToken(dio, user.id);
+        }
       }
     });
   }
@@ -283,6 +295,13 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(AppRouter.routerProvider);
+
+    ref.listen(currentUserProvider, (previous, next) {
+      if (next != null && _supportsFcm) {
+        final dio = ref.read(dioProvider);
+        PushNotificationService.updateDeviceToken(dio, next.id);
+      }
+    });
 
     return MaterialApp.router(
       title: 'ApoTrack',

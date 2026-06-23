@@ -6,7 +6,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../data/models/cart.dart';
 import '../../data/services/order_service.dart';
 import '../providers/customer_profile_provider.dart';
-import 'order_confirm_screen.dart';
+import 'qris_payment_screen.dart';
+import 'order_detail_screen.dart';
+import '../../data/models/order_model.dart';
 import 'address/address_model.dart';
 import 'address/address_provider.dart';
 import 'address/address_picker_sheet.dart';
@@ -20,8 +22,9 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String _deliveryMethod = 'kirim';
-  String _paymentMethod = 'cod';
+  String _paymentMethod = 'cash';
   File? _prescriptionFile;
+  bool _isSubmitting = false;
   final TextEditingController _noteController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
@@ -186,6 +189,119 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _selectedCourierService = rate['courier_service'] as String?;
       _selectedCourierPrice = (rate['price'] as num?)?.toInt() ?? 0;
     });
+  }
+
+  Future<void> _confirmOrder() async {
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
+    try {
+      final isQris = _paymentMethod == 'qris';
+      final isDelivery = _deliveryMethod == 'kirim';
+      final pharmacyId = _cartItems.isNotEmpty ? _cartItems.first.pharmacyId : '';
+      final pharmacyName = _cartItems.isNotEmpty ? _cartItems.first.pharmacyName : 'Apotek';
+      final notes = _noteController.text.trim().isEmpty ? null : _noteController.text.trim();
+
+      if (isQris) {
+        final items = _cartItems
+            .map(
+              (item) => {
+                'medicine_id': item.id,
+                'medicine_name': item.name,
+                'unit_name': item.unit,
+                'requires_prescription': item.requiresPrescription,
+                'quantity': item.quantity,
+                'price': item.price,
+                'subtotal': item.price * item.quantity,
+              },
+            )
+            .toList();
+        
+        CartState().clear();
+        if (!mounted) return;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => QrisPaymentScreen(
+              pharmacyId: pharmacyId,
+              pharmacyName: pharmacyName,
+              deliveryMethod: _deliveryMethod,
+              addressId: _addressProvider.selectedAddress?.id,
+              notes: notes,
+              courierCode: isDelivery ? _selectedCourierCode : null,
+              courierService: _selectedCourierService,
+              items: items,
+              subtotal: _subtotal,
+              shippingCost: _shippingCost,
+              prescriptionFile: _prescriptionFile,
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Cash: buat order langsung
+      final service = ref.read(orderServiceProvider);
+      final cartItemModels = _cartItems
+          .map(
+            (item) => CartItemModel(
+              medicineId: item.id,
+              medicineName: item.name,
+              unitName: item.unit,
+              requiresPrescription: item.requiresPrescription,
+              quantity: item.quantity,
+              price: item.price,
+              subtotal: item.price * item.quantity,
+            ),
+          )
+          .toList();
+
+      final order = await service.createOrder(
+        pharmacyId: pharmacyId,
+        items: cartItemModels,
+        subtotal: _subtotal.toDouble(),
+        serviceType: isDelivery ? 'DELIVERY' : 'PICK_UP',
+        paymentMethod: 'CASH',
+        addressId: _addressProvider.selectedAddress?.id,
+        notes: notes,
+        shippingCost: _shippingCost.toDouble(),
+        courierCode: isDelivery ? _selectedCourierCode : null,
+        courierService: _selectedCourierService,
+      );
+
+      if (_prescriptionFile != null) {
+        try {
+          await service.uploadPrescription(order.id, _prescriptionFile!);
+        } catch (_) {
+          debugPrint('Prescription upload gagal, bisa diupload nanti');
+        }
+      }
+
+      if (!mounted) return;
+
+      CartState().clear();
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CustomerOrderDetailScreen(orderId: order.id),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal membuat pesanan: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   Future<void> _pickPrescription() async {
@@ -516,6 +632,37 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.access_time_rounded,
+                  color: AppColors.primary,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _deliveryMethod == 'kirim'
+                        ? 'Estimasi pengiriman: 30–45 menit'
+                        : 'Estimasi siap ambil: 15–20 menit',
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -941,6 +1088,38 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             subtitle: 'QR Code akan muncul setelah konfirmasi',
             value: 'qris',
           ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFDE68A)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: Color(0xFFD97706),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _paymentMethod == 'cash'
+                        ? 'Pembayaran dilakukan saat pesanan diterima oleh kurir atau saat pengambilan.'
+                        : 'QR Code pembayaran akan dikirim setelah pesanan dikonfirmasi oleh apotek.',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF92400E),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -1256,7 +1435,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         !_requiresPrescription || _prescriptionFile != null;
     final bool canProceed =
         (_deliveryMethod == 'ambil' || (hasAddress && hasCourier)) &&
-        hasPrescription;
+        hasPrescription && !_isSubmitting;
 
     String? errorMsg;
     if (_requiresPrescription && !hasPrescription) {
@@ -1291,39 +1470,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         height: 52,
         child: ElevatedButton(
           onPressed: canProceed
-              ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => OrderConfirmationScreen(
-                        cartItems: _cartItems,
-                        deliveryMethod: _deliveryMethod,
-                        paymentMethod: _paymentMethod,
-                        courierCode: _deliveryMethod == 'kirim'
-                            ? _selectedCourierCode
-                            : null,
-                        courierService: _selectedCourierService,
-                        total: _total,
-                        shippingCost: _shippingCost,
-                        deliveryAddress: _addressProvider.selectedAddress,
-                        pharmacyId: _cartItems.isNotEmpty
-                            ? _cartItems.first.pharmacyId
-                            : '',
-                        prescriptionFile: _prescriptionFile,
-                      ),
-                    ),
-                  );
-                }
-              : () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        errorMsg ?? 'Lengkapi data terlebih dahulu',
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
+              ? _confirmOrder
+              : (_isSubmitting
+                  ? null
+                  : () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            errorMsg ?? 'Lengkapi data terlebih dahulu',
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }),
           style: ElevatedButton.styleFrom(
             backgroundColor: canProceed
                 ? AppColors.primary
@@ -1334,10 +1493,21 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-          child: const Text(
-            'Lanjutkan Pembayaran',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-          ),
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  _paymentMethod == 'qris'
+                      ? 'Lanjutkan ke Pembayaran'
+                      : 'Konfirmasi & Buat Pesanan',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                ),
         ),
       ),
     );

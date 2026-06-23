@@ -2,15 +2,19 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const FCM_PROJECT_ID = Deno.env.get("FCM_PROJECT_ID") ?? ""
 const FCM_CLIENT_EMAIL = Deno.env.get("FCM_CLIENT_EMAIL") ?? ""
-const FCM_PRIVATE_KEY = (Deno.env.get("FCM_PRIVATE_KEY") ?? "").replace(/\\n/g, "\n")
+const rawPrivateKey = Deno.env.get("FCM_PRIVATE_KEY") ?? ""
+const cleanPrivateKey = rawPrivateKey.trim().replace(/^"/, "").replace(/"$/, "")
+const FCM_PRIVATE_KEY = cleanPrivateKey.replace(/\\n/g, "\n")
 
 async function getAccessToken(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000)
   const jwt = await createJWT({
     aud: "https://oauth2.googleapis.com/token",
     iss: FCM_CLIENT_EMAIL,
     sub: FCM_CLIENT_EMAIL,
     scope: "https://www.googleapis.com/auth/firebase.messaging",
-    exp: Math.floor(Date.now() / 1000) + 3600,
+    iat: now,
+    exp: now + 3600,
   })
 
   const res = await fetch("https://oauth2.googleapis.com/token", {
@@ -23,6 +27,9 @@ async function getAccessToken(): Promise<string> {
   })
 
   const data = await res.json()
+  if (!data.access_token) {
+    throw new Error("Failed to get Google OAuth token: " + JSON.stringify(data))
+  }
   return data.access_token
 }
 
@@ -79,9 +86,9 @@ serve(async (req) => {
       })
     }
 
-    // Cari FCM token user dari tabel user_devices
+    // Cari FCM token user dari tabel device_tokens
     const deviceRes = await fetch(
-      `${Deno.env.get("SUPABASE_URL")}/rest/v1/user_devices?user_id=eq.${record.user_id}&select=fcm_token`,
+      `${Deno.env.get("SUPABASE_URL")}/rest/v1/device_tokens?user_id=eq.${record.user_id}&select=fcm_token`,
       {
         headers: {
           apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -91,7 +98,15 @@ serve(async (req) => {
     )
 
     const devices = await deviceRes.json()
-    if (!devices || devices.length === 0) {
+    if (!deviceRes.ok || !Array.isArray(devices)) {
+      console.error("Database query failed:", devices)
+      return new Response(JSON.stringify({ error: "Database query failed", details: devices }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
+
+    if (devices.length === 0) {
       console.log("No FCM token found for user:", record.user_id)
       return new Response(JSON.stringify({ sent: false, reason: "no_token" }), {
         headers: { "Content-Type": "application/json" },
@@ -109,10 +124,30 @@ serve(async (req) => {
           body: record.message || "Ada update buat kamu!",
         },
         data: {
+          title: record.title || "Notifikasi ApoTrack",
+          body: record.message || "Ada update buat kamu!",
           type: record.type || "",
           reference_type: record.reference_type || "",
           reference_id: record.reference_id || "",
           notification_id: record.id || "",
+        },
+        android: {
+          priority: "HIGH",
+          notification: {
+            channel_id: "apotrack_notifications_v2",
+            notification_priority: "PRIORITY_HIGH",
+          },
+        },
+        apns: {
+          payload: {
+            aps: {
+              alert: {
+                title: record.title || "Notifikasi ApoTrack",
+                body: record.message || "Ada update buat kamu!",
+              },
+              sound: "default",
+            },
+          },
         },
       },
     }

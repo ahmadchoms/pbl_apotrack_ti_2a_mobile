@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "184964236996",
-    "project_id": "apotrack-e1f7a",
-    "storage_bucket": "apotrack-e1f7a.firebasestorage.app"
+    "project_number": "825803543303",
+    "project_id": "tabunganku-a6c40",
+    "storage_bucket": "tabunganku-a6c40.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:184964236996:android:32dd77aa33228c2e62ab91",
+        "mobilesdk_app_id": "1:825803543303:android:6a8140bcaed452f2b0eba2",
         "android_client_info": {
           "package_name": "com.apotrack"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD1rN-YgLx4cp5uiIvVXDR-95Mv54RDmZo"
+          "current_key": "AIzaSyA3hFTY6-BiuZeAqQMi-4fR9ZRaaKG-EzQ"
         }
       ],
       "services": {

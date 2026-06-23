@@ -4,15 +4,10 @@ class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform => android;
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: "AIzaSyD1rN-YgLx4cp5uiIvVXDR-95Mv54RDmZo",
-    appId: "1:184964236996:android:32dd77aa33228c2e62ab91",
-    messagingSenderId: "184964236996",
-    projectId: "apotrack-e1f7a",
-    storageBucket: "apotrack-e1f7a.firebasestorage.app",
-    // apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
-    // appId: String.fromEnvironment('FIREBASE_APP_ID'),
-    // messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
-    // projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
-    // storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    apiKey: "AIzaSyA3hFTY6-BiuZeAqQMi-4fR9ZRaaKG-EzQ",
+    appId: "1:825803543303:android:6a8140bcaed452f2b0eba2",
+    messagingSenderId: "825803543303",
+    projectId: "tabunganku-a6c40",
+    storageBucket: "tabunganku-a6c40.firebasestorage.app",
   );
 }

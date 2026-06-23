@@ -12,29 +12,38 @@ class DeliveryInfoCard extends StatelessWidget {
   const DeliveryInfoCard({super.key, required this.order});
 
   static const Map<String, String> _courierMap = {
-    'jne':      'JNE Express',
-    'jnt':      'J&T Express',
-    'sicepat':  'SiCepat',
-    'gojek':    'GoSend',
-    'grab':     'GrabExpress',
+    'jne': 'JNE Express',
+    'jnt': 'J&T Express',
+    'sicepat': 'SiCepat',
+    'gojek': 'GoSend',
+    'grab': 'GrabExpress',
     'anteraja': 'AnterAja',
-    'tiki':     'TIKI',
-    'pos':      'POS Indonesia',
+    'tiki': 'TIKI',
+    'pos': 'POS Indonesia',
   };
 
   static const Map<String, Map<String, dynamic>> _statusMap = {
-    'confirmed':         {'label': 'Mencari Kurir',          'color': AppColors.warning},
-    'allocated':         {'label': 'Kurir Ditemukan',         'color': AppColors.warning},
-    'picking_up':        {'label': 'Menuju Apotek',           'color': AppColors.primary},
-    'picked':            {'label': 'Paket Diambil',           'color': AppColors.primary},
-    'dropping_off':      {'label': 'Sedang Diantar',          'color': AppColors.accentIndigo},
-    'delivered':         {'label': 'Sampai Tujuan',           'color': AppColors.success},
-    'cancelled':         {'label': 'Dibatalkan',              'color': AppColors.danger},
-    'rejected':          {'label': 'Ditolak Kurir',           'color': AppColors.danger},
-    'on_hold':           {'label': 'Ditahan Sementara',       'color': AppColors.warning},
-    'courier_not_found': {'label': 'Kurir Tidak Ditemukan',   'color': AppColors.danger},
-    'return_in_transit': {'label': 'Proses Pengembalian',     'color': AppColors.warning},
-    'returned':          {'label': 'Paket Dikembalikan',      'color': AppColors.danger},
+    'confirmed': {'label': 'Mencari Kurir', 'color': AppColors.warning},
+    'allocated': {'label': 'Kurir Ditemukan', 'color': AppColors.warning},
+    'picking_up': {'label': 'Menuju Apotek', 'color': AppColors.primary},
+    'picked': {'label': 'Paket Diambil', 'color': AppColors.primary},
+    'dropping_off': {
+      'label': 'Sedang Diantar',
+      'color': AppColors.accentIndigo,
+    },
+    'delivered': {'label': 'Sampai Tujuan', 'color': AppColors.success},
+    'cancelled': {'label': 'Dibatalkan', 'color': AppColors.danger},
+    'rejected': {'label': 'Ditolak Kurir', 'color': AppColors.danger},
+    'on_hold': {'label': 'Ditahan Sementara', 'color': AppColors.warning},
+    'courier_not_found': {
+      'label': 'Kurir Tidak Ditemukan',
+      'color': AppColors.danger,
+    },
+    'return_in_transit': {
+      'label': 'Proses Pengembalian',
+      'color': AppColors.warning,
+    },
+    'returned': {'label': 'Paket Dikembalikan', 'color': AppColors.danger},
   };
 
   Future<void> _openTrackingUrl(String url) async {
@@ -50,11 +59,12 @@ class DeliveryInfoCard extends StatelessWidget {
     final address = order.address;
 
     final statusKey = tracking?.status ?? 'confirmed';
-    final statusInfo = _statusMap[statusKey] ??
-        {'label': statusKey.toUpperCase().replaceAll('_', ' '), 'color': AppColors.textMid};
+    final statusInfo =
+        _statusMap[statusKey] ?? {'label': '-', 'color': AppColors.textMid};
 
     final companyRaw = tracking?.courierCompany?.toLowerCase() ?? '';
-    final courierDisplayName = _courierMap[companyRaw] ?? companyRaw.toUpperCase();
+    final courierDisplayName =
+        _courierMap[companyRaw] ?? companyRaw.toUpperCase();
 
     return AppCard(
       child: Column(
@@ -88,8 +98,11 @@ class DeliveryInfoCard extends StatelessWidget {
                     color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: const Icon(Icons.location_on_rounded,
-                      size: 18, color: AppColors.primary),
+                  child: const Icon(
+                    Icons.location_on_rounded,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
