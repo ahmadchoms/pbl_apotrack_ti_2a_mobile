@@ -42,7 +42,7 @@ class QrisPaymentScreen extends ConsumerStatefulWidget {
 class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
   late final OrderService _orderService;
   bool _paying = false;
-  int _secondsLeft = 4 * 60 + 59;
+  int _secondsLeft = 14 * 60 + 59;
   Timer? _timer;
 
   String _orderNumber = '';

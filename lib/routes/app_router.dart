@@ -135,7 +135,11 @@ class AppRouter {
         // ── Customer ──────────────────────────────────────────────
         GoRoute(
           path: customerHome,
-          builder: (context, state) => const CustomerMainScreen(),
+          builder: (context, state) {
+            final tabParam = state.uri.queryParameters['tab'];
+            final initialIndex = int.tryParse(tabParam ?? '') ?? 0;
+            return CustomerMainScreen(initialIndex: initialIndex);
+          },
         ),
         GoRoute(
           path: customerAccountHub,

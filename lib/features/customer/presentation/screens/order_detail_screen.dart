@@ -98,35 +98,82 @@ class _CustomerOrderDetailScreenState
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textDark,
-              size: 20,
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          context.go('/customer?tab=2');
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            backgroundColor: AppColors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: AppColors.textDark,
+                size: 20,
+              ),
+              onPressed: () => context.go('/customer?tab=2'),
             ),
-            onPressed: () => context.pop(),
-          ),
-          title: const Text(
-            'Detail Pesanan',
-            style: TextStyle(
-              color: AppColors.textDark,
-              fontWeight: FontWeight.w900,
-              fontSize: 17,
+            title: const Text(
+              'Detail Pesanan',
+              style: TextStyle(
+                color: AppColors.textDark,
+                fontWeight: FontWeight.w900,
+                fontSize: 17,
+              ),
             ),
+            centerTitle: true,
           ),
-          centerTitle: true,
+          body: const Center(child: CircularProgressIndicator()),
         ),
-        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_order == null) {
-      return Scaffold(
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          context.go('/customer?tab=2');
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            backgroundColor: AppColors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: AppColors.textDark,
+                size: 20,
+              ),
+              onPressed: () => context.go('/customer?tab=2'),
+            ),
+            title: const Text(
+              'Detail Pesanan',
+              style: TextStyle(
+                color: AppColors.textDark,
+                fontWeight: FontWeight.w900,
+                fontSize: 17,
+              ),
+            ),
+            centerTitle: true,
+          ),
+          body: const Center(child: Text('Pesanan tidak ditemukan')),
+        ),
+      );
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        context.go('/customer?tab=2');
+      },
+      child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
           backgroundColor: AppColors.white,
@@ -137,7 +184,7 @@ class _CustomerOrderDetailScreenState
               color: AppColors.textDark,
               size: 20,
             ),
-            onPressed: () => context.pop(),
+            onPressed: () => context.go('/customer?tab=2'),
           ),
           title: const Text(
             'Detail Pesanan',
@@ -148,41 +195,15 @@ class _CustomerOrderDetailScreenState
             ),
           ),
           centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: AppColors.textDark),
+              onPressed: _refresh,
+            ),
+          ],
         ),
-        body: const Center(child: Text('Pesanan tidak ditemukan')),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AppColors.textDark,
-            size: 20,
-          ),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text(
-          'Detail Pesanan',
-          style: TextStyle(
-            color: AppColors.textDark,
-            fontWeight: FontWeight.w900,
-            fontSize: 17,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.textDark),
-            onPressed: _refresh,
-          ),
-        ],
+        body: _buildContent(context),
       ),
-      body: _buildContent(context),
     );
   }
 

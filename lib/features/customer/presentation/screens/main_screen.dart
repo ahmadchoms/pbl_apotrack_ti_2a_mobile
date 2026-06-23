@@ -11,20 +11,32 @@ import 'customer_profile_screen.dart';
 import 'order_history_screen.dart';
 
 class CustomerMainScreen extends ConsumerStatefulWidget {
-  const CustomerMainScreen({super.key});
+  final int initialIndex;
+  const CustomerMainScreen({super.key, this.initialIndex = 0});
 
   @override
   ConsumerState<CustomerMainScreen> createState() => _CustomerMainScreenState();
 }
 
 class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   int _unreadNotifCount = 0;
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _loadUnreadCount();
+  }
+
+  @override
+  void didUpdateWidget(CustomerMainScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      setState(() {
+        _currentIndex = widget.initialIndex;
+      });
+    }
   }
 
   Future<void> _loadUnreadCount() async {
