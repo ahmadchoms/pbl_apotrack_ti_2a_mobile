@@ -11,6 +11,7 @@ import 'core/services/push_notification_service.dart';
 import 'core/services/local_notification_service.dart';
 import 'routes/app_router.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/customer/presentation/providers/customer_order_provider.dart';
 import 'features/customer/presentation/screens/order_detail_screen.dart';
 import 'features/customer/presentation/screens/order_history_screen.dart';
 import 'features/staff/presentation/screens/staff_orders_screen.dart';
@@ -132,6 +133,18 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
       final data = message.data;
       final title = data['title'] ?? message.notification?.title ?? 'Notifikasi Baru';
       final body = data['body'] ?? message.notification?.body ?? '';
+
+      // Auto-refresh order data if push notification indicates an order update
+      final type = (data['type'] ?? '').toString().toUpperCase();
+      final referenceId = data['reference_id']?.toString();
+      if (type == 'ORDER' || type == 'ORDER_STATUS') {
+        // Refresh active/history order lists
+        ref.read(customerOrderProvider.notifier).loadAll();
+        // Refresh the detail screen of the specific order if it is open
+        if (referenceId != null && referenceId.isNotEmpty) {
+          ref.invalidate(orderDetailProvider(referenceId));
+        }
+      }
 
       LocalNotificationService.show(
         id: DateTime.now().millisecondsSinceEpoch ~/ 1000,

@@ -10,7 +10,7 @@ import '../widgets/order_history/order_detail_items_card.dart';
 import '../widgets/order_history/order_detail_summary_card.dart';
 import '../widgets/order_history/order_detail_timeline_card.dart';
 import '../../data/models/prescription.dart';
-import '../../data/services/customer_order_service.dart';
+import '../providers/customer_order_provider.dart';
 
 class CustomerOrderDetailScreen extends ConsumerStatefulWidget {
   final Order? order;
@@ -30,42 +30,12 @@ class CustomerOrderDetailScreen extends ConsumerStatefulWidget {
 class _CustomerOrderDetailScreenState
     extends ConsumerState<CustomerOrderDetailScreen> {
   Order? _order;
-  bool _isLoading = false;
-  late CustomerOrderService _orderService;
-
-  @override
-  void initState() {
-    super.initState();
-    _orderService = ref.read(customerOrderServiceProvider);
-    if (widget.order != null) {
-      _order = widget.order;
-    } else {
-      _isLoading = true;
-      _loadOrder();
-    }
-  }
-
-  Future<void> _loadOrder() async {
-    try {
-      final fresh = await _orderService.getOrderDetail(widget.orderId!);
-      if (mounted) {
-        setState(() {
-          _order = fresh;
-          _isLoading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
 
   Future<void> _refresh() async {
-    final id = _order?.id ?? widget.orderId;
+    final id = _order?.id ?? widget.orderId ?? widget.order?.id;
     if (id == null) return;
     try {
-      final fresh = await _orderService.getOrderDetail(id);
+      final fresh = await ref.refresh(orderDetailProvider(id).future);
       if (!mounted) return;
       setState(() => _order = fresh);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -97,8 +67,39 @@ class _CustomerOrderDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return PopScope(
+    final orderId = widget.orderId ?? widget.order?.id;
+    if (orderId == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textDark,
+              size: 20,
+            ),
+            onPressed: () => context.go('/customer?tab=2'),
+          ),
+          title: const Text(
+            'Detail Pesanan',
+            style: TextStyle(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w900,
+              fontSize: 17,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: const Center(child: Text('ID Pesanan tidak valid')),
+      );
+    }
+
+    final orderFuture = ref.watch(orderDetailProvider(orderId));
+
+    return orderFuture.when(
+      loading: () => PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
           if (didPop) return;
@@ -129,11 +130,8 @@ class _CustomerOrderDetailScreenState
           ),
           body: const Center(child: CircularProgressIndicator()),
         ),
-      );
-    }
-
-    if (_order == null) {
-      return PopScope(
+      ),
+      error: (err, stack) => PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
           if (didPop) return;
@@ -164,46 +162,48 @@ class _CustomerOrderDetailScreenState
           ),
           body: const Center(child: Text('Pesanan tidak ditemukan')),
         ),
-      );
-    }
-
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        context.go('/customer?tab=2');
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textDark,
-              size: 20,
-            ),
-            onPressed: () => context.go('/customer?tab=2'),
-          ),
-          title: const Text(
-            'Detail Pesanan',
-            style: TextStyle(
-              color: AppColors.textDark,
-              fontWeight: FontWeight.w900,
-              fontSize: 17,
-            ),
-          ),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: AppColors.textDark),
-              onPressed: _refresh,
-            ),
-          ],
-        ),
-        body: _buildContent(context),
       ),
+      data: (order) {
+        _order = order;
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            context.go('/customer?tab=2');
+          },
+          child: Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              backgroundColor: AppColors.white,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.textDark,
+                  size: 20,
+                ),
+                onPressed: () => context.go('/customer?tab=2'),
+              ),
+              title: const Text(
+                'Detail Pesanan',
+                style: TextStyle(
+                  color: AppColors.textDark,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 17,
+                ),
+              ),
+              centerTitle: true,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded, color: AppColors.textDark),
+                  onPressed: _refresh,
+                ),
+              ],
+            ),
+            body: _buildContent(context),
+          ),
+        );
+      },
     );
   }
 
