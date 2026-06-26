@@ -64,10 +64,9 @@ class UserModel {
 
   bool get isStaff =>
       role == 'STAFF' ||
-      role == 'APOTEKER' ||
-      email.toLowerCase().contains('@apotek');
+      role == 'APOTEKER';
   bool get isCustomer =>
-      role == 'USER' && !email.toLowerCase().contains('@apotek');
+      role == 'USER';
 
   String get initials {
     final parts = username.trim().split(' ');

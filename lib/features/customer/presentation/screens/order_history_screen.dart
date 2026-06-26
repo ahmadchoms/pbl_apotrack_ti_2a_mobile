@@ -33,7 +33,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     'Menunggu',
     'Diproses',
     'Siap Diambil',
-    'Dikirim',
     'Selesai',
     'Dibatalkan',
   ];
@@ -56,9 +55,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
         break;
       case 'Siap Diambil':
         result = all.where((o) => o.orderStatus == 'READY_FOR_PICKUP').toList();
-        break;
-      case 'Dikirim':
-        result = all.where((o) => o.orderStatus == 'SHIPPED').toList();
         break;
       case 'Selesai':
         result = all
@@ -119,8 +115,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
         return () => _showCancelDialog(order);
       case 'CANCEL_REQUESTED':
         return () => CancellationDetailSheet.show(context, order);
-      case 'SHIPPED':
-        return () => context.push(AppRouter.customerTrackOrder, extra: order);
       case 'COMPLETED':
         return () => _handleBuyAgain(order);
       case 'CANCELLED':

@@ -77,6 +77,17 @@ function pemToBinary(pem: string): ArrayBuffer {
 
 serve(async (req) => {
   try {
+    const APOTRACK_INTERNAL_SECRET = Deno.env.get("APOTRACK_INTERNAL_SECRET") ?? ""
+    const incomingSecret = req.headers.get("x-apotrack-secret")
+
+    if (APOTRACK_INTERNAL_SECRET && incomingSecret !== APOTRACK_INTERNAL_SECRET) {
+      console.warn("Unauthorized attempt to access notify-user function")
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
+
     const { record } = await req.json()
 
     if (!record || !record.user_id) {
@@ -134,7 +145,7 @@ serve(async (req) => {
         android: {
           priority: "HIGH",
           notification: {
-            channel_id: "apotrack_notifications_v2",
+            channel_id: "apotrack_notifications_v3",
             notification_priority: "PRIORITY_HIGH",
           },
         },

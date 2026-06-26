@@ -48,6 +48,7 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(customerProfileProvider);
     final profile = state.profile;
+    final isStaff = profile?.isStaff ?? false;
     final primaryAddr = state.addresses.where((a) => a.isPrimary).firstOrNull;
     final otherAddrs = state.addresses.where((a) => !a.isPrimary).toList();
 
@@ -127,13 +128,27 @@ class _AccountHubScreenState extends ConsumerState<AccountHubScreen> {
                       ],
                     ),
 
-                    // ── Join Staff ──────────────────
-                    MenuSection(
-                      title: 'GABUNG SEBAGAI STAFF APOTEK',
-                      items: [
-                        MenuItemCustom(child: const ScanQrInvitationCard()),
-                      ],
-                    ),
+                    if (isStaff)
+                      MenuSection(
+                        title: 'BERALIH MODE',
+                        items: [
+                          MenuItemTile(
+                            icon: Icons.swap_horiz_rounded,
+                            title: 'Beralih ke Mode Staff',
+                            onTap: () {
+                              context.go(AppRouter.staffHome);
+                            },
+                          ),
+                        ],
+                      )
+                    else
+                      // ── Join Staff ──────────────────
+                      MenuSection(
+                        title: 'GABUNG SEBAGAI STAFF APOTEK',
+                        items: [
+                          MenuItemCustom(child: const ScanQrInvitationCard()),
+                        ],
+                      ),
 
                     // ── Lainnya ─────────────────────
                     MenuSection(

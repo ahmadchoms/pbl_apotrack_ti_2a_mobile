@@ -16,6 +16,7 @@ import 'features/customer/presentation/screens/order_detail_screen.dart';
 import 'features/customer/presentation/screens/order_history_screen.dart';
 import 'features/staff/presentation/screens/staff_orders_screen.dart';
 import 'features/staff/presentation/screens/staff_inventory_screen.dart';
+import 'features/staff/presentation/providers/staff_provider.dart';
 import 'dart:async';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -149,6 +150,44 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
       // Auto-refresh order data if push notification indicates an order update
       final type = (data['type'] ?? '').toString().toUpperCase();
       final referenceId = data['reference_id']?.toString();
+
+      if (type == 'STAFF_REMOVED') {
+        LocalNotificationService.show(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: title,
+          body: body,
+          payload: data.toString(),
+        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final navContext = AppRouter.navigatorKey.currentContext;
+          if (navContext != null) {
+            showDialog(
+              context: navContext,
+              barrierDismissible: false,
+              builder: (dialogCtx) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                content: Text(body),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(dialogCtx).pop(); // Dismiss dialog
+                      ref.read(authNotifierProvider.notifier).restoreSession();
+                      ref.read(profileProvider.notifier).loadAll();
+                      ref.read(AppRouter.routerProvider).go(AppRouter.splash);
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          }
+        });
+        return;
+      }
+
       if (type == 'ORDER' || type == 'ORDER_STATUS') {
         // Refresh active/history order lists
         ref.read(customerOrderProvider.notifier).loadAll();
@@ -183,6 +222,35 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
   void _navigateByData({required BuildContext context, required Map<String, dynamic> data}) {
     final type = (data['type'] ?? '').toString().toUpperCase();
     final referenceId = data['reference_id'];
+
+    if (type == 'STAFF_REMOVED') {
+      final title = data['title'] ?? 'Pemberhentian Staff';
+      final body = data['message'] ?? data['body'] ?? 'Anda telah diberhentikan sebagai staff di apotek.';
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogCtx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(body),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogCtx).pop(); // Dismiss dialog
+                ref.read(authNotifierProvider.notifier).restoreSession();
+                ref.read(profileProvider.notifier).loadAll();
+                ref.read(AppRouter.routerProvider).go(AppRouter.splash);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final user = ref.read(currentUserProvider);
     if (user == null) return;
     final navigator = Navigator.of(context);
@@ -248,6 +316,35 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
     final data = message.data;
     final type = (data['type'] ?? '').toString().toUpperCase();
     final referenceId = data['reference_id'];
+
+    if (type == 'STAFF_REMOVED') {
+      final title = data['title'] ?? message.notification?.title ?? 'Pemberhentian Staff';
+      final body = data['message'] ?? data['body'] ?? message.notification?.body ?? 'Anda telah diberhentikan sebagai staff di apotek.';
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogCtx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(body),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogCtx).pop(); // Dismiss dialog
+                ref.read(authNotifierProvider.notifier).restoreSession();
+                ref.read(profileProvider.notifier).loadAll();
+                ref.read(AppRouter.routerProvider).go(AppRouter.splash);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final user = ref.read(currentUserProvider);
 
     if (user == null) return;

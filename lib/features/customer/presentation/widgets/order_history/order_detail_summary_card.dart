@@ -4,13 +4,11 @@ import '../../../../../shared/widgets/order_detail_helpers.dart';
 
 class OrderDetailSummaryCard extends StatelessWidget {
   final num subtotal;
-  final num shippingCost;
   final num grandTotal;
 
   const OrderDetailSummaryCard({
     super.key,
     required this.subtotal,
-    required this.shippingCost,
     required this.grandTotal,
   });
 
@@ -43,8 +41,6 @@ class OrderDetailSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           _summaryRow('Subtotal', subtotal),
-          const SizedBox(height: 8),
-          _summaryRow('Biaya Pengiriman', shippingCost),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(color: Color(0xFFF1F5F9), height: 1),

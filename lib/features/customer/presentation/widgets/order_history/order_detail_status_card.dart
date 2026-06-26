@@ -86,13 +86,6 @@ class OrderDetailStatusCard extends StatelessWidget {
           iconContainerColor: Colors.white24,
         );
 
-      case 'SHIPPED':
-        return const _StatusThemeData(
-          backgroundColor: AppColors.accentOrange,
-          textColor: AppColors.white,
-          iconContainerColor: Colors.white24,
-        );
-
       case 'DELIVERED':
         return const _StatusThemeData(
           backgroundColor: AppColors.successLight,
@@ -134,9 +127,6 @@ class OrderDetailStatusCard extends StatelessWidget {
       case 'READY_FOR_PICKUP':
         return 'Siap Diambil';
 
-      case 'SHIPPED':
-        return 'Dikirim';
-
       case 'COMPLETED':
         return 'Selesai';
 
@@ -158,9 +148,6 @@ class OrderDetailStatusCard extends StatelessWidget {
 
       case 'READY_FOR_PICKUP':
         return Icons.storefront_outlined;
-
-      case 'SHIPPED':
-        return Icons.local_shipping_outlined;
 
       case 'COMPLETED':
         return Icons.check_circle_outline_rounded;

@@ -16,9 +16,6 @@ class CustomerRepository {
 
   Future<Response> getCustomerOrderDetail(String id) => _dio.get('/orders/$id');
 
-  Future<Response> getCustomerOrderTracking(String id) =>
-      _dio.get('/orders/$id/tracking');
-
   Future<Response> simulatePayment(String id) =>
       _dio.post('/orders/$id/simulate-payment');
 

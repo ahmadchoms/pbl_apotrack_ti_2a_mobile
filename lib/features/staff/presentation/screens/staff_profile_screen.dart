@@ -258,6 +258,20 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                         ],
                       ),
 
+                    if (!isCustomer)
+                      MenuSection(
+                        title: 'BERALIH MODE',
+                        items: [
+                          MenuItemTile(
+                            icon: Icons.swap_horiz_rounded,
+                            title: 'Beralih ke Mode Customer',
+                            onTap: () {
+                              context.go(AppRouter.customerHome);
+                            },
+                          ),
+                        ],
+                      ),
+
                     if (isCustomer)
                       MenuSection(
                         title: 'JOIN SEBAGAI STAFF APOTEK',

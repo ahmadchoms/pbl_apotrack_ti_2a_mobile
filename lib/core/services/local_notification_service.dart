@@ -6,7 +6,7 @@ class LocalNotificationService {
   static bool _initialized = false;
   static int _notificationId = 0;
 
-  static const String _channelId = 'apotrack_notifications_v2';
+  static const String _channelId = 'apotrack_notifications_v3';
   static const String _channelName = 'ApoTrack Notifications';
   static const String _channelDescription = 'Notifikasi pesanan dan resep ApoTrack';
 

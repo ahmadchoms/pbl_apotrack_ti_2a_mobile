@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/order_model.dart';
 import '../../data/services/order_service.dart';
@@ -12,12 +13,7 @@ class QrisPaymentScreen extends ConsumerStatefulWidget {
   final String pharmacyName;
   final List<Map<String, dynamic>> items;
   final int subtotal;
-  final int shippingCost;
-  final String deliveryMethod;
-  final String? addressId;
   final String? notes;
-  final String? courierCode;
-  final String? courierService;
   final File? prescriptionFile;
 
   const QrisPaymentScreen({
@@ -26,12 +22,7 @@ class QrisPaymentScreen extends ConsumerStatefulWidget {
     required this.pharmacyName,
     required this.items,
     required this.subtotal,
-    required this.shippingCost,
-    required this.deliveryMethod,
-    this.addressId,
     this.notes,
-    this.courierCode,
-    this.courierService,
     this.prescriptionFile,
   });
 
@@ -125,19 +116,13 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
           )
           .toList();
 
-      final isDelivery = widget.deliveryMethod == 'kirim';
-
       final order = await _orderService.createOrder(
         pharmacyId: widget.pharmacyId,
-        serviceType: isDelivery ? 'DELIVERY' : 'PICK_UP',
+        serviceType: 'PICKUP',
         paymentMethod: 'QRIS',
         items: cartItemModels,
         subtotal: widget.subtotal.toDouble(),
-        shippingCost: widget.shippingCost.toDouble(),
-        addressId: widget.addressId,
         notes: widget.notes,
-        courierCode: widget.courierCode,
-        courierService: widget.courierService,
       );
 
       if (widget.prescriptionFile != null) {
@@ -222,59 +207,63 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        title: const Text(
-          'Konfirmasi Pembayaran',
-          style: TextStyle(
-            color: AppColors.textDark,
-            fontWeight: FontWeight.w900,
-            fontSize: 17,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AppColors.textDark,
-            size: 18,
-          ),
-          onPressed: () =>
-              Navigator.of(context).popUntil((route) => route.isFirst),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            _buildPharmacyCard(),
-            const SizedBox(height: 16),
-            _buildInfoBanner(),
-            const SizedBox(height: 16),
-            _buildOrderDetails(now),
-            const SizedBox(height: 28),
-            _buildPayButton(),
-            const SizedBox(height: 10),
-            Text(
-              widget.deliveryMethod == 'kirim'
-                  ? 'Pembayaran berhasil. Pesanan akan segera diproses dan dikirim.'
-                  : 'Setelah konfirmasi, kamu akan mendapat QR Code\nuntuk pengambilan obat di apotek',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSubtle,
-                height: 1.5,
-              ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        context.go('/customer');
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF9FAFB),
+        appBar: AppBar(
+          title: const Text(
+            'Konfirmasi Pembayaran',
+            style: TextStyle(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w900,
+              fontSize: 17,
             ),
-            const SizedBox(height: 24),
-          ],
+          ),
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textDark,
+              size: 18,
+            ),
+            onPressed: () => context.go('/customer'),
+          ),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              _buildPharmacyCard(),
+              const SizedBox(height: 16),
+              _buildInfoBanner(),
+              const SizedBox(height: 16),
+              _buildOrderDetails(now),
+              const SizedBox(height: 28),
+              _buildPayButton(),
+              const SizedBox(height: 10),
+              const Text(
+                'Setelah konfirmasi, kamu akan mendapat QR Code\nuntuk pengambilan obat di apotek',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSubtle,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildPharmacyCard() {
-    final total = widget.subtotal + widget.shippingCost;
+    final total = widget.subtotal;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -381,18 +370,16 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
             size: 18,
           ),
           const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              widget.deliveryMethod == 'kirim'
-                  ? 'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Pesanan akan segera dikirim ke alamat tujuan.'
-                  : 'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Kamu akan mendapat QR Code untuk pengambilan obat di apotek.',
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF1E3A5F),
-                height: 1.4,
+            const Expanded(
+              child: Text(
+                'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Kamu akan mendapat QR Code untuk pengambilan obat di apotek.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF1E3A5F),
+                  height: 1.4,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -523,7 +510,7 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
                 ),
               ),
               Text(
-                _rupiah(widget.subtotal + widget.shippingCost),
+                _rupiah(widget.subtotal),
                 style: const TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 15,

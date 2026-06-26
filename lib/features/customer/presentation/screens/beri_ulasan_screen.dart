@@ -35,7 +35,7 @@ class _BeriUlasanScreenState extends ConsumerState<BeriUlasanScreen> {
   bool _berhasil = false;
 
   final List<String> _tags = [
-    'Pengiriman Cepat',
+    'Proses Cepat',
     'Pelayanan Ramah',
     'Obat Lengkap',
     'Kemasan Aman',

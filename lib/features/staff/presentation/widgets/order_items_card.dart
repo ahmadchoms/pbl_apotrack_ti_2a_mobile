@@ -17,8 +17,7 @@ class OrderItemsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = order.items;
     final grandTotal = order.grandTotal;
-    final shippingCost = order.shippingCost;
-    final subtotal = grandTotal - shippingCost;
+    final subtotal = grandTotal;
 
     return AppCard(
       child: Column(
@@ -38,18 +37,15 @@ class OrderItemsCard extends StatelessWidget {
           const SizedBox(height: 4),
           const Divider(height: 24),
           _PriceRow(label: 'Subtotal Produk', value: formatRupiah(subtotal)),
-          const SizedBox(height: 6),
-          _PriceRow(
-            label: 'Biaya Layanan/Ongkir',
-            value: formatRupiah(shippingCost),
-          ),
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: AppColors.primaryLight,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.1),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

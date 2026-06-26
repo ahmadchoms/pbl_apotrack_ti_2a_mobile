@@ -302,7 +302,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                       color: AppColors.textDark),
                 ),
                 subtitle: const Text(
-                  'Digunakan sebagai default pengiriman',
+                  'Digunakan sebagai alamat utama',
                   style: TextStyle(
                       fontSize: 12, color: AppColors.textLight),
                 ),
@@ -326,7 +326,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                   Expanded(
                     child: Text(
                       widget.isAdd
-                          ? 'Alamat baru akan ditambahkan ke daftar pengirimanmu.'
+                          ? 'Alamat baru akan ditambahkan ke daftar alamat Anda.'
                           : 'Perubahan akan langsung diterapkan.',
                       style: const TextStyle(
                           fontSize: 12,

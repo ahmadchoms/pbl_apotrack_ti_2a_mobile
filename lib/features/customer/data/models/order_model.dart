@@ -75,7 +75,6 @@ class OrderModel {
   final String id;
   final String userId;
   final String pharmacyId;
-  final String? addressId;
   final String orderNumber;
   final String verificationCode;
   final String serviceType;
@@ -83,7 +82,6 @@ class OrderModel {
   final String orderStatus;
   final String paymentStatus;
   final double subtotalAmount;
-  final double shippingCost;
   final double grandTotal;
   final String? notes;
   final String? cancellationReason;
@@ -98,7 +96,6 @@ class OrderModel {
     required this.id,
     required this.userId,
     required this.pharmacyId,
-    this.addressId,
     required this.orderNumber,
     required this.verificationCode,
     required this.serviceType,
@@ -106,7 +103,6 @@ class OrderModel {
     required this.orderStatus,
     required this.paymentStatus,
     required this.subtotalAmount,
-    required this.shippingCost,
     required this.grandTotal,
     this.notes,
     this.cancellationReason,
@@ -130,7 +126,6 @@ class OrderModel {
       id: json['id'] as String? ?? '',
       userId: json['user_id'] as String? ?? '',
       pharmacyId: json['pharmacy_id'] as String? ?? '',
-      addressId: json['address_id'] as String?,
       orderNumber: json['order_number'] as String? ?? '',
       verificationCode: json['verification_code'] as String? ?? '',
       serviceType: json['service_type'] as String? ?? '',
@@ -138,7 +133,6 @@ class OrderModel {
       orderStatus: json['order_status'] as String? ?? 'PENDING',
       paymentStatus: json['payment_status'] as String? ?? 'UNPAID',
       subtotalAmount: double.parse((json['subtotal_amount'] ?? 0).toString()),
-      shippingCost: double.parse((json['shipping_cost'] ?? 0).toString()),
       grandTotal: double.parse((json['grand_total'] ?? 0).toString()),
       notes: json['notes'] as String?,
       cancellationReason: json['cancellation_reason'] as String?,
@@ -156,7 +150,6 @@ class Order {
   final String id;
   final String userId;
   final String pharmacyId;
-  final String? addressId;
   final String orderNumber;
   final String verificationCode;
   final String serviceType;
@@ -164,7 +157,6 @@ class Order {
   final String orderStatus;
   final String paymentStatus;
   final double subtotalAmount;
-  final double shippingCost;
   final double grandTotal;
   final String? notes;
   final String? cancellationReason;
@@ -179,7 +171,6 @@ class Order {
     required this.id,
     required this.userId,
     required this.pharmacyId,
-    this.addressId,
     required this.orderNumber,
     required this.verificationCode,
     required this.serviceType,
@@ -187,7 +178,6 @@ class Order {
     required this.orderStatus,
     required this.paymentStatus,
     required this.subtotalAmount,
-    required this.shippingCost,
     required this.grandTotal,
     this.notes,
     this.cancellationReason,
@@ -214,7 +204,6 @@ class Order {
       id: json['id'] as String? ?? '',
       userId: json['user_id'] as String? ?? '',
       pharmacyId: json['pharmacy_id'] as String? ?? '',
-      addressId: json['address_id'] as String?,
       orderNumber: json['order_number'] as String? ?? '',
       verificationCode: json['verification_code'] as String? ?? '',
       serviceType: json['service_type'] as String? ?? '',
@@ -222,7 +211,6 @@ class Order {
       orderStatus: json['order_status'] as String? ?? 'PENDING',
       paymentStatus: json['payment_status'] as String? ?? 'UNPAID',
       subtotalAmount: double.tryParse((json['subtotal_amount'] ?? 0).toString()) ?? 0.0,
-      shippingCost: double.tryParse((json['shipping_cost'] ?? 0).toString()) ?? 0.0,
       grandTotal: double.tryParse((json['grand_total'] ?? 0).toString()) ?? 0.0,
       notes: json['notes'] as String?,
       cancellationReason: json['cancellation_reason'] as String?,

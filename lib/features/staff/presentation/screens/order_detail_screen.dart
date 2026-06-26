@@ -6,7 +6,6 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../data/services/staff_service.dart';
 import '../widgets/order_status_timeline.dart';
-import '../widgets/delivery_info_card.dart';
 import '../widgets/order_items_card.dart';
 import '../../data/models/order.dart';
 
@@ -21,8 +20,6 @@ class OrderDetailScreen extends ConsumerStatefulWidget {
 class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   bool _isUpdating = false;
   bool _refreshError = false;
-  bool _isSimulating = false;
-  String _selectedSimulateStatus = 'confirmed';
   late Order _order;
 
   @override
@@ -73,10 +70,27 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           .read(staffServiceProvider)
           .updateOrderStatus(_order.id, newStatus);
       if (mounted) {
+        String friendlyStatus = newStatus;
+        if (newStatus == 'PENDING') {
+          friendlyStatus = 'Pesanan Menunggu Konfirmasi';
+        } else if (newStatus == 'PROCESSING') {
+          friendlyStatus = 'Pesanan Mulai Diproses';
+        } else if (newStatus == 'READY_FOR_PICKUP') {
+          friendlyStatus = 'Obat Selesai Disiapkan & Siap Diambil';
+        } else if (newStatus == 'COMPLETED') {
+          friendlyStatus = 'Pesanan Selesai Diserahkan';
+        } else if (newStatus == 'CANCELLED') {
+          friendlyStatus = 'Pesanan Telah Dibatalkan';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Status diperbarui: $newStatus'),
+            content: Text('Status diperbarui: $friendlyStatus'),
             backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
         _refreshOrderDetail();
@@ -95,61 +109,6 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     }
   }
 
-  Future<void> _shipOrder() async {
-    setState(() => _isUpdating = true);
-    try {
-      await ref.read(staffServiceProvider).shipOrder(_order.id);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kurir berhasil dipanggil!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        _refreshOrderDetail();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal memanggil kurir: $e'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isUpdating = false);
-    }
-  }
-
-  Future<void> _simulateTracking() async {
-    setState(() => _isSimulating = true);
-    try {
-      await ref
-          .read(staffServiceProvider)
-          .simulateTracking(_order.id, _selectedSimulateStatus);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Status tracking: $_selectedSimulateStatus'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        _refreshOrderDetail();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal simulasi: $e'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSimulating = false);
-    }
-  }
 
   Future<void> _approveCancellation() async {
     setState(() => _isUpdating = true);
@@ -283,8 +242,6 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDelivery = _order.serviceType == 'DELIVERY';
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
@@ -311,28 +268,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       ),
                       OrderStatusTimeline(currentStatus: _order.orderStatus),
                       const SizedBox(height: 24),
-                      if (isDelivery) ...[
-                        const _SectionTitle(
-                          title: 'Logistik & Lokasi',
-                          icon: Icons.local_shipping_outlined,
-                        ),
-                        DeliveryInfoCard(order: _order),
-                        if (_order.tracking != null) ...[
-                          const SizedBox(height: 16),
-                          _SimulateTrackingCard(
-                            orderStatus: _order.orderStatus,
-                            selectedStatus: _selectedSimulateStatus,
-                            isSimulating: _isSimulating,
-                            onStatusChanged: (v) =>
-                                setState(() => _selectedSimulateStatus = v!),
-                            onSimulate: _simulateTracking,
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                      ] else if (_order.verificationCode != null) ...[
-                        _VerificationCodeCard(order: _order),
-                        const SizedBox(height: 24),
-                      ],
+                      _VerificationCodeCard(order: _order),
+                      const SizedBox(height: 24),
                       const _SectionTitle(
                         title: 'Rincian Pesanan',
                         icon: Icons.receipt_long_outlined,
@@ -472,8 +409,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   Widget _buildOrderInfoCard(Order order) {
     final cfg = _statusMap[order.orderStatus] ?? _statusMap['PENDING']!;
     final serviceConfig = {
-      'DELIVERY': {'label': 'Antar ke Rumah'},
+      'PICKUP': {'label': 'Ambil di Apotek'},
       'PICK_UP': {'label': 'Ambil di Apotek'},
+      'POS': {'label': 'Pembelian Langsung'},
       'WALK_IN': {'label': 'Pembelian Langsung'},
     };
     final config =
@@ -520,8 +458,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   child: _buildSimpleInfo(
                     'TIPE LAYANAN',
                     config['label']!,
-                    icon: order.serviceType == 'DELIVERY'
-                        ? Icons.local_shipping
+                    icon: (order.serviceType == 'POS' || order.serviceType == 'WALK_IN')
+                        ? Icons.receipt_long_rounded
                         : Icons.store,
                   ),
                 ),
@@ -670,20 +608,49 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  isPaid ? 'Pembayaran Lunas' : 'Belum Dibayar',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                  ),
-                ),
-                Text(
-                  isPaid ? 'Metode: Online Payment' : 'Menunggu Transfer',
-                  style: const TextStyle(
-                    color: AppColors.textLight,
-                    fontSize: 12,
-                  ),
-                ),
+                Builder(builder: (context) {
+                  final payMethod = order.paymentMethod.toUpperCase();
+                  String paymentTitle = isPaid ? 'Pembayaran Lunas' : 'Belum Dibayar';
+                  String paymentSubtitle = '';
+
+                  if (isPaid) {
+                    if (payMethod == 'CASH') {
+                      paymentSubtitle = 'Metode: Bayar di Tempat (Cash)';
+                    } else if (payMethod == 'QRIS') {
+                      paymentSubtitle = 'Metode: QRIS';
+                    } else {
+                      paymentSubtitle = 'Metode: Transfer';
+                    }
+                  } else {
+                    if (payMethod == 'CASH') {
+                      paymentSubtitle = 'Bayar Langsung di Kasir (Cash)';
+                    } else if (payMethod == 'QRIS') {
+                      paymentSubtitle = 'Menunggu Scan QRIS';
+                    } else {
+                      paymentSubtitle = 'Menunggu Transfer';
+                    }
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        paymentTitle,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                        ),
+                      ),
+                      Text(
+                        paymentSubtitle,
+                        style: const TextStyle(
+                          color: AppColors.textLight,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  );
+                }),
               ],
             ),
           ),
@@ -806,12 +773,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     if (status == 'PENDING') {
       label = 'Terima & Proses';
     } else if (status == 'PROCESSING') {
-      label = 'Siap Diambil/Kirim';
+      label = 'Siap Diambil';
     } else if (status == 'READY_FOR_PICKUP') {
-      label = _order.serviceType == 'DELIVERY'
-          ? 'Panggil Kurir'
-          : 'Selesaikan Pesanan';
-      if (_order.serviceType == 'DELIVERY') color = AppColors.accentIndigo;
+      label = 'Selesaikan Pesanan';
     }
 
     return Container(
@@ -842,11 +806,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       } else if (status == 'PROCESSING') {
                         _updateStatus('READY_FOR_PICKUP');
                       } else if (status == 'READY_FOR_PICKUP') {
-                        if (_order.serviceType == 'DELIVERY') {
-                          _shipOrder();
-                        } else {
-                          _updateStatus('COMPLETED');
-                        }
+                        _updateStatus('COMPLETED');
                       }
                     },
             ),
@@ -1174,121 +1134,6 @@ class _MetadataCard extends StatelessWidget {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SimulateTrackingCard extends StatelessWidget {
-  final String orderStatus;
-  final String selectedStatus;
-  final bool isSimulating;
-  final void Function(String?) onStatusChanged;
-  final VoidCallback onSimulate;
-
-  const _SimulateTrackingCard({
-    required this.orderStatus,
-    required this.selectedStatus,
-    required this.isSimulating,
-    required this.onStatusChanged,
-    required this.onSimulate,
-  });
-
-  static const List<Map<String, String>> _statuses = [
-    {'value': 'confirmed', 'label': 'Confirmed - Cari Kurir'},
-    {'value': 'allocated', 'label': 'Allocated - Kurir Ditemukan'},
-    {'value': 'pickingUp', 'label': 'Picking Up - Menuju Apotek'},
-    {'value': 'picked', 'label': 'Picked - Paket Diambil'},
-    {'value': 'inTransit', 'label': 'In Transit - Dalam Perjalanan'},
-    {'value': 'droppingOff', 'label': 'Dropping Off - Sedang Diantar'},
-    {'value': 'delivered', 'label': 'Delivered - Sampai Tujuan'},
-    {'value': 'onHold', 'label': 'On Hold - Ditahan'},
-    {'value': 'cancelled', 'label': 'Cancelled - Dibatalkan'},
-    {'value': 'rejected', 'label': 'Rejected - Ditolak Kurir'},
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.science_rounded, size: 18, color: Colors.amber),
-              const SizedBox(width: 8),
-              const Text(
-                'SIMULASI TRACKING (SANDBOX)',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.amber,
-                  letterSpacing: 0.8,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: selectedStatus,
-            isExpanded: true,
-            decoration: InputDecoration(
-              labelText: 'Pilih Status Tracking',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
-            ),
-            items: _statuses
-                .map(
-                  (s) => DropdownMenuItem(
-                    value: s['value'],
-                    child: Text(
-                      s['label']!,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                )
-                .toList(),
-            onChanged: onStatusChanged,
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: isSimulating ? null : onSimulate,
-              icon: isSimulating
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.play_arrow_rounded, size: 18),
-              label: Text(isSimulating ? 'Memproses...' : 'Simulasikan Status'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );

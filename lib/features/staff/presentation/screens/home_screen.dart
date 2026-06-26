@@ -645,16 +645,6 @@ class _RecentOrderTile extends StatelessWidget {
         color: AppColors.success,
         icon: Icons.inventory_2_rounded,
       ),
-      'SHIPPED': (
-        label: 'Dalam Pengiriman',
-        color: AppColors.accentIndigo,
-        icon: Icons.local_shipping_rounded,
-      ),
-      'DELIVERED': (
-        label: 'Sudah Diterima',
-        color: AppColors.success,
-        icon: Icons.task_alt_rounded,
-      ),
       'COMPLETED': (
         label: 'Transaksi Selesai',
         color: AppColors.textMid,

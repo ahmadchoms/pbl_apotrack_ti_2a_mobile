@@ -138,10 +138,3 @@ final orderDetailProvider = FutureProvider.family<Order, String>((
 ) async {
   return ref.read(customerOrderServiceProvider).getOrderDetail(id);
 });
-
-final orderTrackingProvider = FutureProvider.family<DeliveryTracking, String>((
-  ref,
-  id,
-) async {
-  return ref.read(customerOrderServiceProvider).getOrderTracking(id);
-});

@@ -1,11 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/app_card.dart';
 import '../../../../customer/data/repositories/customer_repository.dart';
 import '../../screens/scanner_screen.dart';
+import '../../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../../routes/app_router.dart';
 
 class ScanQrInvitationCard extends ConsumerWidget {
   const ScanQrInvitationCard({super.key});
@@ -126,8 +129,13 @@ class ScanQrInvitationCard extends ConsumerWidget {
         _showResultDialog(
           context,
           isSuccess: true,
-          message:
-              'Kamu berhasil bergabung sebagai Staff di $pharmacyName!\n\nSilakan login ulang untuk mengakses fitur staff.',
+          message: 'Kamu berhasil bergabung sebagai Staff di $pharmacyName!',
+          onConfirm: () async {
+            await ref.read(authNotifierProvider.notifier).restoreSession();
+            if (context.mounted) {
+              context.go(AppRouter.staffHome);
+            }
+          },
         );
       }
     } on DioException catch (e) {
@@ -173,8 +181,13 @@ class ScanQrInvitationCard extends ConsumerWidget {
         _showResultDialog(
           context,
           isSuccess: true,
-          message:
-              'Kamu berhasil bergabung sebagai Staff di $pharmacyName!\n\nSilakan login ulang untuk mengakses fitur staff.',
+          message: 'Kamu berhasil bergabung sebagai Staff di $pharmacyName!',
+          onConfirm: () async {
+            await ref.read(authNotifierProvider.notifier).restoreSession();
+            if (context.mounted) {
+              context.go(AppRouter.staffHome);
+            }
+          },
         );
       }
     } on DioException catch (e) {
@@ -200,6 +213,7 @@ class ScanQrInvitationCard extends ConsumerWidget {
     BuildContext context, {
     required bool isSuccess,
     required String message,
+    VoidCallback? onConfirm,
   }) {
     showDialog(
       context: context,
@@ -248,7 +262,10 @@ class ScanQrInvitationCard extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: () {
+                Navigator.pop(ctx);
+                onConfirm?.call();
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: isSuccess
                     ? AppColors.success

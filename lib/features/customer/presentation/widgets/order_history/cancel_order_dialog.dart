@@ -24,7 +24,6 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
   static const _reasons = [
     'Salah memilih obat',
     'Ingin mengubah metode pembayaran',
-    'Ingin mengubah alamat pengiriman',
     'Obat sudah dibeli di tempat lain',
     'Menunggu terlalu lama',
     'Stok obat tidak sesuai kebutuhan',
@@ -140,16 +139,16 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
                 duration: const Duration(milliseconds: 150),
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 12),
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.primaryLight
                       : AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.divider,
+                    color: isSelected ? AppColors.primary : AppColors.divider,
                     width: isSelected ? 1.5 : 1,
                   ),
                 ),
@@ -192,10 +191,7 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
         hintText: 'Tuliskan alasan pembatalan...',
-        hintStyle: const TextStyle(
-          fontSize: 13,
-          color: AppColors.textSubtle,
-        ),
+        hintStyle: const TextStyle(fontSize: 13, color: AppColors.textSubtle),
         filled: true,
         fillColor: AppColors.surfaceLight,
         border: OutlineInputBorder(
@@ -234,7 +230,8 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
               padding: const EdgeInsets.symmetric(vertical: 14),
               side: const BorderSide(color: AppColors.divider),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
             child: const Text(
               'Tidak',
@@ -251,8 +248,7 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
             onPressed: canSubmit
                 ? () async {
                     setState(() => _isLoading = true);
-                    final success =
-                        await widget.onConfirm(_finalReason!);
+                    final success = await widget.onConfirm(_finalReason!);
                     if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -274,12 +270,12 @@ class _CancelOrderDialogState extends State<CancelOrderDialog> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.danger,
               foregroundColor: AppColors.white,
-              disabledBackgroundColor:
-                  AppColors.danger.withValues(alpha: 0.4),
+              disabledBackgroundColor: AppColors.danger.withValues(alpha: 0.4),
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
             child: _isLoading
                 ? const SizedBox(

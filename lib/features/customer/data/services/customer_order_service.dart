@@ -32,12 +32,6 @@ class CustomerOrderService {
     return Order.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
-  Future<DeliveryTracking> getOrderTracking(String id) async {
-    final res = await _repository.getCustomerOrderTracking(id);
-    return DeliveryTracking.fromJson(
-        res.data['data'] as Map<String, dynamic>);
-  }
-
   Future<Order> simulatePayment(String id) async {
     final res = await _repository.simulatePayment(id);
     return Order.fromJson(res.data['data'] as Map<String, dynamic>);

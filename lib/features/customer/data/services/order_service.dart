@@ -15,11 +15,7 @@ class OrderService {
     required String paymentMethod,
     required List<CartItemModel> items,
     required double subtotal,
-    required double shippingCost,
-    String? addressId,
     String? notes,
-    String? courierCode,
-    String? courierService,
   }) async {
     final apiItems = items
         .map((item) => {
@@ -35,29 +31,10 @@ class OrderService {
       'subtotal_amount': subtotal.toInt(),
       'service_type': serviceType,
       'payment_method': paymentMethod,
-      'shipping_cost': shippingCost.toInt(),
       // ignore: use_null_aware_elements
-      if (addressId != null) 'address_id': addressId,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
-      // ignore: use_null_aware_elements
-      if (courierCode != null) 'courier_code': courierCode,
-      // ignore: use_null_aware_elements
-      if (courierService != null) 'courier_service': courierService,
     });
     return OrderModel.fromJson(response.data['data'] as Map<String, dynamic>);
-  }
-
-  Future<Map<String, dynamic>> getShippingRates({
-    required String pharmacyId,
-    required String addressId,
-    List<Map<String, dynamic>>? items,
-  }) async {
-    final response = await _dio.post('/shipping/rates', data: {
-      'pharmacy_id': pharmacyId,
-      'address_id': addressId,
-      if (items != null && items.isNotEmpty) 'items': items,
-    });
-    return response.data['data'] as Map<String, dynamic>;
   }
 
   Future<OrderModel> getOrderById(String orderId) async {
@@ -79,7 +56,6 @@ class OrderService {
         .where((o) =>
             o.orderStatus == 'PENDING' ||
             o.orderStatus == 'PROCESSING' ||
-            o.orderStatus == 'SHIPPED' ||
             o.orderStatus == 'READY_FOR_PICKUP')
         .toList();
   }

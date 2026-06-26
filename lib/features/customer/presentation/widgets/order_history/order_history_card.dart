@@ -49,28 +49,6 @@ class OrderHistoryCard extends StatelessWidget {
           iconBg: AppColors.primaryLight,
           icon: Icons.storefront_rounded,
         );
-      case 'SHIPPED':
-        return _StatusConfig(
-          badgeLabel: 'Dikirim',
-          badgeColor: AppColors.accentOrange,
-          badgeBg: AppColors.warningLight,
-          iconColor: AppColors.accentOrange,
-          iconBg: AppColors.warningLight,
-          icon: Icons.local_shipping_rounded,
-          primaryLabel: 'Lacak Kurir',
-          primarySolid: true,
-        );
-      case 'DELIVERED':
-        return _StatusConfig(
-          badgeLabel: 'Diterima',
-          badgeColor: AppColors.mapGrid,
-          badgeBg: AppColors.warningLight,
-          iconColor: AppColors.mapGrid,
-          iconBg: AppColors.warningLight,
-          icon: Icons.check_circle_rounded,
-          primaryLabel: 'Beli Lagi',
-          primarySolid: true,
-        );
       case 'COMPLETED':
         return _StatusConfig(
           badgeLabel: 'Selesai',

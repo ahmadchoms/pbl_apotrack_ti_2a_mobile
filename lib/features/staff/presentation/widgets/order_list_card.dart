@@ -20,7 +20,7 @@ class OrderListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = order.orderStatus;
-    final isDelivery = order.serviceType == 'DELIVERY';
+    final isPos = order.serviceType == 'POS' || order.serviceType == 'WALK_IN';
     final customerName =
         order.customer['username']?.toString() ?? 'Pembeli Umum';
 
@@ -76,7 +76,7 @@ class OrderListCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          _buildOrderMeta(isDelivery),
+                          _buildOrderMeta(isPos),
                         ],
                       ),
                     ),
@@ -167,7 +167,7 @@ class OrderListCard extends StatelessWidget {
     );
   }
 
-  Widget _buildOrderMeta(bool isDelivery) {
+  Widget _buildOrderMeta(bool isPos) {
     return Row(
       children: [
         _buildMetaItem(
@@ -176,8 +176,8 @@ class OrderListCard extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         _buildMetaItem(
-          isDelivery ? Icons.local_shipping_outlined : Icons.storefront_rounded,
-          isDelivery ? "Antar ke Rumah" : "Ambil di Apotek",
+          isPos ? Icons.receipt_long_rounded : Icons.storefront_rounded,
+          isPos ? "Pembelian Langsung" : "Ambil di Apotek",
         ),
       ],
     );

@@ -258,12 +258,7 @@ class _CustomerOrderDetailScreenState
         const SizedBox(height: 12),
         _buildPharmacyCard(order),
         const SizedBox(height: 12),
-        if (order.serviceType == 'DELIVERY') ...[
-          _buildDeliveryAddressCard(order),
-          const SizedBox(height: 12),
-        ],
-        if (order.serviceType == 'PICK_UP' &&
-            order.verificationCode != null &&
+        if (order.verificationCode != null &&
             order.verificationCode!.isNotEmpty &&
             order.orderStatus != 'COMPLETED' &&
             order.orderStatus != 'CANCELLED') ...[
@@ -285,7 +280,6 @@ class _CustomerOrderDetailScreenState
         const SizedBox(height: 12),
         OrderDetailSummaryCard(
           subtotal: order.subtotalAmount,
-          shippingCost: order.shippingCost,
           grandTotal: order.grandTotal,
         ),
         const SizedBox(height: 12),
@@ -538,11 +532,14 @@ class _CustomerOrderDetailScreenState
   }
 
   Widget _buildTransactionTimeCard(Order detail) {
-    final isPickup = detail.serviceType == 'PICK_UP';
-    final serviceLabel = isPickup ? 'Ambil di Tempat' : 'Dikirim (Kurir)';
+    final isPickup = detail.serviceType == 'PICK_UP' || detail.serviceType == 'PICKUP';
+    final isPos = detail.serviceType == 'POS' || detail.serviceType == 'WALK_IN';
+    final serviceLabel = isPickup
+        ? 'Ambil di Tempat'
+        : (isPos ? 'Pembelian Langsung' : 'Ambil di Tempat');
     final serviceIcon = isPickup
         ? Icons.storefront_rounded
-        : Icons.local_shipping_rounded;
+        : (isPos ? Icons.receipt_long_rounded : Icons.storefront_rounded);
 
     return Container(
       width: double.infinity,
@@ -620,57 +617,6 @@ class _CustomerOrderDetailScreenState
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDeliveryAddressCard(Order detail) {
-    final addressData = detail.address;
-    if (addressData == null) return const SizedBox.shrink();
-
-    final deliveryAddress =
-        addressData['address_detail']?.toString() ??
-        addressData['complete_address']?.toString() ??
-        '—';
-    final deliveryLabel =
-        addressData['label']?.toString() ?? 'Alamat Pengiriman';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.location_on_rounded,
-                size: 14,
-                color: AppColors.primary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'ALAMAT PENGIRIMAN (${deliveryLabel.toUpperCase()})',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.primary,
-                  letterSpacing: 0.8,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            deliveryAddress,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textSlate,
-              height: 1.4,
-            ),
           ),
         ],
       ),

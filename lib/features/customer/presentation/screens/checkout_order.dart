@@ -5,13 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/cart.dart';
 import '../../data/services/order_service.dart';
-import '../providers/customer_profile_provider.dart';
 import 'qris_payment_screen.dart';
 import 'order_detail_screen.dart';
 import '../../data/models/order_model.dart';
-import 'address/address_model.dart';
-import 'address/address_provider.dart';
-import 'address/address_picker_sheet.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -21,185 +17,34 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 }
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
-  String _deliveryMethod = 'kirim';
   String _paymentMethod = 'cash';
   File? _prescriptionFile;
   bool _isSubmitting = false;
   final TextEditingController _noteController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
-  late final AddressProvider _addressProvider;
-  bool _addressesLoaded = false;
-
-  List<Map<String, dynamic>> _courierRates = [];
-  String? _selectedCourierCode;
-  String? _selectedCourierService;
-  int _selectedCourierPrice = 0;
-  bool _isLoadingRates = false;
-  bool _ratesError = false;
   final List<CartItem> _cartItems = CartState().items;
 
   int get _subtotal =>
       _cartItems.fold(0, (sum, item) => sum + item.price * item.quantity);
-  int get _shippingCost =>
-      _deliveryMethod == 'kirim' ? _selectedCourierPrice : 0;
-  int get _total => _subtotal + _shippingCost;
+  int get _total => _subtotal;
   bool get _requiresPrescription =>
       _cartItems.any((item) => item.requiresPrescription);
-
-  @override
-  void initState() {
-    super.initState();
-    _addressProvider = AddressProvider();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadAddresses());
-  }
-
-  Future<void> _loadAddresses() async {
-    final profileState = ref.read(customerProfileProvider);
-    if (profileState.addresses.isEmpty && !profileState.isLoading) {
-      ref.read(customerProfileProvider.notifier).loadAll();
-    } else if (profileState.addresses.isNotEmpty) {
-      _addressesLoaded = true;
-      final converted = profileState.addresses
-          .map(AddressModel.fromCustomerAddress)
-          .toList();
-      _addressProvider.loadFromApi(converted);
-      _initializeDefaultAddress();
-    }
-  }
-
-  Future<void> _initializeDefaultAddress() async {
-    if (_addressProvider.selectedAddress != null) return;
-
-    final profileState = ref.read(customerProfileProvider);
-
-    if (profileState.tempGpsAddress != null) {
-      final gpsAddr = profileState.tempGpsAddress!;
-      if (gpsAddr.id == 'gps_session') {
-        try {
-          setState(() {
-            _isLoadingRates = true;
-          });
-          final savedAddr = await ref
-              .read(customerProfileProvider.notifier)
-              .addAddress(
-                label: 'Lokasi Sekarang',
-                addressDetail: gpsAddr.addressDetail,
-                latitude: gpsAddr.latitude,
-                longitude: gpsAddr.longitude,
-                isPrimary: false,
-              );
-          final activeAddr = AddressModel.fromCustomerAddress(savedAddr);
-          _addressProvider.selectAddress(activeAddr);
-
-          final updatedProfileState = ref.read(customerProfileProvider);
-          final converted = updatedProfileState.addresses
-              .map(AddressModel.fromCustomerAddress)
-              .toList();
-          _addressProvider.loadFromApi(converted);
-
-          _fetchRates();
-        } catch (e) {
-          debugPrint('Failed to save temp GPS location on checkout: $e');
-          setState(() {
-            _isLoadingRates = false;
-          });
-        }
-      } else {
-        _addressProvider.selectAddress(
-          AddressModel.fromCustomerAddress(gpsAddr),
-        );
-        _fetchRates();
-      }
-      return;
-    }
-
-    final primaryAddr = profileState.addresses
-        .where((a) => a.isPrimary)
-        .firstOrNull;
-    if (primaryAddr != null) {
-      _addressProvider.selectAddress(
-        AddressModel.fromCustomerAddress(primaryAddr),
-      );
-      _fetchRates();
-      return;
-    }
-
-    if (profileState.addresses.isNotEmpty) {
-      _addressProvider.selectAddress(
-        AddressModel.fromCustomerAddress(profileState.addresses.first),
-      );
-      _fetchRates();
-    }
-  }
-
-  Future<void> _fetchRates() async {
-    final address = _addressProvider.selectedAddress;
-    if (address == null) return;
-
-    setState(() {
-      _isLoadingRates = true;
-      _ratesError = false;
-      _courierRates = [];
-      _selectedCourierCode = null;
-      _selectedCourierService = null;
-      _selectedCourierPrice = 0;
-    });
-
-    try {
-      final service = ref.read(orderServiceProvider);
-      final items = _cartItems
-          .map(
-            (item) => {
-              'id': item.id,
-              'name': item.name,
-              'quantity': item.quantity,
-              'value': item.price,
-              'weight': 200,
-            },
-          )
-          .toList();
-      final result = await service.getShippingRates(
-        pharmacyId: _cartItems.isNotEmpty ? _cartItems.first.pharmacyId : '',
-        addressId: address.id,
-        items: items,
-      );
-
-      final List<dynamic> pricing = result['pricing'] ?? [];
-      setState(() {
-        _courierRates = pricing.cast<Map<String, dynamic>>();
-        _isLoadingRates = false;
-      });
-
-      if (_courierRates.isNotEmpty) {
-        _selectCourier(_courierRates.first);
-      }
-    } catch (e) {
-      debugPrint('ShippingRates error: $e');
-      setState(() {
-        _isLoadingRates = false;
-        _ratesError = true;
-      });
-    }
-  }
-
-  void _selectCourier(Map<String, dynamic> rate) {
-    setState(() {
-      _selectedCourierCode = rate['courier_code'] as String?;
-      _selectedCourierService = rate['courier_service'] as String?;
-      _selectedCourierPrice = (rate['price'] as num?)?.toInt() ?? 0;
-    });
-  }
 
   Future<void> _confirmOrder() async {
     if (_isSubmitting) return;
     setState(() => _isSubmitting = true);
     try {
       final isQris = _paymentMethod == 'qris';
-      final isDelivery = _deliveryMethod == 'kirim';
-      final pharmacyId = _cartItems.isNotEmpty ? _cartItems.first.pharmacyId : '';
-      final pharmacyName = _cartItems.isNotEmpty ? _cartItems.first.pharmacyName : 'Apotek';
-      final notes = _noteController.text.trim().isEmpty ? null : _noteController.text.trim();
+      final pharmacyId = _cartItems.isNotEmpty
+          ? _cartItems.first.pharmacyId
+          : '';
+      final pharmacyName = _cartItems.isNotEmpty
+          ? _cartItems.first.pharmacyName
+          : 'Apotek';
+      final notes = _noteController.text.trim().isEmpty
+          ? null
+          : _noteController.text.trim();
 
       if (isQris) {
         final items = _cartItems
@@ -215,7 +60,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               },
             )
             .toList();
-        
+
+        final subtotalVal = _subtotal;
         CartState().clear();
         if (!mounted) return;
 
@@ -225,14 +71,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             builder: (_) => QrisPaymentScreen(
               pharmacyId: pharmacyId,
               pharmacyName: pharmacyName,
-              deliveryMethod: _deliveryMethod,
-              addressId: _addressProvider.selectedAddress?.id,
               notes: notes,
-              courierCode: isDelivery ? _selectedCourierCode : null,
-              courierService: _selectedCourierService,
               items: items,
-              subtotal: _subtotal,
-              shippingCost: _shippingCost,
+              subtotal: subtotalVal,
               prescriptionFile: _prescriptionFile,
             ),
           ),
@@ -260,13 +101,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         pharmacyId: pharmacyId,
         items: cartItemModels,
         subtotal: _subtotal.toDouble(),
-        serviceType: isDelivery ? 'DELIVERY' : 'PICK_UP',
+        serviceType: 'PICKUP',
         paymentMethod: 'CASH',
-        addressId: _addressProvider.selectedAddress?.id,
         notes: notes,
-        shippingCost: _shippingCost.toDouble(),
-        courierCode: isDelivery ? _selectedCourierCode : null,
-        courierService: _selectedCourierService,
       );
 
       if (_prescriptionFile != null) {
@@ -387,74 +224,52 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(customerProfileProvider, (prev, next) {
-      if (!next.isLoading && next.addresses.isNotEmpty && !_addressesLoaded) {
-        _addressesLoaded = true;
-        final converted = next.addresses
-            .map(AddressModel.fromCustomerAddress)
-            .toList();
-        _addressProvider.loadFromApi(converted);
-        _initializeDefaultAddress();
-      }
-    });
-
-    return AnimatedBuilder(
-      animation: _addressProvider,
-      builder: (context, _) {
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: 18,
-                color: AppColors.textDark,
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: const Text(
-              'Checkout',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-                color: AppColors.textDark,
-              ),
-            ),
-            centerTitle: false,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(height: 1, color: Colors.grey.shade100),
-            ),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: AppColors.textDark,
           ),
-          body: ListView(
-            padding: const EdgeInsets.only(bottom: 120),
-            children: [
-              _buildOrderSummary(),
-              _buildDivider(),
-              _buildDeliveryMethod(),
-              if (_deliveryMethod == 'kirim') ...[
-                _buildDivider(),
-                _buildAddressSection(),
-                _buildDivider(),
-                _buildCourierRateTrigger(),
-              ],
-              _buildDivider(),
-              _buildNoteField(),
-              _buildDivider(),
-              _buildPaymentMethod(),
-              if (_requiresPrescription) ...[
-                _buildDivider(),
-                _buildPrescriptionUpload(),
-                _buildDivider(),
-              ],
-              _buildPaymentDetails(),
-            ],
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Checkout',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: AppColors.textDark,
           ),
-          bottomNavigationBar: _buildBottomBar(),
-        );
-      },
+        ),
+        centerTitle: false,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: Colors.grey.shade100),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 120),
+        children: [
+          _buildOrderSummary(),
+          _buildDivider(),
+          _buildDeliveryMethod(),
+          _buildDivider(),
+          _buildNoteField(),
+          _buildDivider(),
+          _buildPaymentMethod(),
+          if (_requiresPrescription) ...[
+            _buildDivider(),
+            _buildPrescriptionUpload(),
+            _buildDivider(),
+          ],
+          _buildPaymentDetails(),
+        ],
+      ),
+      bottomNavigationBar: _buildBottomBar(),
     );
   }
 
@@ -524,10 +339,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.08),
+                      color: AppColors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppColors.primary.withOpacity(0.15),
+                        color: AppColors.primary.withValues(alpha: 0.15),
                       ),
                     ),
                     child: Row(
@@ -614,51 +429,50 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         children: [
           _sectionLabel('METODE LAYANAN'),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _deliveryOption(
-                  icon: Icons.delivery_dining_rounded,
-                  label: 'Kirim',
-                  value: 'kirim',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _deliveryOption(
-                  icon: Icons.store_rounded,
-                  label: 'Ambil',
-                  value: 'ambil',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.access_time_rounded,
-                  color: AppColors.primary,
-                  size: 18,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.store_rounded,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    _deliveryMethod == 'kirim'
-                        ? 'Estimasi pengiriman: 30–45 menit'
-                        : 'Estimasi siap ambil: 15–20 menit',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ambil di Tempat (Pick Up)',
+                        style: TextStyle(
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Estimasi siap ambil: 15–20 menit setelah dikonfirmasi',
+                        style: TextStyle(
+                          color: AppColors.textLight,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -667,352 +481,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ],
       ),
     );
-  }
-
-  Widget _deliveryOption({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    final isSelected = _deliveryMethod == value;
-    return GestureDetector(
-      onTap: () => setState(() => _deliveryMethod = value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey.shade200,
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.white : AppColors.textLight,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textDark,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddressSection() {
-    final selected = _addressProvider.selectedAddress;
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _sectionLabel('ALAMAT PENGIRIMAN'),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text(
-                    'WAJIB',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: selected == null
-                      ? Colors.orange.withValues(alpha: 0.4)
-                      : Colors.grey.shade200,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: selected == null
-                  ? GestureDetector(
-                      onTap: _openAddressPicker,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.orange.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.location_off_rounded,
-                              color: Colors.orange,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Belum ada alamat dipilih',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                    color: AppColors.textDark,
-                                  ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  'Ketuk untuk memilih alamat pengiriman',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.textLight,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            color: AppColors.textLight,
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                    )
-                  : Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            Icons.location_on_rounded,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                selected.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14,
-                                  color: AppColors.textDark,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                selected.fullAddress,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textLight,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              if (selected.landmark != null) ...[
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.flag_rounded,
-                                      size: 11,
-                                      color: AppColors.textLight,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        selected.landmark!,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.textLight,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: _openAddressPicker,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: AppColors.primary),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              'Ganti',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-
-            if (selected == null) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Colors.orange.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      size: 14,
-                      color: Colors.orange,
-                    ),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Isi detail alamat biar kurir gampang cari lokasimu.',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.orange,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _openAddressPicker() {
-    showAddressPickerSheet(
-      context,
-      _addressProvider,
-      onSelected: () {
-        setState(() {
-          _courierRates = [];
-          _selectedCourierCode = null;
-          _selectedCourierService = null;
-          _selectedCourierPrice = 0;
-          _ratesError = false;
-        });
-      },
-      onSetPrimary: (address) {
-        ref
-            .read(customerProfileProvider.notifier)
-            .setPrimaryAddress(address.id);
-        _addressProvider.updatePrimaryFlags(address.id);
-      },
-      onAddressSaved: (address, isEdit) async {
-        final notifier = ref.read(customerProfileProvider.notifier);
-        if (isEdit) {
-          await notifier.updateAddress(
-            id: address.id,
-            label: address.name,
-            addressDetail: address.fullAddress,
-            latitude: address.latitude ?? -6.208800,
-            longitude: address.longitude ?? 106.845600,
-            isPrimary: address.isPrimary,
-          );
-        } else {
-          final newAddr = await notifier.addAddress(
-            label: address.name,
-            addressDetail: address.fullAddress,
-            latitude: address.latitude ?? -6.208800,
-            longitude: address.longitude ?? 106.845600,
-            isPrimary: address.isPrimary,
-          );
-          _addressProvider.updateAddressId(address.id, newAddr.id);
-        }
-      },
-      onAddressDeleted: (id) {
-        ref.read(customerProfileProvider.notifier).deleteAddress(id);
-      },
-    );
-  }
-
-  Widget _buildCourierRateTrigger() {
-    if (_courierRates.isEmpty && !_isLoadingRates && !_ratesError) {
-      final address = _addressProvider.selectedAddress;
-      if (address != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _fetchRates());
-      }
-    }
-    return const SizedBox.shrink();
   }
 
   Widget _buildNoteField() {
@@ -1034,7 +502,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               maxLines: 3,
               style: const TextStyle(fontSize: 13, color: AppColors.textDark),
               decoration: const InputDecoration(
-                hintText: 'Contoh: Titipkan di satpam, jangan diketuk...',
+                hintText: 'Contoh: Siapkan resep asli saat pengambilan...',
                 hintStyle: TextStyle(color: AppColors.textLight, fontSize: 13),
                 contentPadding: EdgeInsets.all(14),
                 border: InputBorder.none,
@@ -1078,14 +546,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           _paymentOption(
             icon: Icons.payments_rounded,
             title: 'Bayar di Tempat (Cash)',
-            subtitle: 'Bayar saat pesanan diterima',
+            subtitle: 'Bayar langsung di kasir apotek saat mengambil',
             value: 'cash',
           ),
           const SizedBox(height: 10),
           _paymentOption(
             icon: Icons.qr_code_2_rounded,
             title: 'QRIS (Scan Pembayaran)',
-            subtitle: 'QR Code akan muncul setelah konfirmasi',
+            subtitle: 'QR Code akan muncul setelah konfirmasi apotek',
             value: 'qris',
           ),
           const SizedBox(height: 12),
@@ -1108,8 +576,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 Expanded(
                   child: Text(
                     _paymentMethod == 'cash'
-                        ? 'Pembayaran dilakukan saat pesanan diterima oleh kurir atau saat pengambilan.'
-                        : 'QR Code pembayaran akan dikirim setelah pesanan dikonfirmasi oleh apotek.',
+                        ? 'Kamu bisa bayar langsung di kasir apotek saat mengambil pesananmu nanti, ya!'
+                        : 'QR Code pembayaran bakal dikirim ke HP-mu setelah pesanan selesai dikonfirmasi oleh apotek.',
                     style: const TextStyle(
                       fontSize: 11,
                       color: Color(0xFF92400E),
@@ -1360,15 +828,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             child: Column(
               children: [
                 _priceRow('Subtotal Produk', _subtotal),
-                const SizedBox(height: 10),
-                _priceRow(
-                  _deliveryMethod == 'kirim'
-                      ? (_selectedCourierCode != null
-                            ? 'Biaya Pengiriman (${_selectedCourierCode!.toUpperCase()})'
-                            : 'Biaya Pengiriman')
-                      : 'Biaya Pengiriman',
-                  _deliveryMethod == 'kirim' ? _selectedCourierPrice : 0,
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Divider(color: Colors.grey.shade100, height: 1),
@@ -1429,23 +888,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildBottomBar() {
-    final bool hasAddress = _addressProvider.selectedAddress != null;
-    final bool hasCourier = _selectedCourierCode != null;
     final bool hasPrescription =
         !_requiresPrescription || _prescriptionFile != null;
-    final bool canProceed =
-        (_deliveryMethod == 'ambil' || (hasAddress && hasCourier)) &&
-        hasPrescription && !_isSubmitting;
+    final bool canProceed = hasPrescription && !_isSubmitting;
 
     String? errorMsg;
     if (_requiresPrescription && !hasPrescription) {
       errorMsg = 'Upload resep dokter terlebih dahulu';
-    } else if (_deliveryMethod == 'kirim') {
-      if (!hasAddress) {
-        errorMsg = 'Pilih alamat pengiriman terlebih dahulu';
-      } else if (!hasCourier) {
-        errorMsg = 'Pilih kurir pengiriman terlebih dahulu';
-      }
     }
 
     return Container(
@@ -1472,17 +921,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           onPressed: canProceed
               ? _confirmOrder
               : (_isSubmitting
-                  ? null
-                  : () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            errorMsg ?? 'Lengkapi data terlebih dahulu',
+                    ? null
+                    : () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              errorMsg ?? 'Lengkapi data terlebih dahulu',
+                            ),
+                            behavior: SnackBarBehavior.floating,
                           ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }),
+                        );
+                      }),
           style: ElevatedButton.styleFrom(
             backgroundColor: canProceed
                 ? AppColors.primary
@@ -1506,7 +955,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   _paymentMethod == 'qris'
                       ? 'Lanjutkan ke Pembayaran'
                       : 'Konfirmasi & Buat Pesanan',
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
                 ),
         ),
       ),
@@ -1535,7 +987,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   @override
   void dispose() {
     _noteController.dispose();
-    _addressProvider.dispose();
     super.dispose();
   }
 }

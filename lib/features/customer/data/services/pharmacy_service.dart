@@ -12,7 +12,7 @@ class PharmacyService {
     final data = await _api.getPharmacies(
       latitude: userPosition?.latitude,
       longitude: userPosition?.longitude,
-      radius: 20.0,
+      radius: 3.0,
       categoryId: categoryId,
     );
     return data.map((e) => e.toJson()).toList();
@@ -22,7 +22,7 @@ class PharmacyService {
     final data = await _api.getPharmacies(
       latitude: userPosition?.latitude,
       longitude: userPosition?.longitude,
-      radius: 20.0,
+      radius: 3.0,
       categoryId: categoryId,
     );
     return data

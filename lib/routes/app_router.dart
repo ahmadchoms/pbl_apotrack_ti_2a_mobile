@@ -26,8 +26,7 @@ import '../features/customer/presentation/screens/qris_payment_screen.dart';
 import '../features/customer/presentation/screens/beri_ulasan_screen.dart';
 
 // Staff
-import '../features/staff/presentation/screens/main_screen.dart'
-    as staff_main;
+import '../features/staff/presentation/screens/main_screen.dart' as staff_main;
 import '../features/staff/presentation/screens/edit_profile_screen.dart'
     as staff_edit_profile;
 import '../features/staff/presentation/screens/change_password_screen.dart'
@@ -47,7 +46,8 @@ import '../features/staff/presentation/screens/scanner_screen.dart';
 import '../features/staff/presentation/screens/staff_orders_screen.dart';
 
 class AppRouter {
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   static const String splash = '/';
   static const String login = '/login';
@@ -107,6 +107,11 @@ class AppRouter {
           return login;
         }
 
+        if (authState.user?.role != 'STAFF' &&
+            matchedLoc.startsWith('/staff')) {
+          return customerHome;
+        }
+
         if (isSplash || isAuthPage) {
           return authState.user?.role == 'STAFF' ? staffHome : customerHome;
         }
@@ -119,10 +124,7 @@ class AppRouter {
           path: splash,
           builder: (context, state) => const SplashScreen(),
         ),
-        GoRoute(
-          path: login,
-          builder: (context, state) => const LoginScreen(),
-        ),
+        GoRoute(path: login, builder: (context, state) => const LoginScreen()),
         GoRoute(
           path: register,
           builder: (context, state) => const RegisterScreen(),
@@ -187,9 +189,7 @@ class AppRouter {
               );
             }
             return const Scaffold(
-              body: Center(
-                child: Text('Pesanan tidak ditemukan'),
-              ),
+              body: Center(child: Text('Pesanan tidak ditemukan')),
             );
           },
         ),
@@ -237,12 +237,7 @@ class AppRouter {
               pharmacyName: extra['pharmacyName'] as String,
               items: List<Map<String, dynamic>>.from(extra['items'] as List),
               subtotal: extra['subtotal'] as int,
-              shippingCost: extra['shippingCost'] as int? ?? 0,
-              deliveryMethod: extra['deliveryMethod'] as String,
-              addressId: extra['addressId'] as String?,
               notes: extra['notes'] as String?,
-              courierCode: extra['courierCode'] as String?,
-              courierService: extra['courierService'] as String?,
             );
           },
         ),
@@ -318,10 +313,7 @@ class AppRouter {
           path: staffNotifications,
           builder: (context, state) => const NotificationScreen(),
         ),
-        GoRoute(
-          path: staffPos,
-          builder: (context, state) => const PosScreen(),
-        ),
+        GoRoute(path: staffPos, builder: (context, state) => const PosScreen()),
         GoRoute(
           path: staffAuditLogDetail,
           builder: (context, state) {

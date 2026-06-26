@@ -336,7 +336,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (!context.mounted) return;
 
-      if (user.isStaff || email.toLowerCase().contains('@apotek')) {
+      if (user.isStaff) {
         // ignore: use_build_context_synchronously
         context.go(AppRouter.staffHome);
       } else {
