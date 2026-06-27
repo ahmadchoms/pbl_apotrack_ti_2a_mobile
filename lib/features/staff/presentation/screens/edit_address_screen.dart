@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../customer/data/models/customer_address.dart';
+import 'package:mobile/core/models/customer_address.dart';
 import '../providers/staff_provider.dart';
 import '../../../customer/presentation/widgets/profile/map_picker_dialog.dart';
 

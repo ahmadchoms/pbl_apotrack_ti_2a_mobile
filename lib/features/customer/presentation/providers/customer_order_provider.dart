@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../staff/data/models/order.dart';
-import '../../data/services/customer_order_service.dart';
+import 'package:mobile/core/models/order.dart';
+import '../../data/services/order_service.dart';
 
 class CustomerOrderState {
   final List<Order> activeOrders;

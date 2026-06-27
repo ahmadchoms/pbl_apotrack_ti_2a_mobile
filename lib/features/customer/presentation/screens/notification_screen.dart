@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/models/notification_model.dart';
+import 'package:mobile/core/models/notification.dart';
 import '../../data/services/notification_service.dart';
 import 'order_detail_screen.dart';
 import 'order_history_screen.dart';

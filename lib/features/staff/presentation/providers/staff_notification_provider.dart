@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
-import '../../data/services/staff_notification_service.dart';
+import '../../data/services/notification_service.dart';
 
 final staffUnreadNotifProvider = StreamProvider<int>((ref) {
   final dio = ref.watch(dioProvider);

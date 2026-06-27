@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../staff/data/models/order.dart';
+import 'package:mobile/core/models/order.dart';
 
 class CancelOrderDialog extends StatefulWidget {
   final Order order;

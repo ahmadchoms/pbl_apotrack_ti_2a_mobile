@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
-import 'package:mobile/features/customer/data/models/pharmacy_model.dart';
+import 'package:mobile/core/models/pharmacy.dart';
 import 'package:mobile/features/customer/data/services/pharmacy_service.dart';
 import 'package:mobile/features/customer/presentation/providers/customer_profile_provider.dart';
 import 'medicine_list_screen.dart';
@@ -95,7 +95,8 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
 
   Position? get _activePosition {
     final profileState = ref.read(customerProfileProvider);
-    final activeAddr = profileState.tempGpsAddress ??
+    final activeAddr =
+        profileState.tempGpsAddress ??
         profileState.addresses.where((a) => a.isPrimary).firstOrNull;
     if (activeAddr != null) {
       return Position(
@@ -132,7 +133,7 @@ class _PharmaScanMapScreenState extends ConsumerState<PharmaScanMapScreen> {
     return '${km.toStringAsFixed(1)} km';
   }
 
-  static const double _maxRadiusKm = 20.0;
+  static const double _maxRadiusKm = 3.0;
 
   List<PharmacyModel> _filtered(List<PharmacyModel> pharmacies) {
     var filtered = pharmacies.where((p) {

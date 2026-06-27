@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/services/staff_service.dart';
 import '../providers/staff_provider.dart';
-import '../../data/models/medicine.dart';
+import 'package:mobile/core/models/medicine.dart';
 import '../widgets/medicine_form/medicine_form_batch.dart';
 
 class MedicineDetailScreen extends ConsumerStatefulWidget {

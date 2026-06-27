@@ -2,11 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/secure_storage_service.dart';
 import '../../../auth/data/models/user_model.dart';
-import '../../data/models/audit_log.dart';
-import '../../data/models/medicine.dart';
-import '../../data/models/order.dart';
+import 'package:mobile/core/models/audit_log.dart';
+import 'package:mobile/core/models/medicine.dart';
+import 'package:mobile/core/models/order.dart';
 import '../../data/services/staff_service.dart';
-import '../../../customer/data/models/customer_address.dart';
+import 'package:mobile/core/models/customer_address.dart';
 
 enum MedicineSortBy {
   nameAsc,

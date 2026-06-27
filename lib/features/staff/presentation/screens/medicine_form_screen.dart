@@ -5,7 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../widgets/medicine_form/medicine_form_card.dart';
 import '../widgets/medicine_form/medicine_form_fields.dart';
 import '../widgets/medicine_form/medicine_form_batch.dart';
-import '../../data/models/medicine.dart';
+import 'package:mobile/core/models/medicine.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -202,14 +202,14 @@ class _MedicineFormScreenState extends ConsumerState<MedicineFormScreen>
         'type': _type,
         'form': _form,
         'unit': _unit,
-        'price': num.tryParse(_priceCtrl.text) ?? 0,
+        'price': (double.tryParse(_priceCtrl.text) ?? 0).toInt(),
         'is_active': _isActive ? 1 : 0,
         'manufacturer': _manufacturerCtrl.text.isEmpty
             ? 'ApoTrack'
             : _manufacturerCtrl.text,
         'description': _descCtrl.text,
         'dosage_info': _dosageCtrl.text,
-        'weight_in_grams': num.tryParse(_weightCtrl.text) ?? 0,
+        'weight_in_grams': (double.tryParse(_weightCtrl.text) ?? 0).toInt(),
         'requires_prescription': _requiresPrescription ? 1 : 0,
       };
 

@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/models/cart.dart';
+import 'package:mobile/core/models/cart.dart';
 import '../../data/services/order_service.dart';
 import 'qris_payment_screen.dart';
 import 'order_detail_screen.dart';
-import '../../data/models/order_model.dart';
+import 'package:mobile/core/models/order.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -434,7 +434,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.15),
+              ),
             ),
             child: Row(
               children: [

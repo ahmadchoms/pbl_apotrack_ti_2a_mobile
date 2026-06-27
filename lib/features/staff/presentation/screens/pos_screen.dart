@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../providers/staff_provider.dart';
@@ -10,7 +12,8 @@ import '../providers/pos_cart_provider.dart';
 import '../widgets/pos_product_card.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/services/staff_service.dart';
-import '../../data/models/medicine.dart';
+import 'package:mobile/core/models/medicine.dart';
+import 'package:mobile/core/models/order.dart';
 
 class PosScreen extends ConsumerStatefulWidget {
   const PosScreen({super.key});
@@ -25,6 +28,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   final _notesController = TextEditingController();
   String _selectedCategory = 'Semua';
   Timer? _debounce;
+  double _cashReceived = 0.0;
+  double _cashChange = 0.0;
 
   @override
   void initState() {
@@ -477,8 +482,380 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       ),
     );
 
-    if (method != null) return await _submitOrder(method);
+    if (method == 'CASH') {
+      final total = ref.read(posCartProvider.notifier).totalPrice;
+      final confirm = await _showCashInputConfirmation(total);
+      if (confirm) {
+        return await _submitOrder('CASH');
+      }
+      return false;
+    } else if (method == 'QRIS') {
+      return await _submitOrder('QRIS');
+    }
     return false;
+  }
+
+  Future<bool> _showCashInputConfirmation(double total) async {
+    final cashController = TextEditingController();
+    double change = 0.0;
+    bool isValid = false;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final inputVal = double.tryParse(cashController.text.replaceAll('.', '')) ?? 0.0;
+            change = inputVal - total;
+            isValid = inputVal >= total;
+            
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Pembayaran Tunai',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total Tagihan',
+                          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textMid),
+                        ),
+                        Text(
+                          _formatRupiah(total),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.primary,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: cashController,
+                      keyboardType: TextInputType.number,
+                      autofocus: true,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      decoration: const InputDecoration(
+                        labelText: 'Uang Diterima',
+                        prefixText: 'Rp ',
+                        labelStyle: TextStyle(fontWeight: FontWeight.w600),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
+                      ),
+                      onChanged: (val) {
+                        setDialogState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildPresetBtn(total, 'Uang Pas', () {
+                          cashController.text = total.toStringAsFixed(0);
+                          setDialogState(() {});
+                        }),
+                        if (total < 10000)
+                          _buildPresetBtn(10000, '10.000', () {
+                            cashController.text = '10000';
+                            setDialogState(() {});
+                          }),
+                        if (total < 20000)
+                          _buildPresetBtn(20000, '20.000', () {
+                            cashController.text = '20000';
+                            setDialogState(() {});
+                          }),
+                        if (total < 50000)
+                          _buildPresetBtn(50000, '50.000', () {
+                            cashController.text = '50000';
+                            setDialogState(() {});
+                          }),
+                        if (total < 100000)
+                          _buildPresetBtn(100000, '100.000', () {
+                            cashController.text = '100000';
+                            setDialogState(() {});
+                          }),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    const Divider(height: 1),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Kembalian',
+                          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textMid),
+                        ),
+                        Text(
+                          change >= 0 ? _formatRupiah(change) : 'Rp 0',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: change >= 0 ? AppColors.success : AppColors.danger,
+                            fontSize: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text(
+                            'Batal',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: !isValid
+                              ? null
+                              : () {
+                                  _cashReceived = inputVal;
+                                  _cashChange = change;
+                                  Navigator.pop(context, true);
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Bayar',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    return result ?? false;
+  }
+
+  Widget _buildPresetBtn(double val, String label, VoidCallback onTap) {
+    return ActionChip(
+      label: Text(label),
+      onPressed: onTap,
+    );
+  }
+
+  Future<void> _showCheckoutSuccessDialog(Order order) async {
+    final isQris = order.paymentMethod == 'QRIS';
+    
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          elevation: 10,
+          child: Padding(
+            padding: const EdgeInsets.all(28.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: (isQris ? AppColors.primary : AppColors.success).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isQris ? Icons.qr_code_2_rounded : Icons.check_circle_outline_rounded,
+                    color: isQris ? AppColors.primary : AppColors.success,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  isQris ? 'Pembayaran QRIS' : 'Transaksi Berhasil',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  order.orderNumber,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textLight,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Divider(height: 1),
+                const SizedBox(height: 20),
+                
+                if (isQris) ...[
+                  const Text(
+                    'Pindai QRIS untuk membayar',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textMid,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                    child: SizedBox(
+                      width: 180,
+                      height: 180,
+                      child: QrImageView(
+                        data: 'Apotrack-QRIS-POS-${order.orderNumber}-${order.grandTotal}',
+                        version: QrVersions.auto,
+                        size: 180,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _formatRupiah(order.grandTotal),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ] else ...[
+                  _buildDetailRow('Metode', 'TUNAI / CASH'),
+                  const SizedBox(height: 8),
+                  _buildDetailRow('Total Tagihan', _formatRupiah(order.grandTotal)),
+                  const SizedBox(height: 8),
+                  _buildDetailRow('Uang Diterima', _formatRupiah(_cashReceived)),
+                  const SizedBox(height: 8),
+                  _buildDetailRow('Kembalian', _formatRupiah(_cashChange), valueColor: AppColors.success),
+                  const SizedBox(height: 24),
+                ],
+                
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Simulasi Cetak Struk Berhasil!'),
+                              backgroundColor: AppColors.primary,
+                            ),
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: AppColors.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cetak Struk',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isQris ? AppColors.primary : AppColors.success,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'Selesai',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, {Color? valueColor}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textLight,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: valueColor ?? AppColors.textDark,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildPaymentOption(
@@ -516,7 +893,49 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final cart = ref.read(posCartProvider);
     final notifier = ref.read(posCartProvider.notifier);
     final service = ref.read(staffServiceProvider);
-    final processingNotifier = ref.read(posProcessingProvider.notifier);
+
+    // 1. Show a blocking loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const PopScope(
+        canPop: false,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Center(
+            child: Card(
+              color: Colors.white,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: AppColors.primary),
+                    SizedBox(height: 20),
+                    Text(
+                      'Memproses Transaksi...',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Mengirim data ke server...',
+                      style: TextStyle(
+                        color: AppColors.textLight,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
 
     final items = cart
         .map(
@@ -529,8 +948,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         .toList();
 
     try {
-      processingNotifier.state = true;
-      await service.storePosOrder({
+      final order = await service.storePosOrder({
         'items': items,
         'total': notifier.totalPrice,
         'payment_method': paymentMethod,
@@ -538,21 +956,56 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       });
 
       if (mounted) {
+        // Pop the loading dialog
+        Navigator.pop(context);
+        // Pop the cart bottom sheet
+        Navigator.pop(context);
+
         notifier.clearCart();
         _notesController.clear();
         ref.read(staffMedicinesProvider.notifier).refresh();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Transaksi Berhasil disimpan!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        await _showCheckoutSuccessDialog(order);
       }
       return true;
     } catch (e) {
+      if (mounted) {
+        // Pop the loading dialog
+        Navigator.pop(context);
+
+        String errorMsg = 'Gagal menyimpan transaksi.';
+        if (e is DioException) {
+          final serverMsg = e.response?.data?['message'];
+          if (serverMsg != null) {
+            errorMsg = serverMsg.toString();
+          } else {
+            errorMsg = e.message ?? errorMsg;
+          }
+        } else {
+          errorMsg = e.toString();
+        }
+
+        // Show a clear error alert dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.error_outline_rounded, color: AppColors.danger),
+                SizedBox(width: 8),
+                Text('Transaksi Gagal'),
+              ],
+            ),
+            content: Text(errorMsg),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
       return false;
-    } finally {
-      processingNotifier.state = false;
     }
   }
 }
@@ -584,8 +1037,7 @@ class _CartSheetWrapper extends ConsumerWidget {
         Navigator.pop(context);
       },
       onCheckout: () async {
-        final success = await onCheckout();
-        if (success && context.mounted) Navigator.pop(context);
+        await onCheckout();
       },
     );
   }

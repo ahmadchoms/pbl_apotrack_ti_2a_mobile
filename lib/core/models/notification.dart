@@ -1,4 +1,4 @@
-class NotificationModel {
+class Notification {
   final String id;
   final String title;
   final String message;
@@ -7,7 +7,7 @@ class NotificationModel {
   final String? referenceId;
   final DateTime createdAt;
 
-  NotificationModel({
+  Notification({
     required this.id,
     required this.title,
     required this.message,
@@ -17,8 +17,8 @@ class NotificationModel {
     required this.createdAt,
   });
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) {
-    return NotificationModel(
+  factory Notification.fromJson(Map<String, dynamic> json) {
+    return Notification(
       id: json['id'].toString(),
       title: json['title'] ?? '',
       message: json['message'] ?? '',
@@ -29,3 +29,6 @@ class NotificationModel {
     );
   }
 }
+
+// Typedef alias for backward compatibility
+typedef NotificationModel = Notification;

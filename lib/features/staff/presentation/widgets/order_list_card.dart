@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/status_badge.dart';
-import '../../data/models/order.dart';
+import 'package:mobile/core/models/order.dart';
 
 class OrderListCard extends StatelessWidget {
   final Order order;

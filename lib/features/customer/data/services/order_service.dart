@@ -1,15 +1,56 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client.dart';
-import '../models/order_model.dart';
+import 'package:mobile/core/models/order.dart';
+import '../repositories/order_repository.dart';
 
-class OrderService {
-  final Dio _dio;
+class CustomerOrderService {
+  final OrderRepository _repository;
 
-  OrderService(this._dio);
+  CustomerOrderService(this._repository);
 
-  Future<OrderModel> createOrder({
+  Future<List<Order>> getActiveOrders({int page = 1}) async {
+    final res = await _repository.getCustomerOrders(
+      {'page': page, 'per_page': 10},
+    );
+    final data = res.data['data'] as List<dynamic>? ?? [];
+    return data
+        .map((e) => Order.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<Order>> getOrderHistory({int page = 1}) async {
+    final res = await _repository.getCustomerOrderHistory(
+      {'page': page, 'per_page': 15},
+    );
+    final data = res.data['data'] as List<dynamic>? ?? [];
+    return data
+        .map((e) => Order.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<Order> getOrderDetail(String id) async {
+    final res = await _repository.getCustomerOrderDetail(id);
+    return Order.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
+
+  Future<Order> simulatePayment(String id) async {
+    final res = await _repository.simulatePayment(id);
+    return Order.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
+
+  Future<Order> requestCancellation(String id, String reason) async {
+    final res = await _repository.requestCancellation(id, reason);
+    return Order.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
+
+  Future<Order> confirmReceived(String id) async {
+    final res = await _repository.confirmReceived(id);
+    return Order.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
+
+  // Merged from old OrderService
+  Future<Order> createOrder({
     required String pharmacyId,
     required String serviceType,
     required String paymentMethod,
@@ -25,7 +66,7 @@ class OrderService {
             })
         .toList();
 
-    final response = await _dio.post('/orders', data: {
+    final res = await _repository.createOrder({
       'pharmacy_id': pharmacyId,
       'items': apiItems,
       'subtotal_amount': subtotal.toInt(),
@@ -34,35 +75,7 @@ class OrderService {
       // ignore: use_null_aware_elements
       if (notes != null && notes.isNotEmpty) 'notes': notes,
     });
-    return OrderModel.fromJson(response.data['data'] as Map<String, dynamic>);
-  }
-
-  Future<OrderModel> getOrderById(String orderId) async {
-    final response = await _dio.get('/orders/$orderId');
-    return OrderModel.fromJson(response.data['data'] as Map<String, dynamic>);
-  }
-
-  Future<List<OrderModel>> getMyOrders() async {
-    final response = await _dio.get('/orders');
-    final list = response.data['data'] as List<dynamic>;
-    return list
-        .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
-
-  Future<List<OrderModel>> getActiveOrders() async {
-    final all = await getMyOrders();
-    return all
-        .where((o) =>
-            o.orderStatus == 'PENDING' ||
-            o.orderStatus == 'PROCESSING' ||
-            o.orderStatus == 'READY_FOR_PICKUP')
-        .toList();
-  }
-
-  Future<Map<String, dynamic>> simulatePayment(String orderId) async {
-    final response = await _dio.post('/orders/$orderId/simulate-payment');
-    return response.data['data'] as Map<String, dynamic>;
+    return Order.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
   Future<void> uploadPrescription(String orderId, File file) async {
@@ -72,7 +85,7 @@ class OrderService {
         filename: file.path.split(Platform.pathSeparator).last,
       ),
     });
-    await _dio.post('/orders/$orderId/prescription', data: formData);
+    await _repository.uploadPrescription(orderId, formData);
   }
 
   Future<Map<String, dynamic>> submitReview({
@@ -80,30 +93,30 @@ class OrderService {
     required int rating,
     String? comment,
   }) async {
-    final response = await _dio.post('/reviews', data: {
+    final res = await _repository.submitReview({
       'order_id': orderId,
       'rating': rating,
       // ignore: use_null_aware_elements
       if (comment != null) 'comment': comment,
     });
-    return response.data['data'] as Map<String, dynamic>;
+    return res.data['data'] as Map<String, dynamic>;
   }
 }
 
-final orderServiceProvider = Provider<OrderService>((ref) {
-  final dio = ref.watch(dioProvider);
-  return OrderService(dio);
+// ── Riverpod Providers ────────────────────────────────────────────────
+final customerOrderServiceProvider = Provider<CustomerOrderService>((ref) {
+  return CustomerOrderService(ref.read(orderRepositoryProvider));
 });
 
-final myOrdersProvider = FutureProvider<List<OrderModel>>((ref) {
-  return ref.watch(orderServiceProvider).getMyOrders();
+// Alias for backward compatibility
+final orderServiceProvider = customerOrderServiceProvider;
+
+final myOrdersProvider = FutureProvider<List<Order>>((ref) {
+  return ref.watch(customerOrderServiceProvider).getOrderHistory();
 });
 
-final activeOrdersProvider = FutureProvider<List<OrderModel>>((ref) {
-  return ref.watch(orderServiceProvider).getActiveOrders();
+final activeOrdersProvider = FutureProvider<List<Order>>((ref) {
+  return ref.watch(customerOrderServiceProvider).getActiveOrders();
 });
 
-final orderDetailProvider =
-    FutureProvider.family<OrderModel, String>((ref, orderId) {
-  return ref.watch(orderServiceProvider).getOrderById(orderId);
-});
+typedef OrderService = CustomerOrderService;

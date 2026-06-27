@@ -1,194 +1,117 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/data/models/user_model.dart';
-import '../models/audit_log.dart';
-import '../models/medicine.dart';
-import '../models/order.dart';
-import '../repositories/staff_repository.dart';
-import '../../../customer/data/models/customer_address.dart';
+import 'package:mobile/core/models/audit_log.dart';
+import 'package:mobile/core/models/medicine.dart';
+import 'package:mobile/core/models/order.dart';
+import 'package:mobile/core/models/customer_address.dart';
+import 'order_service.dart';
+import 'medicine_service.dart';
+import 'audit_service.dart';
+import 'profile_service.dart';
+import 'address_service.dart';
 
 class StaffService {
-  final StaffRepository _repository;
-  StaffService(this._repository);
+  final StaffOrderService _orderService;
+  final StaffMedicineService _medicineService;
+  final StaffAuditService _auditService;
+  final StaffProfileService _profileService;
+  final StaffAddressService _addressService;
+
+  StaffService({
+    required StaffOrderService orderService,
+    required StaffMedicineService medicineService,
+    required StaffAuditService auditService,
+    required StaffProfileService profileService,
+    required StaffAddressService addressService,
+  })  : _orderService = orderService,
+        _medicineService = medicineService,
+        _auditService = auditService,
+        _profileService = profileService,
+        _addressService = addressService;
 
   // --- PESANAN (ORDERS) ---
+  Future<List<Order>> getOrders({Map<String, dynamic>? queryParams}) =>
+      _orderService.getOrders(queryParams: queryParams);
 
-  Future<List<Order>> getOrders({Map<String, dynamic>? queryParams}) async {
-    final response = await _repository.getOrders(queryParams);
-    final list = response.data['data'] as List? ?? [];
-    return list.map((e) => Order.fromJson(e)).toList();
-  }
+  Future<Order> getOrderDetail(String orderId) =>
+      _orderService.getOrderDetail(orderId);
 
-  Future<Order> getOrderDetail(String orderId) async {
-    final response = await _repository.getOrderDetail(orderId);
-    return Order.fromJson(response.data['data']);
-  }
+  Future<void> updateOrderStatus(String orderId, String status) =>
+      _orderService.updateOrderStatus(orderId, status);
 
-  Future<void> updateOrderStatus(String orderId, String status) async {
-    await _repository.updateOrderStatus(orderId, status);
-  }
+  Future<void> shipOrder(String orderId) =>
+      _orderService.shipOrder(orderId);
 
-  Future<void> shipOrder(String orderId) async {
-    await _repository.shipOrder(orderId);
-  }
+  Future<void> simulateTracking(String orderId, String status) =>
+      _orderService.simulateTracking(orderId, status);
 
-  Future<void> simulateTracking(String orderId, String status) async {
-    await _repository.simulateTracking(orderId, status);
-  }
+  Future<Order> verifyOrderByCode(String verificationCode) =>
+      _orderService.verifyOrderByCode(verificationCode);
 
-  Future<Order> verifyOrderByCode(String verificationCode) async {
-    final response = await _repository.verifyOrderByCode(verificationCode);
-    return Order.fromJson(response.data['data']);
-  }
+  Future<void> approveCancellation(String orderId) =>
+      _orderService.approveCancellation(orderId);
 
-  Future<void> approveCancellation(String orderId) async {
-    await _repository.approveCancellation(orderId);
-  }
+  Future<void> rejectCancellation(String orderId) =>
+      _orderService.rejectCancellation(orderId);
 
-  Future<void> rejectCancellation(String orderId) async {
-    await _repository.rejectCancellation(orderId);
-  }
+  Future<Order> storePosOrder(Map<String, dynamic> payload) =>
+      _orderService.storePosOrder(payload);
 
   // --- INVENTARIS (MEDICINES) ---
+  Future<List<Medicine>> getMedicines({Map<String, dynamic>? queryParams}) =>
+      _medicineService.getMedicines(queryParams: queryParams);
 
-  Future<List<Medicine>> getMedicines(
-      {Map<String, dynamic>? queryParams}) async {
-    final response = await _repository.getMedicines(queryParams);
-    final list = response.data['data'] as List? ?? [];
-    return list.map((e) => Medicine.fromJson(e)).toList();
-  }
+  Future<Medicine> getMedicine(String id) =>
+      _medicineService.getMedicine(id);
 
-  Future<Medicine> getMedicine(String id) async {
-    final response = await _repository.getMedicineDetail(id);
-    return Medicine.fromJson(response.data['data']);
-  }
+  Future<Medicine> createMedicine(dynamic payload) =>
+      _medicineService.createMedicine(payload);
 
-  Future<Medicine> createMedicine(dynamic payload) async {
-    final response = await _repository.createMedicine(payload);
-    return Medicine.fromJson(response.data['data']);
-  }
+  Future<Medicine> updateMedicine(String id, dynamic payload) =>
+      _medicineService.updateMedicine(id, payload);
 
-  Future<Medicine> updateMedicine(String id, dynamic payload) async {
-    final response = await _repository.updateMedicine(id, payload);
-    return Medicine.fromJson(response.data['data']);
-  }
+  Future<void> updateStock(String medicineId, Map<String, dynamic> payload) =>
+      _medicineService.updateStock(medicineId, payload);
 
-  Future<void> updateStock(
-      String medicineId, Map<String, dynamic> payload) async {
-    await _repository.updateStock(medicineId, payload);
-  }
-
-  Future<void> deleteMedicine(String id) async {
-    await _repository.deleteMedicine(id);
-  }
-
-  // --- POINT OF SALE (POS) ---
-
-  Future<void> storePosOrder(Map<String, dynamic> payload) async {
-    await _repository.storePosOrder(payload);
-  }
+  Future<void> deleteMedicine(String id) =>
+      _medicineService.deleteMedicine(id);
 
   // --- AUDITS & LOGS ---
+  Future<List<AuditLog>> getAudits({Map<String, dynamic>? queryParams}) =>
+      _auditService.getAudits(queryParams: queryParams);
 
-  Future<List<AuditLog>> getAudits({Map<String, dynamic>? queryParams}) async {
-    final response = await _repository.getAudits(queryParams);
-    final list = response.data['data'] as List? ?? [];
-    return list.map((e) => AuditLog.fromJson(e)).toList();
-  }
-
-  Future<List<AuditLog>> fetchAuditLogs(
-      {Map<String, dynamic>? queryParams}) async {
-    final response = await _repository.getAudits(queryParams);
-    final list = response.data['data'] as List? ?? [];
-    return list.map((e) => AuditLog.fromJson(e)).toList();
-  }
+  Future<List<AuditLog>> fetchAuditLogs({Map<String, dynamic>? queryParams}) =>
+      _auditService.getAudits(queryParams: queryParams);
 
   // --- PROFIL & KEAMANAN ---
-
-  Future<UserModel> getProfile() async {
-    try {
-      final response = await _repository.fetchMe();
-      final data = response.data['data'] ?? response.data;
-      return UserModel.fromJson(data as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw Exception(
-        _extractLaravelError(e.response?.data) ?? 'Gagal memuat profil',
-      );
-    }
-  }
+  Future<UserModel> getProfile() => _profileService.getProfile();
 
   Future<UserModel> updateProfile({
     required String username,
     required String email,
     String? phone,
     dynamic imageFile,
-  }) async {
-    final formData = FormData.fromMap({
-      'username': username,
-      'email': email,
-      if (phone != null && phone.isNotEmpty) 'phone': phone,
-    });
-
-    if (imageFile != null) {
-      final path = imageFile is String ? imageFile : imageFile.path;
-      formData.files.add(
-        MapEntry(
-          'image',
-          await MultipartFile.fromFile(path, filename: 'profile.jpg'),
-        ),
+  }) =>
+      _profileService.updateProfile(
+        username: username,
+        email: email,
+        phone: phone,
+        imageFile: imageFile,
       );
-    }
-
-    try {
-      final response = await _repository.updateProfile(formData);
-      return UserModel.fromJson(
-        response.data['data'] as Map<String, dynamic>,
-      );
-    } on DioException catch (e) {
-      throw Exception(
-        _extractLaravelError(e.response?.data) ?? 'Gagal memperbarui profil',
-      );
-    }
-  }
 
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
-  }) async {
-    try {
-      await _repository.changePassword({
-        'current_password': currentPassword,
-        'new_password': newPassword,
-        'new_password_confirmation': newPassword,
-      });
-    } on DioException catch (e) {
-      throw Exception(
-        _extractLaravelError(e.response?.data) ?? 'Gagal mengubah password',
+  }) =>
+      _profileService.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
       );
-    }
-  }
 
-  Future<void> logout() async {
-    try {
-      await _repository.logout();
-    } catch (_) {}
-  }
+  Future<void> logout() => _profileService.logout();
 
   // --- ALAMAT ---
-
-  Future<List<CustomerAddress>> getAddresses() async {
-    try {
-      final response = await _repository.getAddresses();
-      final list = response.data['data'] as List? ?? [];
-      return list
-          .map((e) => CustomerAddress.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } on DioException catch (e) {
-      throw Exception(
-        _extractLaravelError(e.response?.data) ?? 'Gagal memuat alamat',
-      );
-    }
-  }
+  Future<List<CustomerAddress>> getAddresses() => _addressService.getAddresses();
 
   Future<CustomerAddress> addAddress({
     required String label,
@@ -196,24 +119,14 @@ class StaffService {
     required double latitude,
     required double longitude,
     bool isPrimary = false,
-  }) async {
-    try {
-      final response = await _repository.addAddress({
-        'label': label,
-        'address_detail': addressDetail,
-        'latitude': latitude,
-        'longitude': longitude,
-        'is_primary': isPrimary,
-      });
-      return CustomerAddress.fromJson(
-        response.data['data'] as Map<String, dynamic>,
+  }) =>
+      _addressService.addAddress(
+        label: label,
+        addressDetail: addressDetail,
+        latitude: latitude,
+        longitude: longitude,
+        isPrimary: isPrimary,
       );
-    } on DioException catch (e) {
-      throw Exception(
-        _extractLaravelError(e.response?.data) ?? 'Gagal menambah alamat',
-      );
-    }
-  }
 
   Future<CustomerAddress> updateAddress({
     required String id,
@@ -222,63 +135,27 @@ class StaffService {
     required double latitude,
     required double longitude,
     bool isPrimary = false,
-  }) async {
-    try {
-      final response = await _repository.updateAddress(id, {
-        'label': label,
-        'address_detail': addressDetail,
-        'latitude': latitude,
-        'longitude': longitude,
-        'is_primary': isPrimary,
-      });
-      return CustomerAddress.fromJson(
-        response.data['data'] as Map<String, dynamic>,
+  }) =>
+      _addressService.updateAddress(
+        id: id,
+        label: label,
+        addressDetail: addressDetail,
+        latitude: latitude,
+        longitude: longitude,
+        isPrimary: isPrimary,
       );
-    } on DioException catch (e) {
-      throw Exception(
-        _extractLaravelError(e.response?.data) ?? 'Gagal memperbarui alamat',
-      );
-    }
-  }
 
-  Future<void> setPrimaryAddress(String id) async {
-    try {
-      await _repository.setPrimaryAddress(id);
-    } on DioException catch (e) {
-      throw Exception(
-        _extractLaravelError(e.response?.data) ?? 'Gagal mengatur alamat utama',
-      );
-    }
-  }
+  Future<void> setPrimaryAddress(String id) => _addressService.setPrimaryAddress(id);
 
-  Future<void> deleteAddress(String id) async {
-    try {
-      await _repository.deleteAddress(id);
-    } on DioException catch (e) {
-      throw Exception(
-        _extractLaravelError(e.response?.data) ?? 'Gagal menghapus alamat',
-      );
-    }
-  }
-
-  String? _extractLaravelError(dynamic errorBody) {
-    if (errorBody == null) return null;
-    if (errorBody is Map) {
-      if (errorBody['message'] != null) return errorBody['message'].toString();
-      if (errorBody['errors'] is Map) {
-        final errors = errorBody['errors'] as Map;
-        final firstKey = errors.keys.first;
-        final firstError = errors[firstKey];
-        if (firstError is List && firstError.isNotEmpty) {
-          return firstError.first.toString();
-        }
-      }
-    }
-    return errorBody.toString();
-  }
+  Future<void> deleteAddress(String id) => _addressService.deleteAddress(id);
 }
 
 final staffServiceProvider = Provider<StaffService>((ref) {
-  final repository = ref.watch(staffRepositoryProvider);
-  return StaffService(repository);
+  return StaffService(
+    orderService: ref.watch(staffOrderServiceProvider),
+    medicineService: ref.watch(staffMedicineServiceProvider),
+    auditService: ref.watch(staffAuditServiceProvider),
+    profileService: ref.watch(staffProfileServiceProvider),
+    addressService: ref.watch(staffAddressServiceProvider),
+  );
 });

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
-import '../../data/models/order.dart';
+import 'package:mobile/core/models/order.dart';
 
 class OrderItemsCard extends StatelessWidget {
   final Order order;

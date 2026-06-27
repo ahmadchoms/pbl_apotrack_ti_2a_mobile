@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/staff_provider.dart';
 import '../widgets/medicine_inventory_card.dart';
-import '../../data/models/medicine.dart';
+import 'package:mobile/core/models/medicine.dart';
 import 'medicine_detail_screen.dart';
 import 'medicine_form_screen.dart';
 
@@ -80,7 +80,12 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
 
   Widget _buildFixedHeader(int count) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 16,
+        bottom: 24,
+        left: 20,
+        right: 20,
+      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.primaryDark],
@@ -337,8 +342,18 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
         final med = medicines[i];
         return MedicineInventoryCard(
           medicine: med,
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MedicineDetailScreen(medicine: med))),
-          onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MedicineFormScreen(medicine: med))),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MedicineDetailScreen(medicine: med),
+            ),
+          ),
+          onEdit: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MedicineFormScreen(medicine: med),
+            ),
+          ),
           formatRupiah: (val) {
             final str = val.toStringAsFixed(0);
             final buf = StringBuffer();
@@ -358,7 +373,10 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
       height: 48,
       margin: const EdgeInsets.only(bottom: 10),
       child: FloatingActionButton.extended(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MedicineFormScreen())),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MedicineFormScreen()),
+        ),
         backgroundColor: AppColors.primary,
         elevation: 6,
         highlightElevation: 0,

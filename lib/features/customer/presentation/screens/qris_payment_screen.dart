@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/models/order_model.dart';
+import 'package:mobile/core/models/order.dart';
 import '../../data/services/order_service.dart';
 import 'order_detail_screen.dart';
 
@@ -370,16 +370,16 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
             size: 18,
           ),
           const SizedBox(width: 10),
-            const Expanded(
-              child: Text(
-                'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Kamu akan mendapat QR Code untuk pengambilan obat di apotek.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF1E3A5F),
-                  height: 1.4,
-                ),
+          const Expanded(
+            child: Text(
+              'Tekan "Konfirmasi Bayar" untuk menyelesaikan pembayaran. Kamu akan mendapat QR Code untuk pengambilan obat di apotek.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF1E3A5F),
+                height: 1.4,
               ),
             ),
+          ),
         ],
       ),
     );

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile/core/models/notification_model.dart';
+import 'package:mobile/core/models/notification.dart';
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/location_helper.dart';
-import 'package:mobile/features/customer/data/models/cart.dart';
+import 'package:mobile/core/models/cart.dart';
 import 'package:mobile/features/customer/data/services/notification_service.dart';
 import 'package:mobile/features/customer/presentation/providers/customer_profile_provider.dart';
 import 'package:mobile/routes/app_router.dart';
 import 'cart_screen.dart';
-import 'notification.dart';
-import 'address/address_model.dart';
-import 'address/address_provider.dart';
+import 'notification_screen.dart';
+import 'package:mobile/core/models/address.dart';
+import 'package:mobile/features/customer/presentation/providers/address_provider.dart';
 import 'address/address_picker_sheet.dart';
 
 class CustomerHomeScreen extends ConsumerStatefulWidget {

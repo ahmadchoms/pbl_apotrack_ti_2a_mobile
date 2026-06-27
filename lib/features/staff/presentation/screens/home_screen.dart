@@ -8,8 +8,8 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/staff_provider.dart';
 import '../providers/staff_notification_provider.dart';
 import '../../data/services/staff_service.dart';
-import '../../data/models/medicine.dart';
-import '../../data/models/order.dart';
+import 'package:mobile/core/models/medicine.dart';
+import 'package:mobile/core/models/order.dart';
 import 'package:mobile/features/staff/presentation/screens/scanner_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -712,8 +712,9 @@ class _NotifBadgeIcon extends ConsumerWidget {
           IconButton(
             onPressed: onPressed,
             icon: const Icon(
-              Icons.notifications_active_outlined,
+              Icons.notifications_none_rounded,
               color: Colors.white,
+              size: 22,
             ),
             style: IconButton.styleFrom(
               backgroundColor: Colors.white.withValues(alpha: 0.15),

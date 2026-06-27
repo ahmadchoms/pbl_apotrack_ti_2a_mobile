@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../shared/widgets/app_card.dart';
 import '../../../../../shared/widgets/status_badge.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../staff/data/models/order.dart';
+import 'package:mobile/core/models/order.dart';
 
 class OrderHistoryCard extends StatelessWidget {
   final Order order;

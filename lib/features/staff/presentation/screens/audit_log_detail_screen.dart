@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile/features/staff/data/models/audit_log.dart';
+import 'package:mobile/core/models/audit_log.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class AuditLogDetailScreen extends StatelessWidget {

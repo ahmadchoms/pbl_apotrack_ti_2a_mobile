@@ -5,12 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../staff/data/models/order.dart';
+import 'package:mobile/core/models/order.dart';
 import '../widgets/order_history/order_detail_status_card.dart';
 import '../widgets/order_history/order_detail_items_card.dart';
 import '../widgets/order_history/order_detail_summary_card.dart';
 import '../widgets/order_history/order_detail_timeline_card.dart';
-import '../../data/models/prescription.dart';
+import 'package:mobile/core/models/prescription.dart';
 import '../providers/customer_order_provider.dart';
 
 class CustomerOrderDetailScreen extends ConsumerStatefulWidget {

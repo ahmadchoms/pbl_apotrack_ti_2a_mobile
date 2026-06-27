@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/theme/app_colors.dart';
-import 'package:mobile/features/customer/data/models/medicine_model.dart';
-import 'package:mobile/features/customer/data/models/medicine_category_model.dart';
+import 'package:mobile/core/models/medicine.dart';
+import 'package:mobile/core/models/medicine_category.dart';
 import 'package:mobile/features/customer/data/services/medicine_service.dart';
 import 'package:mobile/shared/widgets/status_badge.dart';
-import '../../data/models/cart.dart';
-import 'checkout_order.dart';
+import 'package:mobile/core/models/cart.dart';
+import 'checkout_order_screen.dart';
 
 class MedicineListScreen extends ConsumerStatefulWidget {
   final String pharmacyId;

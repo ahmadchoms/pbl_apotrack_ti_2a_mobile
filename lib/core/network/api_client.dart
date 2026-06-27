@@ -240,3 +240,41 @@ Future<String?> _discoverLocalServerIp() async {
   }
   return null;
 }
+
+String? get resolvedBaseUrl {
+  final resolved = _AuthInterceptor._resolvedBaseUrl;
+  if (resolved != null) return resolved;
+  
+  String baseUrl = _kBaseUrl;
+  if (!kIsWeb && Platform.isAndroid && baseUrl.contains('127.0.0.1')) {
+    baseUrl = baseUrl.replaceFirst('127.0.0.1', '10.0.2.2');
+  }
+  return baseUrl;
+}
+
+String resolveImageUrl(String? url) {
+  if (url == null || url.isEmpty) return '';
+  
+  final base = resolvedBaseUrl; // e.g. 'http://10.42.158.48:8000/api'
+  if (base != null) {
+    if (url.contains(':54321/')) {
+      try {
+        final uri = Uri.parse(url);
+        final pathWithQuery = uri.path + (uri.hasQuery ? '?${uri.query}' : '');
+        return '$base$pathWithQuery';
+      } catch (_) {}
+    }
+    
+    if (url.contains('127.0.0.1') || url.contains('localhost') || url.contains('10.0.2.2')) {
+      try {
+        final baseUri = Uri.parse(base);
+        final host = baseUri.host;
+        return url
+            .replaceAll('127.0.0.1', host)
+            .replaceAll('localhost', host)
+            .replaceAll('10.0.2.2', host);
+      } catch (_) {}
+    }
+  }
+  return url;
+}

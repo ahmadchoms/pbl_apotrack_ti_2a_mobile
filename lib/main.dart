@@ -145,11 +145,16 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
     FirebaseMessaging.onMessage.listen((message) {
       final data = message.data;
       final title = data['title'] ?? message.notification?.title ?? 'Notifikasi Baru';
-      final body = data['body'] ?? message.notification?.body ?? '';
-
-      // Auto-refresh order data if push notification indicates an order update
+      final body = data['body'] ?? data['message'] ?? message.notification?.body ?? '';
       final type = (data['type'] ?? '').toString().toUpperCase();
       final referenceId = data['reference_id']?.toString();
+
+      debugPrint('=== APOTRACK FCM FOREGROUND MESSAGE ===');
+      debugPrint('Title: $title');
+      debugPrint('Body: $body');
+      debugPrint('Type: $type');
+      debugPrint('Reference ID: $referenceId');
+      debugPrint('Data payload: $data');
 
       if (type == 'STAFF_REMOVED') {
         LocalNotificationService.show(
@@ -189,9 +194,8 @@ class _ApoTrackAppState extends ConsumerState<ApoTrackApp> {
       }
 
       if (type == 'ORDER' || type == 'ORDER_STATUS') {
-        // Refresh active/history order lists
+        debugPrint('Auto-refreshing order list and details provider...');
         ref.read(customerOrderProvider.notifier).loadAll();
-        // Refresh the detail screen of the specific order if it is open
         if (referenceId != null && referenceId.isNotEmpty) {
           ref.invalidate(orderDetailProvider(referenceId));
         }

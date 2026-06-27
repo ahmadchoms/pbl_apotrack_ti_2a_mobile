@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../../core/theme/app_colors.dart';
-import 'address_model.dart';
-import 'address_provider.dart';
+import 'package:mobile/core/models/address.dart';
+import 'package:mobile/features/customer/presentation/providers/address_provider.dart';
 
 class AddressFormScreen extends StatefulWidget {
   final AddressModel? existing;

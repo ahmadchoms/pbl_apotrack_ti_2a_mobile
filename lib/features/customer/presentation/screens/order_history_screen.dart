@@ -4,13 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:animate_do/animate_do.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../routes/app_router.dart';
-import '../../../staff/data/models/order.dart';
+import 'package:mobile/core/models/order.dart';
 import '../providers/customer_order_provider.dart';
 import '../widgets/order_history/cancel_order_dialog.dart';
 import '../widgets/order_history/cancellation_detail_sheet.dart';
 import '../widgets/order_history/order_history_card.dart';
-import '../../data/models/cart.dart';
-import '../../data/models/medicine_model.dart';
+import 'package:mobile/core/models/cart.dart';
+import 'package:mobile/core/models/medicine.dart';
 import '../../data/services/medicine_service.dart';
 import 'cart_screen.dart';
 

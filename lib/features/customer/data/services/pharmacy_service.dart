@@ -1,67 +1,80 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../../core/network/customer_api_service.dart';
-import '../models/pharmacy_model.dart';
+import '../repositories/pharmacy_repository.dart';
+import 'package:mobile/core/models/pharmacy.dart';
 import '../../presentation/providers/customer_profile_provider.dart';
 
 class PharmacyService {
-  PharmacyService({required CustomerApiService api}) : _api = api;
-  final CustomerApiService _api;
+  PharmacyService({required PharmacyRepository repository}) : _repository = repository;
+  final PharmacyRepository _repository;
 
   Future<List<Map<String, dynamic>>> getPharmacies({Position? userPosition, String? categoryId}) async {
-    final data = await _api.getPharmacies(
+    final response = await _repository.getPharmacies(
       latitude: userPosition?.latitude,
       longitude: userPosition?.longitude,
       radius: 3.0,
       categoryId: categoryId,
     );
-    return data.map((e) => e.toJson()).toList();
+    final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+    final parsed = rawList
+        .map((e) => Pharmacy.fromJson(e as Map<String, dynamic>))
+        .toList();
+    return parsed.map((e) => e.toJson()).toList();
   }
 
-  Future<List<PharmacyModel>> getActivePharmacies({Position? userPosition, String? categoryId}) async {
-    final data = await _api.getPharmacies(
+  Future<List<Pharmacy>> getActivePharmacies({Position? userPosition, String? categoryId}) async {
+    final response = await _repository.getPharmacies(
       latitude: userPosition?.latitude,
       longitude: userPosition?.longitude,
       radius: 3.0,
       categoryId: categoryId,
     );
-    return data
-        .map((e) => PharmacyModel.fromJson(e.toJson()))
+    final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+    return rawList
+        .map((e) => Pharmacy.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
   Future<Map<String, dynamic>?> getPharmacyById(String id) async {
     try {
-      final pharmacy = await _api.getPharmacyDetail(id);
+      final response = await _repository.getPharmacyDetail(id);
+      final raw = response.data['data'];
+      final pharmacy = Pharmacy.fromJson(
+        (raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>,
+      );
       return pharmacy.toJson();
     } catch (_) {
       return null;
     }
   }
 
-  Future<PharmacyModel?> getPharmacyModel(String id) async {
+  Future<Pharmacy?> getPharmacyModel(String id) async {
     try {
-      final pharmacy = await _api.getPharmacyDetail(id);
-      return PharmacyModel.fromJson(pharmacy.toJson());
+      final response = await _repository.getPharmacyDetail(id);
+      final raw = response.data['data'];
+      return Pharmacy.fromJson(
+        (raw as Map<String, dynamic>?) ?? response.data as Map<String, dynamic>,
+      );
     } catch (_) {
       return null;
     }
   }
 
-  Future<List<PharmacyModel>> searchPharmacies(String query) async {
-    final data = await _api.getPharmacies(search: query);
-    return data
-        .map((e) => PharmacyModel.fromJson(e.toJson()))
+  Future<List<Pharmacy>> searchPharmacies(String query) async {
+    final response = await _repository.getPharmacies(search: query);
+    final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+    return rawList
+        .map((e) => Pharmacy.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 }
 
 // ── Riverpod Providers ────────────────────────────────────────────────
 final pharmacyServiceProvider = Provider<PharmacyService>((ref) {
-  return PharmacyService(api: ref.watch(customerApiServiceProvider));
+  return PharmacyService(repository: ref.watch(pharmacyRepositoryProvider));
 });
 
-final activePharmaciesProvider = FutureProvider.family<List<PharmacyModel>, String?>((ref, categoryId) {
+final activePharmaciesProvider = FutureProvider.family<List<Pharmacy>, String?>((ref, categoryId) {
   final profileState = ref.watch(customerProfileProvider);
   final activeAddr = profileState.tempGpsAddress ?? profileState.addresses.where((a) => a.isPrimary).firstOrNull;
 
@@ -88,6 +101,6 @@ final activePharmaciesProvider = FutureProvider.family<List<PharmacyModel>, Stri
 });
 
 final pharmacyDetailProvider =
-    FutureProvider.family<PharmacyModel?, String>((ref, pharmacyId) {
+    FutureProvider.family<Pharmacy?, String>((ref, pharmacyId) {
   return ref.watch(pharmacyServiceProvider).getPharmacyModel(pharmacyId);
 });

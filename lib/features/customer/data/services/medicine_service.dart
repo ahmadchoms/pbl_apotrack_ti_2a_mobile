@@ -1,58 +1,68 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/customer_api_service.dart';
-import '../models/medicine_model.dart';
-import '../models/medicine_category_model.dart';
+import '../repositories/medicine_repository.dart';
+import 'package:mobile/core/models/medicine.dart';
+import 'package:mobile/core/models/medicine_category.dart';
 
 class MedicineService {
-  MedicineService({required CustomerApiService api}) : _api = api;
-  final CustomerApiService _api;
+  MedicineService({required MedicineRepository repository}) : _repository = repository;
+  final MedicineRepository _repository;
 
-  Future<List<MedicineModel>> getMedicinesByPharmacy(
-      String pharmacyId) async {
-    final data = await _api.getMedicines(pharmacyId: pharmacyId);
-    return data
-        .map((e) => MedicineModel.fromJson(e.toJson()))
+  Future<List<Medicine>> getMedicinesByPharmacy(String pharmacyId) async {
+    final response = await _repository.getMedicines(pharmacyId: pharmacyId);
+    final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+    return rawList
+        .map((e) => Medicine.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  Future<List<MedicineModel>> getMedicinesByCategory({
+  Future<List<Medicine>> getMedicinesByCategory({
     required String pharmacyId,
     required String categoryId,
   }) async {
-    final data = await _api.getMedicines(
-        pharmacyId: pharmacyId, categoryId: categoryId);
-    return data
-        .map((e) => MedicineModel.fromJson(e.toJson()))
+    final response = await _repository.getMedicines(
+      pharmacyId: pharmacyId,
+      categoryId: categoryId,
+    );
+    final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+    return rawList
+        .map((e) => Medicine.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  Future<List<MedicineModel>> searchMedicines({
+  Future<List<Medicine>> searchMedicines({
     required String pharmacyId,
     required String query,
   }) async {
-    final data =
-        await _api.getMedicines(pharmacyId: pharmacyId, search: query);
-    return data
-        .map((e) => MedicineModel.fromJson(e.toJson()))
+    final response = await _repository.getMedicines(
+      pharmacyId: pharmacyId,
+      search: query,
+    );
+    final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+    return rawList
+        .map((e) => Medicine.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  Future<List<MedicineCategoryModel>> getCategories() async {
-    return await _api.getCategories();
+  Future<List<MedicineCategory>> getCategories() async {
+    final response = await _repository.getCategories();
+    final rawList = (response.data['data'] as List<dynamic>?) ?? response.data as List<dynamic>;
+    return rawList
+        .map((e) => MedicineCategory.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }
 
 // ── Riverpod Providers ────────────────────────────────────────────────
 final medicineServiceProvider = Provider<MedicineService>((ref) {
-  return MedicineService(api: ref.watch(customerApiServiceProvider));
+  return MedicineService(repository: ref.watch(medicineRepositoryProvider));
 });
 
 final medicinesProvider =
-    FutureProvider.family<List<MedicineModel>, String>((ref, pharmacyId) {
+    FutureProvider.family<List<Medicine>, String>((ref, pharmacyId) {
   return ref.watch(medicineServiceProvider).getMedicinesByPharmacy(pharmacyId);
 });
 
 final medicineCategoriesProvider =
-    FutureProvider<List<MedicineCategoryModel>>((ref) {
+    FutureProvider<List<MedicineCategory>>((ref) {
   return ref.watch(medicineServiceProvider).getCategories();
 });

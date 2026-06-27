@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/models/medicine.dart';
+import 'package:mobile/core/models/medicine.dart';
 
 class CartItem {
   final Medicine medicine;

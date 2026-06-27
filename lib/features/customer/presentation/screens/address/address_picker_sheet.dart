@@ -4,8 +4,8 @@ import 'package:mobile/core/utils/location_helper.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/customer/presentation/providers/customer_profile_provider.dart';
 import 'package:mobile/features/customer/presentation/widgets/profile/map_picker_dialog.dart';
-import 'address_model.dart';
-import 'address_provider.dart';
+import 'package:mobile/core/models/address.dart';
+import 'package:mobile/features/customer/presentation/providers/address_provider.dart';
 import 'address_form_screen.dart';
 
 void showAddressPickerSheet(

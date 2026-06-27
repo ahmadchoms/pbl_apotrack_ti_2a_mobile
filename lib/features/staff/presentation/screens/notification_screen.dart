@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/models/notification_model.dart';
-import '../../../customer/data/services/notification_service.dart';
+import '../../data/services/notification_service.dart';
+import 'package:mobile/core/models/notification.dart';
 
 class NotificationScreen extends ConsumerStatefulWidget {
   final bool showBack;
@@ -19,14 +19,14 @@ class NotificationScreen extends ConsumerStatefulWidget {
 }
 
 class _NotificationScreenState extends ConsumerState<NotificationScreen> {
-  late final NotificationService _notificationService;
+  late final StaffNotificationService _notificationService;
   List<NotificationModel> _notifications = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _notificationService = NotificationService(ref.read(dioProvider));
+    _notificationService = StaffNotificationService(ref.read(dioProvider));
     _loadNotifications();
   }
 

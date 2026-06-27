@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/models/medicine.dart';
+import 'package:mobile/core/models/medicine.dart';
 
 class MedicineInventoryCard extends StatelessWidget {
   final Medicine medicine;

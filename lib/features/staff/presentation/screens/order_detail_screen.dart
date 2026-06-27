@@ -7,7 +7,7 @@ import '../../../../shared/widgets/status_badge.dart';
 import '../../data/services/staff_service.dart';
 import '../widgets/order_status_timeline.dart';
 import '../widgets/order_items_card.dart';
-import '../../data/models/order.dart';
+import 'package:mobile/core/models/order.dart';
 
 class OrderDetailScreen extends ConsumerStatefulWidget {
   final Order order;
@@ -108,7 +108,6 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       if (mounted) setState(() => _isUpdating = false);
     }
   }
-
 
   Future<void> _approveCancellation() async {
     setState(() => _isUpdating = true);
@@ -298,7 +297,12 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
   Widget _buildModernHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 16,
+        bottom: 24,
+        left: 20,
+        right: 20,
+      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.primaryDark],
@@ -458,7 +462,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   child: _buildSimpleInfo(
                     'TIPE LAYANAN',
                     config['label']!,
-                    icon: (order.serviceType == 'POS' || order.serviceType == 'WALK_IN')
+                    icon:
+                        (order.serviceType == 'POS' ||
+                            order.serviceType == 'WALK_IN')
                         ? Icons.receipt_long_rounded
                         : Icons.store,
                   ),
@@ -608,49 +614,53 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Builder(builder: (context) {
-                  final payMethod = order.paymentMethod.toUpperCase();
-                  String paymentTitle = isPaid ? 'Pembayaran Lunas' : 'Belum Dibayar';
-                  String paymentSubtitle = '';
+                Builder(
+                  builder: (context) {
+                    final payMethod = order.paymentMethod.toUpperCase();
+                    String paymentTitle = isPaid
+                        ? 'Pembayaran Lunas'
+                        : 'Belum Dibayar';
+                    String paymentSubtitle = '';
 
-                  if (isPaid) {
-                    if (payMethod == 'CASH') {
-                      paymentSubtitle = 'Metode: Bayar di Tempat (Cash)';
-                    } else if (payMethod == 'QRIS') {
-                      paymentSubtitle = 'Metode: QRIS';
+                    if (isPaid) {
+                      if (payMethod == 'CASH') {
+                        paymentSubtitle = 'Metode: Bayar di Tempat (Cash)';
+                      } else if (payMethod == 'QRIS') {
+                        paymentSubtitle = 'Metode: QRIS';
+                      } else {
+                        paymentSubtitle = 'Metode: Transfer';
+                      }
                     } else {
-                      paymentSubtitle = 'Metode: Transfer';
+                      if (payMethod == 'CASH') {
+                        paymentSubtitle = 'Bayar Langsung di Kasir (Cash)';
+                      } else if (payMethod == 'QRIS') {
+                        paymentSubtitle = 'Menunggu Scan QRIS';
+                      } else {
+                        paymentSubtitle = 'Menunggu Transfer';
+                      }
                     }
-                  } else {
-                    if (payMethod == 'CASH') {
-                      paymentSubtitle = 'Bayar Langsung di Kasir (Cash)';
-                    } else if (payMethod == 'QRIS') {
-                      paymentSubtitle = 'Menunggu Scan QRIS';
-                    } else {
-                      paymentSubtitle = 'Menunggu Transfer';
-                    }
-                  }
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        paymentTitle,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          paymentTitle,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                          ),
                         ),
-                      ),
-                      Text(
-                        paymentSubtitle,
-                        style: const TextStyle(
-                          color: AppColors.textLight,
-                          fontSize: 12,
+                        Text(
+                          paymentSubtitle,
+                          style: const TextStyle(
+                            color: AppColors.textLight,
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ],
-                  );
-                }),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ),

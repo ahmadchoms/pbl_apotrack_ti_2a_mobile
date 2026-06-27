@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'address_model.dart';
+import 'package:mobile/core/models/address.dart';
 
 class AddressProvider extends ChangeNotifier {
   AddressModel? _selectedAddress;

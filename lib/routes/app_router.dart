@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../features/staff/data/models/medicine.dart';
-import '../features/staff/data/models/order.dart';
-import '../features/staff/data/models/audit_log.dart';
+import 'package:mobile/core/models/medicine.dart';
+import 'package:mobile/core/models/order.dart';
+import 'package:mobile/core/models/audit_log.dart';
 
 // Auth
 import '../core/auth/auth_state_provider.dart';
@@ -18,12 +18,11 @@ import '../features/customer/presentation/screens/main_screen.dart';
 import '../features/customer/presentation/screens/customer_profile_screen.dart';
 import '../features/customer/presentation/screens/order_detail_screen.dart'
     as customer_order;
-import '../features/customer/presentation/screens/track_order_screen.dart';
-import '../features/customer/data/models/customer_address.dart';
+import 'package:mobile/core/models/customer_address.dart';
 import '../features/customer/presentation/screens/pharma_scan_map_screen.dart';
 import '../features/customer/presentation/screens/medicine_list_screen.dart';
 import '../features/customer/presentation/screens/qris_payment_screen.dart';
-import '../features/customer/presentation/screens/beri_ulasan_screen.dart';
+import '../features/customer/presentation/screens/submit_review_screen.dart';
 
 // Staff
 import '../features/staff/presentation/screens/main_screen.dart' as staff_main;
@@ -62,7 +61,6 @@ class AppRouter {
   static const String customerChangePassword = '/customer/change-password';
   static const String customerEditAddress = '/customer/edit-address';
   static const String customerOrderDetail = '/customer/order-detail';
-  static const String customerTrackOrder = '/customer/track-order';
   static const String customerMedicineList = '/customer/medicine-list';
   static const String customerPayment = '/customer/payment';
   static const String customerUlasan = '/customer/ulasan';
@@ -193,16 +191,7 @@ class AppRouter {
             );
           },
         ),
-        GoRoute(
-          path: customerTrackOrder,
-          builder: (context, state) {
-            final extra = state.extra;
-            if (extra is Order) return TrackOrderScreen(order: extra);
-            return TrackOrderScreen(
-              order: Order.fromJson(extra as Map<String, dynamic>),
-            );
-          },
-        ),
+
         GoRoute(
           path: customerPharmacySearch,
           builder: (context, state) {
@@ -245,7 +234,7 @@ class AppRouter {
           path: customerUlasan,
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>;
-            return BeriUlasanScreen(
+            return SubmitReviewScreen(
               orderId: extra['orderId'] as String,
               orderNumber: extra['orderNumber'] as String,
               pharmacyId: extra['pharmacyId'] as String,

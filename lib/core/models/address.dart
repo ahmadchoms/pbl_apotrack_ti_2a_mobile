@@ -1,7 +1,9 @@
-import '../../../data/models/customer_address.dart';
+import 'package:mobile/core/models/customer_address.dart';
+
+enum AddressType { personal, bisnis }
 
 /// Model untuk satu alamat tersimpan
-class AddressModel {
+class Address {
   final String id;
   final String name;       // nama label, mis. "Rumah", "Kantor"
   final String fullAddress;
@@ -11,7 +13,7 @@ class AddressModel {
   final double? latitude;
   final double? longitude;
 
-  const AddressModel({
+  const Address({
     required this.id,
     required this.name,
     required this.fullAddress,
@@ -22,7 +24,7 @@ class AddressModel {
     this.longitude,
   });
 
-  AddressModel copyWith({
+  Address copyWith({
     String? id,
     String? name,
     String? fullAddress,
@@ -32,7 +34,7 @@ class AddressModel {
     double? latitude,
     double? longitude,
   }) {
-    return AddressModel(
+    return Address(
       id: id ?? this.id,
       name: name ?? this.name,
       fullAddress: fullAddress ?? this.fullAddress,
@@ -44,8 +46,8 @@ class AddressModel {
     );
   }
 
-  factory AddressModel.fromCustomerAddress(CustomerAddress addr) {
-    return AddressModel(
+  factory Address.fromCustomerAddress(CustomerAddress addr) {
+    return Address(
       id: addr.id,
       name: addr.label,
       fullAddress: addr.completeAddress ?? addr.addressDetail,
@@ -56,5 +58,5 @@ class AddressModel {
   }
 }
 
-enum AddressType { personal, bisnis }
-
+// Typedef alias for backward compatibility with screens using AddressModel
+typedef AddressModel = Address;
