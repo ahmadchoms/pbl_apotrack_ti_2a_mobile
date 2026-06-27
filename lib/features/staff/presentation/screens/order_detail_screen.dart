@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -22,11 +23,31 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   bool _refreshError = false;
   late Order _order;
 
+  Timer? _pollingTimer;
+
   @override
   void initState() {
     super.initState();
     _order = widget.order;
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshOrderDetail());
+    _startPolling();
+  }
+
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        _refreshOrderDetail();
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _refreshOrderDetail() async {

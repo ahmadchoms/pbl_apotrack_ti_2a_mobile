@@ -55,8 +55,22 @@ class CustomerOrderState {
 class CustomerOrderNotifier extends StateNotifier<CustomerOrderState> {
   final CustomerOrderService _service;
 
+  Timer? _pollingTimer;
+
   CustomerOrderNotifier(this._service) : super(const CustomerOrderState()) {
     loadAll();
+    _startPolling();
+  }
+
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        loadActive();
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
   Future<void> loadAll() async {
@@ -124,6 +138,12 @@ class CustomerOrderNotifier extends StateNotifier<CustomerOrderState> {
       state = state.copyWith(activeError: 'Gagal konfirmasi: ${e.toString()}');
       return false;
     }
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
   }
 }
 

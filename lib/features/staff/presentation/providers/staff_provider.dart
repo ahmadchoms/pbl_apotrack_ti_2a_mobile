@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import '../../../../core/network/secure_storage_service.dart';
 import '../../../auth/data/models/user_model.dart';
 import 'package:mobile/core/models/audit_log.dart';
@@ -142,6 +143,12 @@ class StaffMedicinesNotifier extends StateNotifier<PaginationState<Medicine>> {
 
 final staffOrdersProvider = FutureProvider<List<Order>>((ref) async {
   final service = ref.watch(staffServiceProvider);
+  
+  final timer = Timer(const Duration(seconds: 10), () {
+    ref.invalidateSelf();
+  });
+  ref.onDispose(() => timer.cancel());
+  
   return service.getOrders();
 });
 
