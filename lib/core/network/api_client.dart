@@ -259,12 +259,20 @@ String resolveImageUrl(String? url) {
   if (base == null) return url;
 
   try {
-    // Supabase URLs (cloud or local) — return as-is, they're a different service
-    if (url.contains('supabase.co') ||
-        url.contains('supabase') ||
-        url.contains(':54321/')) {
-      debugPrint('[resolveImageUrl] supabase=$url');
+    // If it is a cloud Supabase URL, return as-is
+    if (url.contains('supabase.co')) {
+      debugPrint('[resolveImageUrl] cloud-supabase=$url');
       return url;
+    }
+
+    // If it is a local Supabase URL containing port 54321, route it through Laravel's proxy
+    if (url.contains(':54321/')) {
+      final parts = url.split(':54321/');
+      if (parts.length > 1) {
+        final proxiedUrl = '$base/${parts[1]}';
+        debugPrint('[resolveImageUrl] local-supabase proxied=$url → $proxiedUrl');
+        return proxiedUrl;
+      }
     }
 
     // Handle relative paths like /storage/prescriptions/xxx.jpg
