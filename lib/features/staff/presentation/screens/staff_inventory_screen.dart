@@ -397,14 +397,15 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
 
   void _showFilterSheet(BuildContext context) {
     final categories = ref.read(medicineCategoriesProvider);
-    final filterState = ref.read(inventoryFilterProvider);
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Container(
+        builder: (ctx, setSheetState) {
+          final filterState = ref.read(inventoryFilterProvider);
+          return Container(
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
@@ -538,10 +539,11 @@ class _StaffInventoryScreenState extends ConsumerState<StaffInventoryScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
 
   void _showSortSheet(BuildContext context) {
     final filterState = ref.watch(inventoryFilterProvider);

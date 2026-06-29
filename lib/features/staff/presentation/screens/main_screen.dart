@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../providers/staff_provider.dart';
 import 'home_screen.dart';
 import 'staff_orders_screen.dart';
 import 'staff_inventory_screen.dart';
@@ -15,12 +16,12 @@ class MainScreen extends ConsumerStatefulWidget {
 }
 
 class _MainScreenState extends ConsumerState<MainScreen> {
-  late int _selectedIndex;
-
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(staffTabIndexProvider.notifier).state = widget.initialIndex;
+    });
   }
 
   final List<Widget> _screens = const [
@@ -31,40 +32,48 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   ];
 
   void _onItemTapped(int index) {
-    setState(() => _selectedIndex = index);
+    ref.read(staffTabIndexProvider.notifier).state = index;
   }
 
   @override
   Widget build(BuildContext context) {
+    final selectedIndex = ref.watch(staffTabIndexProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: IndexedStack(index: _selectedIndex, children: _screens),
-      bottomNavigationBar: _buildCustomBottomNav(),
+      body: IndexedStack(index: selectedIndex, children: _screens),
+      bottomNavigationBar: _buildCustomBottomNav(selectedIndex),
     );
   }
 
-  Widget _buildCustomBottomNav() {
+  Widget _buildCustomBottomNav(int selectedIndex) {
     return Container(
       height: 85,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, -4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          )
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildNavItem(0, Icons.grid_view_rounded, 'Beranda'),
-          _buildNavItem(1, Icons.shopping_bag_outlined, 'Pesanan'),
-          _buildNavItem(2, Icons.inventory_2_outlined, 'Obat'),
-          _buildNavItem(3, Icons.person_outline_rounded, 'Profil'),
+          _buildNavItem(0, selectedIndex, Icons.grid_view_rounded, 'Beranda'),
+          _buildNavItem(1, selectedIndex, Icons.shopping_bag_outlined, 'Pesanan'),
+          _buildNavItem(2, selectedIndex, Icons.inventory_2_outlined, 'Obat'),
+          _buildNavItem(3, selectedIndex, Icons.person_outline_rounded, 'Profil'),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
-    final bool isActive = _selectedIndex == index;
+  Widget _buildNavItem(int index, int selectedIndex, IconData icon, String label) {
+    final bool isActive = selectedIndex == index;
     const Color primaryColor = AppColors.primary;
 
     return GestureDetector(
@@ -82,7 +91,14 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           children: [
             Icon(icon, color: isActive ? primaryColor : Colors.grey[400], size: 22),
             const SizedBox(height: 2),
-            Text(label, style: TextStyle(color: isActive ? primaryColor : Colors.grey[400], fontWeight: FontWeight.w700, fontSize: 10)),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? primaryColor : Colors.grey[400],
+                fontWeight: FontWeight.w700,
+                fontSize: 10,
+              ),
+            ),
           ],
         ),
       ),

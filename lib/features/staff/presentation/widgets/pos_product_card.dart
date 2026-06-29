@@ -120,7 +120,7 @@ class PosProductCard extends StatelessWidget {
                         color: AppColors.textDark,
                         height: 1.2,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const Spacer(),

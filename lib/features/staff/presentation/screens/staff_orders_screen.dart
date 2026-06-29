@@ -22,7 +22,6 @@ class _StaffOrdersScreenState extends ConsumerState<StaffOrdersScreen>
     {'status': 'PENDING', 'label': 'Baru'},
     {'status': 'PROCESSING', 'label': 'Proses'},
     {'status': 'READY_FOR_PICKUP', 'label': 'Siap'},
-    {'status': 'SHIPPED', 'label': 'Kirim'},
     {'status': 'CANCEL_REQUESTED', 'label': 'Minta Batal'},
     {'status': 'COMPLETED', 'label': 'Selesai'},
     {'status': 'CANCELLED', 'label': 'Batal'},
@@ -357,18 +356,6 @@ final Map<String, dynamic> _statusMap = {
     'color': AppColors.success,
     'bgColor': AppColors.successLight,
     'icon': Icons.check_circle_rounded,
-  },
-  'SHIPPED': {
-    'label': 'Kirim',
-    'color': AppColors.accentIndigo,
-    'bgColor': AppColors.primaryLight,
-    'icon': Icons.local_shipping_rounded,
-  },
-  'DELIVERED': {
-    'label': 'Diterima',
-    'color': AppColors.accentPink,
-    'bgColor': AppColors.background,
-    'icon': Icons.done_all_rounded,
   },
   'COMPLETED': {
     'label': 'Selesai',

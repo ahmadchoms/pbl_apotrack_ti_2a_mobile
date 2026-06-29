@@ -364,7 +364,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           'AKTIVITAS TERBARU',
           context,
           action: 'Lihat Semua',
-          onTap: () => context.go('/staff/orders'),
+          onTap: () => ref.read(staffTabIndexProvider.notifier).state = 1,
         ),
         const SizedBox(height: 16),
         ordersAsync.when(

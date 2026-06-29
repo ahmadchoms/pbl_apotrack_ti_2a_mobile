@@ -21,7 +21,11 @@ class MedicineInventoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final int stock = medicine.totalActiveStock;
 
-    Color statusColor = AppColors.success;
+    Color statusColor = medicine.isActive
+        ? (stock <= 10
+            ? AppColors.danger
+            : (stock <= 20 ? AppColors.warning : AppColors.success))
+        : Colors.grey;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -46,7 +50,10 @@ class MedicineInventoryCard extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  _buildProductImage(statusColor),
+                  Opacity(
+                    opacity: medicine.isActive ? 1.0 : 0.6,
+                    child: _buildProductImage(statusColor),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -57,6 +64,8 @@ class MedicineInventoryCard extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 medicine.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 15,
@@ -88,6 +97,27 @@ class MedicineInventoryCard extends StatelessWidget {
                                 color: statusColor,
                               ),
                             ),
+                            if (!medicine.isActive) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Nonaktif',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],

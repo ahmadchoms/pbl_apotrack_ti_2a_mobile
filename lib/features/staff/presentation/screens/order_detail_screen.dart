@@ -549,7 +549,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
   Widget _buildCustomerTile(Order order) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(16),
@@ -557,50 +557,65 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: AppColors.primary,
-            radius: 18,
+            backgroundColor: Colors.grey.shade400,
+            radius: 20,
             child: Text(
-              order.customer['username']?[0]?.toUpperCase() ?? 'U',
+              (order.customer['username'] ?? 'U')[0].toUpperCase(),
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
+                fontSize: 14,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  order.customer['username'] ?? 'Pembeli Umum',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        order.customer['username'] ?? 'Pembeli Umum',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          color: AppColors.textDark,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "Pelanggan",
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 4),
                 Text(
                   order.customer['phone'] ?? '-',
                   style: const TextStyle(
                     color: AppColors.textLight,
-                    fontSize: 11,
+                    fontSize: 12,
                   ),
                 ),
               ],
-            ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.phone_outlined,
-              size: 18,
-              color: AppColors.primary,
-            ),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
             ),
           ),
         ],

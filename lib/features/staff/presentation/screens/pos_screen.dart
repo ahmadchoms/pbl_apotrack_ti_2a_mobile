@@ -1256,6 +1256,8 @@ class _CartSheet extends StatelessWidget {
             children: [
               Text(
                 item.medicine.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 14,

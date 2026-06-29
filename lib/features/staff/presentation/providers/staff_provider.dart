@@ -521,3 +521,5 @@ final profileProvider = StateNotifierProvider<ProfileNotifier, ProfileState>((
   final storage = ref.watch(secureStorageServiceProvider);
   return ProfileNotifier(service, storage);
 });
+
+final staffTabIndexProvider = StateProvider<int>((ref) => 0);
