@@ -302,7 +302,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       _buildPaymentSummaryCard(_order),
                       const SizedBox(height: 16),
                       if (_order.hasPrescription ||
-                          (_order.notes ?? '').isNotEmpty)
+                          (_order.notes ?? '').isNotEmpty ||
+                          _order.prescription != null)
                         _MetadataCard(order: _order),
                     ]),
                   ),
@@ -917,7 +918,7 @@ class _MetadataCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (order.hasPrescription) ...[
+          if (order.hasPrescription || order.prescription != null) ...[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -1047,7 +1048,8 @@ class _MetadataCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
             ],
-            if (order.prescription?.imageUrl != null) ...[
+            if (order.prescription?.imageUrl != null &&
+                order.prescription!.imageUrl!.isNotEmpty) ...[
               GestureDetector(
                 onTap: () {
                   showDialog(

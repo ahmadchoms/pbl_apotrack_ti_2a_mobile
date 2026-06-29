@@ -219,6 +219,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
           imageUrl: medicine.imageUrl ?? '',
           pharmacyName: pharmacyName,
           pharmacyId: pharmacyId,
+          requiresPrescription: medicine.requiresPrescription,
           quantity: item.quantity,
           stock: medicine.totalActiveStock,
         ),

@@ -247,7 +247,11 @@ class _CustomerOrderDetailScreenState
         ? CustomerPrescription(
             id: pData.id,
             imageUrl: pData.imageUrl ?? '',
+            doctorName: pData.doctorName,
+            patientName: pData.patientName,
+            issuedDate: pData.issuedDate,
             status: pData.status,
+            rejectionNote: pData.rejectionNote,
           )
         : null;
 
@@ -782,47 +786,56 @@ class _CustomerOrderDetailScreenState
             ],
           ),
           const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              prescription.imageUrl,
-              height: 160,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
+          if (prescription.imageUrl.isNotEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                prescription.imageUrl,
                 height: 160,
-                color: AppColors.background,
-                child: const Center(
-                  child: Icon(
-                    Icons.image_not_supported_rounded,
-                    color: AppColors.textLight,
-                    size: 32,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
+                    height: 160,
+                    color: AppColors.background,
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) => Container(
+                  height: 160,
+                  color: AppColors.background,
+                  child: const Center(
+                    child: Icon(
+                      Icons.image_not_supported_rounded,
+                      color: AppColors.textLight,
+                      size: 32,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          if (prescription.doctorName != null) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Icon(
-                  Icons.person_outline_rounded,
-                  size: 15,
-                  color: AppColors.textMuted,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Dr. ${prescription.doctorName}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSlate,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 12),
+          if (prescription.patientName != null)
+            _prescriptionInfoRow(
+              Icons.person_rounded,
+              'Pasien',
+              prescription.patientName!,
             ),
-          ],
+          if (prescription.doctorName != null)
+            _prescriptionInfoRow(
+              Icons.local_hospital_rounded,
+              'Dokter',
+              prescription.doctorName!,
+            ),
+          if (prescription.issuedDate != null)
+            _prescriptionInfoRow(
+              Icons.calendar_today_rounded,
+              'Tanggal Resep',
+              prescription.issuedDate!,
+            ),
           if (prescription.status == 'REJECTED' &&
               prescription.rejectionNote != null) ...[
             const SizedBox(height: 10),
@@ -858,6 +871,36 @@ class _CustomerOrderDetailScreenState
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _prescriptionInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 15, color: AppColors.textMuted),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSlate,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ],
       ),
     );

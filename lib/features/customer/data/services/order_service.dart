@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/models/order.dart';
@@ -78,12 +78,22 @@ class CustomerOrderService {
     return Order.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
-  Future<void> uploadPrescription(String orderId, File file) async {
+  Future<void> uploadPrescription(
+    String orderId,
+    Uint8List bytes, {
+    String? fileName,
+    String? doctorName,
+    String? patientName,
+    String? issuedDate,
+  }) async {
     final formData = FormData.fromMap({
-      'prescription_image': await MultipartFile.fromFile(
-        file.path,
-        filename: file.path.split(Platform.pathSeparator).last,
+      'prescription_image': MultipartFile.fromBytes(
+        bytes,
+        filename: fileName ?? 'resep.jpg',
       ),
+      if (doctorName != null) 'doctor_name': doctorName,
+      if (patientName != null) 'patient_name': patientName,
+      if (issuedDate != null) 'issued_date': issuedDate,
     });
     await _repository.uploadPrescription(orderId, formData);
   }

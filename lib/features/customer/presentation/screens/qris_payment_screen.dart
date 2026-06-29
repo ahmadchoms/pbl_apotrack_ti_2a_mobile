@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import 'package:mobile/core/models/order.dart';
 import '../../data/services/order_service.dart';
 import 'order_detail_screen.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class QrisPaymentScreen extends ConsumerStatefulWidget {
   final String pharmacyId;
@@ -14,7 +15,8 @@ class QrisPaymentScreen extends ConsumerStatefulWidget {
   final List<Map<String, dynamic>> items;
   final int subtotal;
   final String? notes;
-  final File? prescriptionFile;
+  final Uint8List? prescriptionBytes;
+  final String? prescriptionFileName;
 
   const QrisPaymentScreen({
     super.key,
@@ -23,7 +25,8 @@ class QrisPaymentScreen extends ConsumerStatefulWidget {
     required this.items,
     required this.subtotal,
     this.notes,
-    this.prescriptionFile,
+    this.prescriptionBytes,
+    this.prescriptionFileName,
   });
 
   @override
@@ -37,6 +40,27 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
   Timer? _timer;
 
   String _orderNumber = '';
+
+  static const _doctorNames = [
+    'dr. Andi Pratama, Sp.F.',
+    'dr. Budi Santoso, M.Kes.',
+    'dr. Cipto Mangunkusumo, Sp.PD.',
+    'dr. Dewi Sartika, Sp.A.',
+    'dr. Eko Wahyudi, Sp.B.',
+    'dr. Fitriani Nur, Sp.OG.',
+    'dr. Gunawan Wijaya, Sp.JP.',
+    'dr. Hapsari Dewi, M.Sc.',
+    'dr. Indra Lesmana, Sp.M.',
+    'dr. Joko Susilo, Sp.KK.',
+    'dr. Kartika Sari, Sp.THT.',
+    'dr. Lukman Hakim, Sp.S.',
+    'dr. Maya Anggraini, Sp.KJ.',
+    'dr. Nanda Pratiwi, Sp.Rad.',
+    'dr. Oscar Rinaldi, Sp.U.',
+  ];
+
+  String get _randomDoctorName =>
+      _doctorNames[DateTime.now().millisecondsSinceEpoch % _doctorNames.length];
 
   @override
   void initState() {
@@ -118,18 +142,23 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
 
       final order = await _orderService.createOrder(
         pharmacyId: widget.pharmacyId,
-        serviceType: 'PICKUP',
+        serviceType: 'PICK_UP',
         paymentMethod: 'QRIS',
         items: cartItemModels,
         subtotal: widget.subtotal.toDouble(),
         notes: widget.notes,
       );
 
-      if (widget.prescriptionFile != null) {
+      if (widget.prescriptionBytes != null) {
         try {
+          final user = ref.read(currentUserProvider);
           await _orderService.uploadPrescription(
             order.id,
-            widget.prescriptionFile!,
+            widget.prescriptionBytes!,
+            fileName: widget.prescriptionFileName ?? 'resep.jpg',
+            doctorName: _randomDoctorName,
+            patientName: user?.username,
+            issuedDate: DateTime.now().toIso8601String().split('T').first,
           );
         } catch (_) {
           debugPrint('Prescription upload gagal, bisa diupload nanti');

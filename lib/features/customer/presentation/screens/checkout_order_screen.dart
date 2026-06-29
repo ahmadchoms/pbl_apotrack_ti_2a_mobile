@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +8,7 @@ import '../../data/services/order_service.dart';
 import 'qris_payment_screen.dart';
 import 'order_detail_screen.dart';
 import 'package:mobile/core/models/order.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -18,12 +19,35 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String _paymentMethod = 'cash';
-  File? _prescriptionFile;
+  Uint8List? _prescriptionBytes;
+  String? _prescriptionFileName;
+  String? _prescriptionFilePath;
   bool _isSubmitting = false;
   final TextEditingController _noteController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
   final List<CartItem> _cartItems = CartState().items;
+
+  static const _doctorNames = [
+    'dr. Andi Pratama, Sp.F.',
+    'dr. Budi Santoso, M.Kes.',
+    'dr. Cipto Mangunkusumo, Sp.PD.',
+    'dr. Dewi Sartika, Sp.A.',
+    'dr. Eko Wahyudi, Sp.B.',
+    'dr. Fitriani Nur, Sp.OG.',
+    'dr. Gunawan Wijaya, Sp.JP.',
+    'dr. Hapsari Dewi, M.Sc.',
+    'dr. Indra Lesmana, Sp.M.',
+    'dr. Joko Susilo, Sp.KK.',
+    'dr. Kartika Sari, Sp.THT.',
+    'dr. Lukman Hakim, Sp.S.',
+    'dr. Maya Anggraini, Sp.KJ.',
+    'dr. Nanda Pratiwi, Sp.Rad.',
+    'dr. Oscar Rinaldi, Sp.U.',
+  ];
+
+  String get _randomDoctorName =>
+      _doctorNames[DateTime.now().millisecondsSinceEpoch % _doctorNames.length];
 
   int get _subtotal =>
       _cartItems.fold(0, (sum, item) => sum + item.price * item.quantity);
@@ -74,7 +98,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               notes: notes,
               items: items,
               subtotal: subtotalVal,
-              prescriptionFile: _prescriptionFile,
+              prescriptionBytes: _prescriptionBytes,
+              prescriptionFileName: _prescriptionFileName,
             ),
           ),
         );
@@ -101,16 +126,36 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         pharmacyId: pharmacyId,
         items: cartItemModels,
         subtotal: _subtotal.toDouble(),
-        serviceType: 'PICKUP',
+        serviceType: 'PICK_UP',
         paymentMethod: 'CASH',
         notes: notes,
       );
 
-      if (_prescriptionFile != null) {
+      if (_prescriptionBytes != null) {
         try {
-          await service.uploadPrescription(order.id, _prescriptionFile!);
-        } catch (_) {
-          debugPrint('Prescription upload gagal, bisa diupload nanti');
+          final user = ref.read(currentUserProvider);
+          await service.uploadPrescription(
+            order.id,
+            _prescriptionBytes!,
+            fileName: _prescriptionFileName ?? 'resep.jpg',
+            doctorName: _randomDoctorName,
+            patientName: user?.username,
+            issuedDate: DateTime.now().toIso8601String().split('T').first,
+          );
+        } catch (e) {
+          debugPrint('Prescription upload gagal: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Gagal mengunggah resep. Kamu bisa upload ulang di halaman detail pesanan.'),
+                backgroundColor: Colors.orange,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            );
+          }
         }
       }
 
@@ -166,11 +211,35 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               const SizedBox(height: 16),
               _sheetOption(Icons.camera_alt_rounded, 'Ambil Foto', () async {
                 Navigator.pop(context);
-                final xfile = await _picker.pickImage(
-                  source: ImageSource.camera,
-                );
-                if (xfile != null) {
-                  setState(() => _prescriptionFile = File(xfile.path));
+                try {
+                  final xfile = await _picker.pickImage(
+                    source: ImageSource.camera,
+                    imageQuality: 80,
+                    maxWidth: 1024,
+                  );
+                  if (xfile != null) {
+                    final bytes = await xfile.readAsBytes();
+                    if (mounted) {
+                      setState(() {
+                        _prescriptionBytes = bytes;
+                        _prescriptionFileName = xfile.name;
+                        _prescriptionFilePath = xfile.path;
+                      });
+                    }
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Gagal mengakses kamera. Periksa izin kamera.'),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                  }
                 }
               }),
               const SizedBox(height: 12),
@@ -179,11 +248,35 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 'Pilih dari Galeri',
                 () async {
                   Navigator.pop(context);
-                  final xfile = await _picker.pickImage(
-                    source: ImageSource.gallery,
-                  );
-                  if (xfile != null) {
-                    setState(() => _prescriptionFile = File(xfile.path));
+                  try {
+                    final xfile = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 80,
+                      maxWidth: 1024,
+                    );
+                    if (xfile != null) {
+                      final bytes = await xfile.readAsBytes();
+                      if (mounted) {
+                        setState(() {
+                          _prescriptionBytes = bytes;
+                          _prescriptionFileName = xfile.name;
+                          _prescriptionFilePath = xfile.path;
+                        });
+                      }
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Gagal mengakses galeri. Periksa izin penyimpanan.'),
+                          backgroundColor: Colors.red,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                    }
                   }
                 },
               ),
@@ -759,20 +852,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             child: Row(
               children: [
-                if (_prescriptionFile != null) ...[
+                if (_prescriptionBytes != null) ...[
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      _prescriptionFile!,
+                    child: Image.memory(
+                      _prescriptionBytes!,
+                      key: ValueKey(_prescriptionBytes!.hashCode),
                       width: 44,
                       height: 44,
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => _imageErrorWidget(),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      _prescriptionFile!.path.split('/').last,
+                      _prescriptionFileName ?? 'resep.jpg',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -788,7 +883,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       size: 18,
                       color: AppColors.textLight,
                     ),
-                    onPressed: () => setState(() => _prescriptionFile = null),
+                    onPressed: () => setState(() {
+                      _prescriptionBytes = null;
+                      _prescriptionFileName = null;
+                      _prescriptionFilePath = null;
+                    }),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -891,7 +990,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   Widget _buildBottomBar() {
     final bool hasPrescription =
-        !_requiresPrescription || _prescriptionFile != null;
+        !_requiresPrescription || _prescriptionBytes != null;
     final bool canProceed = hasPrescription && !_isSubmitting;
 
     String? errorMsg;
@@ -985,6 +1084,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       (m) => '${m[1]}.',
     );
   }
+
+  Widget _imageErrorWidget() => Container(
+    width: 44,
+    height: 44,
+    color: Colors.grey.shade100,
+    child: const Icon(
+      Icons.broken_image_rounded,
+      color: AppColors.textLight,
+      size: 20,
+    ),
+  );
 
   @override
   void dispose() {

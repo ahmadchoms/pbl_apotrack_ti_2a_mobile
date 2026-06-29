@@ -5,6 +5,7 @@ class CustomerPrescription {
   final String imageUrl;
   final String? doctorName;
   final String? patientName;
+  final String? issuedDate;
   final String status;
   final String? rejectionNote;
 
@@ -13,6 +14,7 @@ class CustomerPrescription {
     required this.imageUrl,
     this.doctorName,
     this.patientName,
+    this.issuedDate,
     required this.status,
     this.rejectionNote,
   });
@@ -23,6 +25,7 @@ class CustomerPrescription {
       imageUrl: resolveImageUrl(json['image_url']?.toString()),
       doctorName: json['doctor_name']?.toString(),
       patientName: json['patient_name']?.toString(),
+      issuedDate: json['issued_date']?.toString(),
       status: json['status']?.toString() ?? 'PENDING',
       rejectionNote: json['rejection_note']?.toString(),
     );

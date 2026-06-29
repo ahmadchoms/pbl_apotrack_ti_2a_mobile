@@ -83,6 +83,7 @@ class _MedicineListScreenState extends ConsumerState<MedicineListScreen> {
           imageUrl: med.imageUrl ?? '',
           pharmacyName: widget.pharmacyName,
           pharmacyId: widget.pharmacyId,
+          requiresPrescription: med.requiresPrescription,
           quantity: entry.value,
         ),
       );

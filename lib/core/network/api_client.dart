@@ -254,27 +254,57 @@ String? get resolvedBaseUrl {
 
 String resolveImageUrl(String? url) {
   if (url == null || url.isEmpty) return '';
-  
-  final base = resolvedBaseUrl; // e.g. 'http://10.42.158.48:8000/api'
-  if (base != null) {
-    if (url.contains(':54321/')) {
-      try {
-        final uri = Uri.parse(url);
-        final pathWithQuery = uri.path + (uri.hasQuery ? '?${uri.query}' : '');
-        return '$base$pathWithQuery';
-      } catch (_) {}
+
+  final base = resolvedBaseUrl;
+  if (base == null) return url;
+
+  try {
+    // Supabase URLs (cloud or local) — return as-is, they're a different service
+    if (url.contains('supabase.co') ||
+        url.contains('supabase') ||
+        url.contains(':54321/')) {
+      debugPrint('[resolveImageUrl] supabase=$url');
+      return url;
     }
-    
-    if (url.contains('127.0.0.1') || url.contains('localhost') || url.contains('10.0.2.2')) {
-      try {
-        final baseUri = Uri.parse(base);
-        final host = baseUri.host;
-        return url
-            .replaceAll('127.0.0.1', host)
-            .replaceAll('localhost', host)
-            .replaceAll('10.0.2.2', host);
-      } catch (_) {}
+
+    // Handle relative paths like /storage/prescriptions/xxx.jpg
+    if (url.startsWith('/')) {
+      final baseUri = Uri.parse(base);
+      final basePath = baseUri.path;
+      final apiSuffix = '/api';
+      final cleanPath = basePath.endsWith(apiSuffix)
+          ? basePath.substring(0, basePath.length - apiSuffix.length)
+          : basePath;
+      final newUri = Uri(
+        scheme: baseUri.scheme,
+        host: baseUri.host,
+        port: baseUri.port,
+        path: cleanPath + url,
+      );
+      debugPrint('[resolveImageUrl] relative=$url → $newUri');
+      return newUri.toString();
     }
+
+    final imageUri = Uri.parse(url);
+    if (!url.contains('127.0.0.1') &&
+        !url.contains('localhost') &&
+        !url.contains('10.0.2.2')) {
+      debugPrint('[resolveImageUrl] passthrough=$url');
+      return url;
+    }
+
+    final baseUri = Uri.parse(base);
+    final newUri = Uri(
+      scheme: baseUri.scheme,
+      host: baseUri.host,
+      port: baseUri.port,
+      path: imageUri.path,
+      queryParameters: imageUri.hasQuery ? imageUri.queryParametersAll : null,
+    );
+    debugPrint('[resolveImageUrl] rewrite=$url → $newUri');
+    return newUri.toString();
+  } catch (_) {
+    debugPrint('[resolveImageUrl] error parsing url=$url');
+    return url;
   }
-  return url;
 }
