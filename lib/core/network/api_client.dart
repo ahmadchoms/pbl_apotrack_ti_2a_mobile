@@ -294,9 +294,15 @@ String resolveImageUrl(String? url) {
     }
 
     final imageUri = Uri.parse(url);
-    if (!url.contains('127.0.0.1') &&
-        !url.contains('localhost') &&
-        !url.contains('10.0.2.2')) {
+    final isLocal = url.contains('127.0.0.1') ||
+        url.contains('localhost') ||
+        url.contains('10.0.2.2') ||
+        url.contains('172.16.160.219') ||
+        RegExp(r'192\.168\.\d+\.\d+').hasMatch(url) ||
+        RegExp(r'172\.(1[6-9]|2\d|3[01])\.\d+\.\d+').hasMatch(url) ||
+        RegExp(r'10\.\d+\.\d+\.\d+').hasMatch(url);
+
+    if (!isLocal) {
       debugPrint('[resolveImageUrl] passthrough=$url');
       return url;
     }

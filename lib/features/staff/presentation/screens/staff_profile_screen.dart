@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../routes/app_router.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -120,7 +121,7 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                               backgroundImage:
                                   (profile?.avatarUrl != null &&
                                       profile!.avatarUrl!.isNotEmpty)
-                                  ? NetworkImage(profile.avatarUrl!)
+                                  ? NetworkImage(resolveImageUrl(profile.avatarUrl))
                                         as ImageProvider
                                   : null,
                               child:

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/core/network/api_client.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String name;
@@ -35,8 +36,8 @@ class ProfileHeader extends StatelessWidget {
           CircleAvatar(
             radius: 50,
             backgroundColor: AppColors.surfaceLight,
-            backgroundImage: avatarUrl != null
-                ? NetworkImage(avatarUrl!)
+            backgroundImage: (avatarUrl != null && avatarUrl!.isNotEmpty)
+                ? NetworkImage(resolveImageUrl(avatarUrl))
                 : null,
             child: avatarUrl == null
                 ? Text(
