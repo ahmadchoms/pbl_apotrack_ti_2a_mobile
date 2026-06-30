@@ -196,7 +196,13 @@ class Order {
       verificationCode: json['verification_code']?.toString(),
       requiresPrescription: json['requires_prescription'] == true || json['requires_prescription'] == 1,
       buyer: buyerData is Map<String, dynamic> ? buyerData : {'username': 'Pembeli Umum'},
-      pharmacy: pharmacyData is Map<String, dynamic> ? pharmacyData : {},
+      pharmacy: pharmacyData is Map<String, dynamic>
+          ? {
+              ...pharmacyData,
+              if (pharmacyData['logo_url'] != null)
+                'logo_url': resolveImageUrl(pharmacyData['logo_url']?.toString())
+            }
+          : {},
       items: parsedItems,
       statusLogs: (json['status_logs'] as List<dynamic>? ?? [])
           .map((e) => OrderStatusLog.fromJson(e as Map<String, dynamic>))

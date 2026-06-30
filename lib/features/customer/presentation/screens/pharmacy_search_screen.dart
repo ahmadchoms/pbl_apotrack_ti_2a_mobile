@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/network/api_client.dart';
 import '../../data/services/pharmacy_service.dart';
 
 class PharmacySearchScreen extends ConsumerStatefulWidget {
@@ -38,6 +39,13 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final query = _searchCtrl.text.toLowerCase();
+    final filteredPharmacies = _pharmacies.where((p) {
+      final name = (p['name'] as String? ?? '').toLowerCase();
+      final address = (p['address'] as String? ?? '').toLowerCase();
+      return name.contains(query) || address.contains(query);
+    }).toList();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -79,12 +87,12 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _pharmacies.isEmpty
+                : filteredPharmacies.isEmpty
                     ? const Center(child: Text('Tidak ada apotek ditemukan'))
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _pharmacies.length,
-                        itemBuilder: (_, i) => _buildPharmacyCard(_pharmacies[i]),
+                        itemCount: filteredPharmacies.length,
+                        itemBuilder: (_, i) => _buildPharmacyCard(filteredPharmacies[i]),
                       ),
           ),
         ],
@@ -101,7 +109,7 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: Image.network(
-            pharmacy['logo_url'] as String? ?? '',
+            resolveImageUrl(pharmacy['logo_url'] as String?),
             width: 56,
             height: 56,
             fit: BoxFit.cover,

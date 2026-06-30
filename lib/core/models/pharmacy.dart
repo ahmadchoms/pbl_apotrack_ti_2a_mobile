@@ -1,3 +1,5 @@
+import 'package:mobile/core/network/api_client.dart';
+
 class Pharmacy {
   final String id;
   final String name;
@@ -40,7 +42,7 @@ class Pharmacy {
       name: json['name'] as String? ?? '',
       address: json['address'] as String? ?? '',
       phone: json['phone'] as String?,
-      logoUrl: json['logo_url'] as String?,
+      logoUrl: resolveImageUrl(json['logo_url'] as String?),
       latitude: double.tryParse(json['latitude']?.toString() ?? '0.0') ?? 0.0,
       longitude: double.tryParse(json['longitude']?.toString() ?? '0.0') ?? 0.0,
       rating: double.tryParse(json['rating']?.toString() ?? '0.0') ?? 0.0,
